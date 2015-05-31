@@ -1,4 +1,11 @@
-### Installation
+## Introduction
+
+* commit - makes writing commmit messages easier
+* diff - makes doing diffs easier
+* feature - make working with feature branches easier
+* xgrep - makes using git-grep easier
+
+## Installation
 
 clone the repository
 
@@ -13,6 +20,32 @@ add the bin to your path
 ```
 export PATH=~/GitHub/rkiel/git-utilities/bin:$PATH
 ```
+
+## Commit utility
+
+This utility makes it easier to write commit messages.
+No need to specify the `-m` parameter or wrapping the message in quotes.
+For example,
+
+```
+commit this is a sample commit message
+```
+
+generates the command `git commit -m "this is a sample commit message"`.
+
+## Diff utility
+
+This utility makes it easier to check differences ignoring white spaces.
+No need to specify the `-w` parameter.
+For example,
+
+```
+diff master
+```
+
+generates the command `git diff -w master`.
+
+## Feature utility
 
 ### Usage
 
@@ -76,3 +109,7 @@ If there is a backup copy on `origin`, it will also be removed.
 ```
 feature end
 ```
+
+## Xgrep utility
+
+This utility makes it easier to use git-grep.
