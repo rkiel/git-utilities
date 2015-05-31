@@ -120,11 +120,14 @@ class End < Base
   def execute
     error "USAGE: feature end" unless ARGV.size == 1
 
-    feature_branch = current_branch
+    parts = parse_branch(current_branch)
+
+    standard_branch = parts[:standard]
+    feature_branch  = current_branch
 
     error "invalid feature branch: #{feature_branch}" if standard_branches.include? feature_branch
 
-    run_cmd "git checkout master"
+    run_cmd "git checkout #{standard_branch}"
 
     if remote_branch(feature_branch) != ""
       run_cmd "git push origin :#{feature_branch}"
@@ -135,6 +138,7 @@ class End < Base
     run_cmd "git remote prune origin"
   end
 end
+
 
 error "USAGE: feature cmd branch" unless ARGV.size > 0
 
