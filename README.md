@@ -20,7 +20,7 @@ This utility is built around some standard branch names: `master`, `develop`, an
 Feature branches have specific format: USER-BASE-FEATURE.
 
 * USER is the username as specificied by the USER environment variable
-* BASE is the branch to base the feature branch on
+* BASE is the standard branch to base the feature branch on
 * FEATURE is the name of the feature
 
 #### Start
@@ -39,6 +39,34 @@ feature start my-new-feature
 
 For example, a new branch will be created called `rkiel-master-my-new-feature`
 
+#### Rebase
+
+Use the `rebase` subcommand pull down any changes from the standard branch and rebase them with you changes.
+
+```
+feature rebase
+```
+
+For example, the `master` branch is pulled down and then rebased into the feature branch.
+
+#### Merge
+
+Use the `merge` subcommand to merge your feature branch changes to the standard branch.
+
+```
+feature merge
+```
+
+For example, the `master` branch is pulled down and then your feature branch is merged.
+
+You can also override the default standard branch by specifying another branch.
+
+```
+feature merge integration
+```
+
+For example, the `integration` branch is pulled down and then your feature branch is merged.
+
 #### End
 
 Use the `end` subcommand to close out the feature.
@@ -47,4 +75,4 @@ Use the `end` subcommand to close out the feature.
 feature end
 ```
 
-For example, the feature branch `rkiel-master-my-new-feature` will be deleted the `master` will be checked out.
+For example, the feature branch `rkiel-master-my-new-feature` will be deleted and the `master` will be checked out.
