@@ -41,13 +41,11 @@ For example, a new branch will be created called `rkiel-master-my-new-feature`
 
 #### Rebase
 
-Use the `rebase` subcommand pull down any changes from the standard branch and rebase them with you changes.
+Use the `rebase` subcommand to pull down any changes from the standard branch and then rebase with your feature branch changes.
 
 ```
 feature rebase
 ```
-
-For example, the `master` branch is pulled down and then rebased into the feature branch.
 
 #### Merge
 
@@ -57,15 +55,11 @@ Use the `merge` subcommand to merge your feature branch changes to the standard 
 feature merge
 ```
 
-For example, the `master` branch is pulled down and then your feature branch is merged.
-
 You can also override the default standard branch by specifying another branch.
 
 ```
 feature merge integration
 ```
-
-For example, the `integration` branch is pulled down and then your feature branch is merged.
 
 #### End
 
