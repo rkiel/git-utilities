@@ -1,9 +1,11 @@
 ## Introduction
 
-* commit - makes writing commmit messages easier
-* diff - makes doing diffs easier
+This is a collection of simple scripts to make using `git` easier.
+
+* commit - make using `git-commmit` easier
+* diff - make using `git-diff` easier
 * feature - make working with feature branches easier
-* xgrep - makes using git-grep easier
+* xgrep - make using `git-grep` easier
 
 ## Installation
 
