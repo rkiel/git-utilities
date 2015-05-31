@@ -1,0 +1,149 @@
+#!/usr/bin/env ruby
+
+def error ( msg )
+  puts
+  puts "ERROR: #{msg}"
+  puts
+  exit
+end
+
+class Base
+  attr_reader :argv
+
+  def initialize (argv)
+    @argv = argv
+  end
+
+  def run_cmd ( cmd, fallback_branch = current_branch )
+    puts
+    puts cmd
+    success = system cmd
+    unless success
+      system "git checkout #{fallback_branch}"
+      error "(see above)"
+    end
+    puts
+  end
+
+  def current_branch
+    @current_branch ||= `git branch|grep '\*'|sed 's/\*\s*//'`.strip
+  end
+
+  def remote_branch (branch)
+    @remote_branch  ||= `git branch -r|grep origin|grep -v 'HEAD'|grep #{branch}`.strip
+  end
+
+  def standard_branches
+    ['master','develop','integration']
+  end
+
+  def parse_branch (branch)
+    parts = branch.split('-')
+    error "invalid branch: user-standard-feature" unless parts.size > 2
+
+    user     = parts.shift
+    standard = parts.shift
+    error "invalid user: #{user}" unless ENV['USER'] == user
+    error "invalid branch: #{standard}" unless standard_branches.include? standard
+    feature  =  parts.join('-')
+    { user: user, standard: standard, feature: feature }
+  end
+end
+
+class Rebase < Base
+  def execute
+    parts = parse_branch(current_branch)
+
+    standard_branch = parts[:standard]
+    feature_branch  = current_branch
+    remote_branch   = remote_branch(feature_branch)
+
+    error "USAGE: feature rebase" unless standard_branch
+    error "invalid feature branch: #{feature_branch}" if standard_branches.include? feature_branch
+
+    run_cmd "git checkout #{standard_branch}"
+    run_cmd "git pull origin #{standard_branch}"
+    run_cmd "git checkout #{feature_branch}"
+    run_cmd "git rebase #{standard_branch}"
+
+    if remote_branch != ""
+      run_cmd "git push origin :#{feature_branch}"
+    end
+
+    run_cmd "git push origin #{feature_branch}"
+  end
+end
+
+class MergeTo < Base
+  def execute
+    parts = parse_branch(current_branch)
+
+    if argv.size == 2
+      merge_to_branch = argv[1]
+    elsif argv.size == 1
+      merge_to_branch = parts[:standard]
+    else
+      error "USAGE: feature merge [branch]"
+    end
+
+    feature_branch  = current_branch
+
+    error "invalid branch: #{merge_to_branch}" unless standard_branches.include? merge_to_branch
+
+    run_cmd "git checkout #{merge_to_branch}"
+    run_cmd "git pull origin #{merge_to_branch}"
+    run_cmd "git merge #{feature_branch}"
+    run_cmd "git push origin #{merge_to_branch}"
+    run_cmd "git checkout #{feature_branch}"
+  end
+end
+
+class Start < Base
+  def execute
+    error "USAGE: feature start feature_name" unless argv.size == 2
+
+    feature = argv[1]
+    feature_branch = "#{ENV['USER']}-#{current_branch}-#{feature}"
+
+    error "invalid base branch: #{current_branch}" unless standard_branches.include? current_branch
+    error "invalid feature branch: #{featureh}"    if     standard_branches.include? feature
+
+    run_cmd "git pull origin #{current_branch}"
+
+    run_cmd "git checkout -b #{feature_branch}"
+
+    run_cmd "git push origin #{feature_branch}"
+  end
+end
+
+class End < Base
+  def execute
+    error "USAGE: feature end" unless ARGV.size == 1
+
+    feature_branch = current_branch
+
+    error "invalid feature branch: #{feature_branch}" if standard_branches.include? feature_branch
+
+    run_cmd "git checkout master"
+
+    if remote_branch(feature_branch) != ""
+      run_cmd "git push origin :#{feature_branch}"
+    end
+
+    run_cmd "git branch -D #{feature_branch}"
+
+    run_cmd "git remote prune origin"
+  end
+end
+
+error "USAGE: feature cmd branch" unless ARGV.size > 0
+
+command = case ARGV[0]
+          when "start"  then Start.new(ARGV)
+          when "end"    then End.new(ARGV)
+          when "rebase" then Rebase.new(ARGV)
+          when "merge"  then MergeTo.new(ARGV)
+          else error "invalid cmd: #{ARGV[0]}"
+          end
+
+command.execute
