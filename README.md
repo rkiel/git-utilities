@@ -42,10 +42,14 @@ For example, a new branch will be created called `rkiel-master-my-new-feature`
 #### Rebase
 
 Use the `rebase` subcommand to pull down any changes from the standard branch and then rebase with your feature branch changes.
+In addition, a backup copy of your feature changes will be pushed out to `origin`.
+This backup should not be used to collaborate with others.  It is just a personal backup and will be deleted and recreated with each `rebase`.
 
 ```
 feature rebase
 ```
+
+For example, `rkiel-master-my-new-feature` will be pushed out to `origin`.
 
 #### Merge
 
