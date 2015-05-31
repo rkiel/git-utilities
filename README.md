@@ -5,13 +5,13 @@ clone the repository
 ```
 mkdir -p ~/GitHub/rkiel
 cd ~/GitHub/rkiel
-git clone git@github.com:rkiel/git-feature.git
+git clone git@github.com:rkiel/git-utilities.git
 ```
 
 add the bin to your path
 
 ```
-export PATH=~/GitHub/rkiel/git-feature/bin:$PATH
+export PATH=~/GitHub/rkiel/git-utilities/bin:$PATH
 ```
 
 ### Usage
