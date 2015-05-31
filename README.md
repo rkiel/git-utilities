@@ -4,6 +4,7 @@ clone the repository
 
 ```
 mkdir -p ~/GitHub/rkiel
+cd ~/GitHub/rkiel
 git clone git@github.com:rkiel/git-feature.git
 ```
 
