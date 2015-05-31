@@ -1,0 +1,57 @@
+#!/usr/bin/env ruby
+
+ands    = [ ]
+ors     = [ ]
+nots    = [ ]
+current = ands
+
+paths = %w{Rakefile app config db lib spec}
+
+debug = false
+
+options = %w{-E -I}
+
+ARGV.each do |x|
+  case x
+    when "-d","--debug"  then debug = true
+    when "-i","--ignore" then options << "--ignore-case"
+    when "-l","--names"  then options << "--name-only"
+    when "--clean"       then options << "--no-color"
+    when "--core"        then paths -= ["spec"]
+    when "--spec"        then paths  = ["spec"]
+    when "--model"       then paths  = ["app/models"]
+    when "--view"        then paths  = ["app/views"]
+    when "--controller"  then paths  = ["app/controllers"]
+    when "--lib"         then paths  = ["lib"]
+    when "--config"      then paths  = ["config"]
+    when "--db"          then paths  = ["db"]
+
+    when /^-+(and|or|not)$/ then current << $1
+    when "and" then current = ands
+    when "or"  then current = ors
+    when "not" then current = nots
+    else            current << x
+  end
+end
+
+ands = ands.map { |x| "-e \"#{x}\"" }
+ors  = ors.map  { |x| "-e \"#{x}\"" }
+nots = nots.map { |x| "-e \"#{x}\"" }
+
+if ors.size == 1
+  ands << ors.first
+elsif ors.size > 1
+  ands << "\\( #{ors.join(' --or ')} \\)"
+end
+ands << "--not \\( #{nots.join(' --or ')} \\)" unless nots.empty?
+ands = ands.join(" --and ")
+
+command = "git grep #{options.join(' ')} #{ands} -- #{paths.sort.join(' ')}"
+
+if debug
+  puts
+  puts command
+end
+
+puts
+exec command

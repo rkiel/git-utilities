@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+
+args = ARGV.join(' ')
+
+command = "git diff -w #{args}"
+
+exec command

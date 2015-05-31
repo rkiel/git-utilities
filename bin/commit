@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+
+raise "USAGE: commit [word....]" unless ARGV.size > 0
+
+comment = ARGV.reject { |x| x == '-m' }.join(' ')
+
+command = "git commit -m \"#{comment}\""
+
+exec command
