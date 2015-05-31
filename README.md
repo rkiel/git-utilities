@@ -68,9 +68,10 @@ feature merge integration
 #### End
 
 Use the `end` subcommand to close out the feature.
+The standard branch will be checkout and the local feature branch will be forcibly deleted.
+Make sure that your changes have been merged.
+If there is a backup copy on `origin`, it will also be removed.
 
 ```
 feature end
 ```
-
-For example, the feature branch `rkiel-master-my-new-feature` will be deleted and the `master` will be checked out.
