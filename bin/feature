@@ -50,6 +50,12 @@ class Base
   end
 end
 
+class Branch < Base
+  def execute
+    run_cmd "git branch"
+  end
+end
+
 class Rebase < Base
   def execute
     parts = parse_branch(current_branch)
@@ -140,14 +146,14 @@ class End < Base
 end
 
 
-error "USAGE: feature cmd branch" unless ARGV.size > 0
 
 command = case ARGV[0]
           when "start"  then Start.new(ARGV)
           when "end"    then End.new(ARGV)
           when "rebase" then Rebase.new(ARGV)
           when "merge"  then MergeTo.new(ARGV)
-          else error "invalid cmd: #{ARGV[0]}"
+          when nil      then Branch.new(ARGV)
+          else error "USAGE: feature cmd branch"
           end
 
 command.execute
