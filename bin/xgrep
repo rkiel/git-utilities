@@ -1,5 +1,18 @@
 #!/usr/bin/env ruby
 
+require_relative '../lib/xgrep/commander'
+require_relative '../lib/xgrep/rails_env'
+
+
+commander = Commander.new
+if commander.valid?
+  commander.execute
+else
+  commander.help
+end
+
+exit
+
 ands    = [ ]
 ors     = [ ]
 nots    = [ ]
