@@ -1,5 +1,5 @@
 module Xgrep
-  class RailsEnv
+  class SimpleEnv
     attr_accessor :pathspec
 
     def initialize
