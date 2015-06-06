@@ -24,11 +24,11 @@ module Feature
 
       git_checkout standard_branch
 
+      git_local_branch_delete feature_branch
+
       if remote_branch(feature_branch) != ""
         git_remote_branch_delete feature_branch
       end
-
-      git_local_branch_delete feature_branch
 
       git_prune
     end
