@@ -4,7 +4,7 @@ module Feature
 
   class End < Feature::Base
     def execute
-      error "USAGE: feature end" unless ARGV.size == 1
+      error "USAGE: feature end" unless argv.size == 1
 
       parts = parse_branch(current_branch)
 

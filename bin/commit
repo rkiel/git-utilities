@@ -1,9 +1,10 @@
 #!/usr/bin/env ruby
 
-raise "USAGE: commit [word....]" unless ARGV.size > 0
+require_relative '../lib/commit/commander'
 
-comment = ARGV.reject { |x| x == '-m' }.join(' ')
-
-command = "git commit -m \"#{comment}\""
-
-exec command
+commander = Commit::Commander.new(ARGV)
+if commander.valid?
+  commander.execute
+else
+  commander.help
+end
