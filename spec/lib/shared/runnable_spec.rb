@@ -4,14 +4,124 @@ require_relative '../../../lib/shared/runnable'
 
 describe Shared::Runnable do
 
-  class TestClass
-    include Shared::Runnable
+  describe "run_cmd" do
+    class TestRunCommand
+      include Shared::Runnable
+
+      attr_reader :output, :commands, :errors
+
+      attr_accessor :success
+
+      def initialize
+        @output   = []
+        @commands = []
+        @errors   = []
+        @success  = true
+      end
+
+      def system ( cmd )
+        @commands << cmd
+        @success
+      end
+
+      def puts (message = "")
+        @output << message
+      end
+
+      def error (message)
+        @errors << message
+      end
+
+      def current_branch
+        "current_branch"
+      end
+    end
+
+    before do
+      @object = TestRunCommand.new
+    end
+
+    describe "when success is true" do
+      before do
+        @object.success = true
+      end
+
+      it "should generate output" do
+        @object.run_cmd("foo")
+        @object.output.must_equal ["", "foo", ""]
+      end
+      it "should generate commands" do
+        @object.run_cmd("foo")
+        @object.commands.must_equal ["foo"]
+      end
+      it "should generate errors" do
+        @object.run_cmd("foo")
+        @object.errors.must_equal []
+      end
+    end
+
+    describe "when success is false" do
+      before do
+        @object.success = false
+      end
+
+      it "should generate output" do
+        @object.run_cmd("foo")
+        @object.output.must_equal ["", "foo", ""]
+      end
+      it "should generate commands" do
+        @object.run_cmd("foo")
+        @object.commands.must_equal ["foo", "git checkout current_branch"]
+      end
+      it "should generate commands with fallback" do
+        @object.run_cmd("foo", "fallback_branch")
+        @object.commands.must_equal ["foo", "git checkout fallback_branch"]
+      end
+      it "should generate errors" do
+        @object.run_cmd("foo")
+        @object.errors.must_equal ["(see above)"]
+      end
+    end
+  end
+
+  describe "error" do
+    class TestError
+      include Shared::Runnable
+
+      attr_reader :puts, :exit
+
+      def initialize
+        @puts = []
+        @exit = nil
+      end
+
+      def exit
+        @exit = "exit"
+      end
+
+      def puts (message = "")
+        @puts << message
+      end
+    end
+
+    before do
+      @object = TestError.new
+    end
+
+    it "should generate messages and exit" do
+      @object.error("foo")
+      @object.puts.must_equal ["", "ERROR: foo", "", ""]
+      @object.exit.must_equal "exit"
+    end
   end
 
   describe "git commands" do
+    class TestGitCommands
+      include Shared::Runnable
+    end
 
     before do
-      @object = TestClass.new
+      @object = TestGitCommands.new
       @branch = "branch-name"
       @run_cmd = lambda do |cmd|
         cmd
