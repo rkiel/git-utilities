@@ -58,6 +58,10 @@ module Shared
     def git_local_branch_create (branch)
       run_cmd "git checkout -b #{branch}"
     end
+
+    def git_commit (message)
+      run_cmd "git commit -m \"#{message}\""
+    end
   end
 
 end

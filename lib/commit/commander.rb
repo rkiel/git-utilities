@@ -1,6 +1,13 @@
+require_relative '../shared/branchability'
+require_relative '../shared/runnable'
+
 module Commit
 
   class Commander
+
+    include Shared::Branchability
+    include Shared::Runnable
+
     attr_reader :argv
 
     def initialize (argv)
@@ -19,10 +26,12 @@ module Commit
     end
 
     def execute
-      comment = argv.reject { |x| x == '-m' }.join(' ')
+      parts = parse_branch(current_branch)
 
-      command = "git commit -m \"#{comment}\""
-      exec command
+      comment = argv.reject { |x| x == '-m' }.join(' ')
+      comment = "#{parts[:feature]}: #{comment}"
+
+      git_commit comment
     end
 
   end
