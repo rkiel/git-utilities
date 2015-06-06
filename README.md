@@ -17,10 +17,18 @@ cd ~/GitHub/rkiel
 git clone git@github.com:rkiel/git-utilities.git
 ```
 
-add the bin to your path
+add the following to `.bash_profile`
 
 ```
-export PATH=~/GitHub/rkiel/git-utilities/bin:$PATH
+export GIT_UTILITIES_BIN="~/GitHub/rkiel/git-utilities/bin"
+
+export PATH=${GIT_UTILITIES_BIN}:$PATH
+```
+
+add the following line to `.bashrc`
+
+```
+source ~/GitHub/rkiel/git-utilities/dotfiles/bashrc
 ```
 
 ## Commit utility
