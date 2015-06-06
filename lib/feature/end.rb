@@ -35,5 +35,3 @@ module Feature
   end
 
 end
-
-# fake change
