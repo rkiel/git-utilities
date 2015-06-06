@@ -21,11 +21,11 @@ module Feature
       error "invalid base branch: #{current_branch}" unless standard_branches.include? current_branch
       error "invalid feature branch: #{featureh}"    if     standard_branches.include? feature
 
-      run_cmd "git pull origin #{current_branch}"
+      git_pull current_branch
 
-      run_cmd "git checkout -b #{feature_branch}"
+      git_local_branch_create feature_branch
 
-      run_cmd "git push origin #{feature_branch}"
+      git_push feature_branch
     end
   end
 

@@ -24,16 +24,16 @@ module Feature
       error "USAGE: feature rebase" unless standard_branch
       error "invalid feature branch: #{feature_branch}" if standard_branches.include? feature_branch
 
-      run_cmd "git checkout #{standard_branch}"
-      run_cmd "git pull origin #{standard_branch}"
-      run_cmd "git checkout #{feature_branch}"
-      run_cmd "git rebase #{standard_branch}"
+      git_checkout standard_branch
+      git_pull standard_branch
+      git_checkout feature_branch
+      git_rebase standard_branch
 
       if remote_branch != ""
-        run_cmd "git push origin :#{feature_branch}"
+        git_remote_branch_delete feature_branch
       end
 
-      run_cmd "git push origin #{feature_branch}"
+      git_push feature_branch
     end
   end
 

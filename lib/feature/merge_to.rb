@@ -27,11 +27,11 @@ module Feature
 
       error "invalid branch: #{merge_to_branch}" unless standard_branches.include? merge_to_branch
 
-      run_cmd "git checkout #{merge_to_branch}"
-      run_cmd "git pull origin #{merge_to_branch}"
-      run_cmd "git merge #{feature_branch}"
-      run_cmd "git push origin #{merge_to_branch}"
-      run_cmd "git checkout #{feature_branch}"
+      git_checkout merge_to_branch
+      git_pull     merge_to_branch
+      git_merge    feature_branch
+      git_push     merge_to_branch
+      git_checkout feature_branch
     end
   end
 

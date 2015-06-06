@@ -22,15 +22,15 @@ module Feature
 
       error "invalid feature branch: #{feature_branch}" if standard_branches.include? feature_branch
 
-      run_cmd "git checkout #{standard_branch}"
+      git_checkout standard_branch
 
       if remote_branch(feature_branch) != ""
-        run_cmd "git push origin :#{feature_branch}"
+        git_remote_branch_delete feature_branch
       end
 
-      run_cmd "git branch -D #{feature_branch}"
+      git_local_branch_delete feature_branch
 
-      run_cmd "git remote prune origin"
+      git_prune
     end
   end
 

@@ -12,7 +12,7 @@ module Feature
     end
 
     def execute
-      run_cmd "git branch"
+      git_show_branches
     end
   end
 
