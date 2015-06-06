@@ -25,7 +25,7 @@ export GIT_UTILITIES_BIN="~/GitHub/rkiel/git-utilities/bin"
 export PATH=${GIT_UTILITIES_BIN}:$PATH
 ```
 
-add the following line to `.bashrc`
+add the following to `.bashrc`
 
 ```
 source ~/GitHub/rkiel/git-utilities/dotfiles/bashrc
