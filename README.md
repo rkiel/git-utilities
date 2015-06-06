@@ -3,7 +3,6 @@
 This is a collection of simple scripts to make using `git` easier.
 
 * commit - make using `git-commmit` easier
-* diff - make using `git-diff` easier
 * feature - make working with feature branches easier
 * xgrep - make using `git-grep` easier
 
@@ -45,18 +44,6 @@ commit this is a sample commit message
 ```
 
 generates the command `git commit -m "this is a sample commit message"`.
-
-## Diff utility
-
-This utility makes it easier to check differences ignoring white spaces.
-No need to specify the `-w` parameter.
-For example,
-
-```
-diff master
-```
-
-generates the command `git diff -w master`.
 
 ## Feature utility
 
