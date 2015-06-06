@@ -14,14 +14,6 @@ module Feature
       @argv = argv
     end
 
-    def valid?
-      true
-    end
-
-    def help
-      exit
-    end
-
   end
 
 end

@@ -3,7 +3,6 @@ require_relative './base'
 module Feature
 
   class Rebase < Feature::Base
-
     def valid?
       argv.size == 1
     end
