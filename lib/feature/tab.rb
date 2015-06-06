@@ -4,7 +4,7 @@ module Feature
 
   class Tab < Feature::Base
     def valid?
-      argv.size > 0
+      [1,2].include? argv.size
     end
 
     def help
@@ -17,7 +17,7 @@ module Feature
     def execute
       if argv.size == 1
         pattern = '.+'
-      else
+      elsif argv.size == 2
         pattern = "^#{argv[1]}"
       end
 
