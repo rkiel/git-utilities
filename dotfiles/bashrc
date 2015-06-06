@@ -1,0 +1,28 @@
+alias add="git add"
+alias branch="git branch"
+alias checkout="git checkout"
+alias pop="git stash pop --index"
+alias pull="git pull"
+alias push="git push"
+alias master="git checkout master"
+alias develop="git checkout develop"
+#alias log="git log --graph --decorate --abbrev-commit --pretty=oneline"
+alias log="git log --graph --date=short --pretty=format:'%C(yellow)%h %C(white)%ad %C(black)[%C(green)%an%C(black)] %C(blue)%s%C(yellow)%d'"
+alias stash="git stash save"
+alias status="git status; echo; echo STASH:; git stash list; echo"
+
+alias sfind='find . -not \( -type d -name .git -prune \) -not \( -type d -name node_modes -prune \) -and \( -type f \)|sort -f'
+alias sgrep='find . -not \( -type d -name .git -prune \) -not \( -type d -name node_modes -prune \) -and \( -type f \)|sort -f|xargs grep --color=always'
+alias cgrep='grep --color=always'
+alias vgrep='grep -v'
+
+function get_feature_commands()
+{
+  if [ -z $2 ] ; then
+    COMPREPLY=(`feature tab`)
+  else
+    COMPREPLY=(`feature tab $2`)
+  fi
+}
+
+complete -F get_feature_commands feature
