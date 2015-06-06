@@ -23,6 +23,9 @@ add the following to `.bash_profile`
 export GIT_UTILITIES_BIN="~/GitHub/rkiel/git-utilities/bin"
 
 export PATH=${GIT_UTILITIES_BIN}:$PATH
+
+source ~/GitHub/rkiel/git-utilities/dotfiles/git-completion.bash
+source ~/GitHub/rkiel/git-utilities/dotfiles/git-prompt.sh
 ```
 
 add the following to `.bashrc`
