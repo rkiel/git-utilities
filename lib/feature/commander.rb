@@ -7,31 +7,29 @@ require_relative './branch'
 module Feature
 
   class Commander
-    attr_reader :argv
+    attr_reader :subcommand
 
     def initialize (argv)
-      @argv = argv
+      @subcommand = case argv[0]
+        when "start"  then Feature::Start.new(argv)
+        when "end"    then Feature::End.new(argv)
+        when "rebase" then Feature::Rebase.new(argv)
+        when "merge"  then Feature::MergeTo.new(argv)
+        else               Feature::Branch.new(argv)
+      end
     end
 
     def valid?
-      true
+      subcommand.valid?
     end
 
     def help
-      exit
+      subcommand.help
     end
 
     def execute
-      command = case argv[0]
-                when "start"  then Feature::Start.new(argv)
-                when "end"    then Feature::End.new(argv)
-                when "rebase" then Feature::Rebase.new(argv)
-                when "merge"  then Feature::MergeTo.new(argv)
-                else               Feature::Branch.new(argv)
-                end
-      command.execute
+      subcommand.execute
     end
-
   end
 
 end

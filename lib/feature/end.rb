@@ -3,9 +3,18 @@ require_relative './base'
 module Feature
 
   class End < Feature::Base
-    def execute
-      error "USAGE: feature end" unless argv.size == 1
+    def valid?
+      argv.size == 1
+    end
 
+    def help
+      puts
+      puts "USAGE: feature end"
+      puts
+      exit
+    end
+
+    def execute
       parts = parse_branch(current_branch)
 
       standard_branch = parts[:standard]

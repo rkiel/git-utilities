@@ -3,9 +3,18 @@ require_relative './base'
 module Feature
 
   class Start < Feature::Base
-    def execute
-      error "USAGE: feature start feature_name" unless argv.size == 2
+    def valid?
+      argv.size == 2
+    end
 
+    def help
+      puts
+      puts "USAGE: feature start feature_name"
+      puts
+      exit
+    end
+
+    def execute
       feature = argv[1]
       feature_branch = "#{ENV['USER']}-#{current_branch}-#{feature}"
 

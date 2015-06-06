@@ -13,6 +13,15 @@ module Feature
     def initialize (argv)
       @argv = argv
     end
+
+    def valid?
+      true
+    end
+
+    def help
+      exit
+    end
+
   end
 
 end

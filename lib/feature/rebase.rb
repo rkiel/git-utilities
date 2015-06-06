@@ -3,6 +3,18 @@ require_relative './base'
 module Feature
 
   class Rebase < Feature::Base
+
+    def valid?
+      argv.size == 1
+    end
+
+    def help
+      puts
+      puts "USAGE: feature rebase"
+      puts
+      exit
+    end
+
     def execute
       parts = parse_branch(current_branch)
 
