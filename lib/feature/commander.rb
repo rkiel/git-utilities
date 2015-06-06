@@ -13,6 +13,7 @@ module Feature
       @subcommand = case argv[0]
         when "start"  then Feature::Start.new(argv)
         when "end"    then Feature::End.new(argv)
+        when "trash"  then Feature::Trash.new(argv)
         when "rebase" then Feature::Rebase.new(argv)
         when "merge"  then Feature::MergeTo.new(argv)
         else               Feature::Branch.new(argv)

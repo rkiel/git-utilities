@@ -35,6 +35,10 @@ module Shared
       run_cmd "git branch -d #{branch}"
     end
 
+    def git_local_branch_trash ( branch )
+      run_cmd "git branch -D #{branch}"
+    end
+
     def git_prune
       run_cmd "git remote prune origin"
     end
