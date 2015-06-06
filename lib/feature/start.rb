@@ -4,22 +4,24 @@ module Feature
 
   class Start < Feature::Base
     def valid?
-      argv.size == 2
+      argv.size > 1
     end
 
     def help
       puts
-      puts "USAGE: feature start feature_name"
+      puts "USAGE: feature start feature-words"
       puts
       exit
     end
 
     def execute
-      feature = argv[1]
-      feature_branch = "#{ENV['USER']}-#{current_branch}-#{feature}"
+      subcommand, *feature_words = *argv
 
-      error "invalid base branch: #{current_branch}" unless standard_branches.include? current_branch
-      error "invalid feature branch: #{featureh}"    if     standard_branches.include? feature
+      feature_name = feature_words.join('-')
+      feature_branch = "#{ENV['USER']}-#{current_branch}-#{feature_name}"
+
+      error "invalid base branch: #{current_branch}"  unless standard_branches.include? current_branch
+      error "invalid feature branch: #{feature_name}" if     standard_branches.include? feature_name
 
       git_pull current_branch
 
