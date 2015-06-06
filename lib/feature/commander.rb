@@ -1,5 +1,6 @@
 require_relative './start'
 require_relative './end'
+require_relative './trash'
 require_relative './rebase'
 require_relative './merge_to'
 require_relative './branch'
