@@ -2,5 +2,9 @@
 
 require_relative '../lib/feature/commander'
 
-command = Feature::Commander.new(ARGV)
-command.execute
+commander = Feature::Commander.new(ARGV)
+if commander.valid?
+  commander.execute
+else
+  commander.help
+end

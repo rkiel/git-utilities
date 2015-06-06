@@ -13,6 +13,14 @@ module Feature
       @argv = argv
     end
 
+    def valid?
+      true
+    end
+
+    def help
+      exit
+    end
+
     def execute
       command = case argv[0]
                 when "start"  then Feature::Start.new(argv)
