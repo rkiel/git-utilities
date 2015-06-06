@@ -1,17 +1,6 @@
 #!/usr/bin/env ruby
 
-require_relative '../lib/feature/start'
-require_relative '../lib/feature/end'
-require_relative '../lib/feature/rebase'
-require_relative '../lib/feature/merge_to'
-require_relative '../lib/feature/branch'
+require_relative '../lib/feature/commander'
 
-command = case ARGV[0]
-          when "start"  then Feature::Start.new(ARGV)
-          when "end"    then Feature::End.new(ARGV)
-          when "rebase" then Feature::Rebase.new(ARGV)
-          when "merge"  then Feature::MergeTo.new(ARGV)
-          else               Feature::Branch.new(ARGV)
-          end
-
+command = Feature::Commander.new(ARGV)
 command.execute
