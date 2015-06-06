@@ -3,6 +3,7 @@ require_relative './end'
 require_relative './trash'
 require_relative './rebase'
 require_relative './merge_to'
+require_relative './tab'
 require_relative './branch'
 
 module Feature
@@ -17,6 +18,7 @@ module Feature
         when "trash"  then Feature::Trash.new(argv)
         when "rebase" then Feature::Rebase.new(argv)
         when "merge"  then Feature::MergeTo.new(argv)
+        when "tab"    then Feature::Tab.new(argv)
         else               Feature::Branch.new(argv)
       end
     end
@@ -32,6 +34,11 @@ module Feature
     def execute
       subcommand.execute
     end
+
+    def self.tab_completion
+      [:start, :end, :trash, :rebase, :merge].map(&:to_s).sort
+    end
+
   end
 
 end
