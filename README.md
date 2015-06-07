@@ -10,8 +10,8 @@ The command-line scripts include:
 
 The `bash` utilities come directly from the [git source contrib](https://github.com/git/git/tree/master/contrib) and include:
 
-* support for tab completion
-* support for custom shell prompt
+* support for [tab completion](https://github.com/git/git/tree/master/contrib/completion)
+* support for customizing [shell prompt](https://github.com/git/git/tree/master/contrib/completion)
 
 ## Installation
 
