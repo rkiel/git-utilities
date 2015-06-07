@@ -1,14 +1,21 @@
 ## Introduction
 
-This is a collection of simple scripts to make using `git` easier.
+This is a collection of simple command-line scripts, bash aliases, and bash utilities that make using `git` even easier.
+
+The command-line scripts include:
 
 * commit - make using `git-commmit` easier
 * feature - make working with feature branches easier
 * xgrep - make using `git-grep` easier
 
+The `bash` utilities include:
+
+* support for tab completion
+* support for custom shell prompt
+
 ## Installation
 
-clone the repository
+Clone the repository
 
 ```
 mkdir -p ~/GitHub/rkiel
@@ -16,18 +23,26 @@ cd ~/GitHub/rkiel
 git clone git@github.com:rkiel/git-utilities.git
 ```
 
-add the following to `.bash_profile`
+To add the scripts to your path, add the following to `.bash_profile`
 
 ```
 export GIT_UTILITIES_BIN="~/GitHub/rkiel/git-utilities/bin"
 
 export PATH=${GIT_UTILITIES_BIN}:$PATH
+```
 
+To enable `bash` tab completion for `git` commands, add the following to `.bash_profile`
+
+```
 source ~/GitHub/rkiel/git-utilities/dotfiles/git-completion.bash
+```
+
+To enable your `bash` prompt to display the current `git` branch, add the following to `.bash_profile`
+```
 source ~/GitHub/rkiel/git-utilities/dotfiles/git-prompt.sh
 ```
 
-add the following to `.bashrc`
+To include the `bash` aliases and enable tab completion for the `feature` script, add the following to `.bashrc`
 
 ```
 source ~/GitHub/rkiel/git-utilities/dotfiles/bashrc
