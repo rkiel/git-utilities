@@ -132,13 +132,24 @@ my-feature-name: this is a sample commit message
 
 #### End
 
-Use the `end` subcommand to close out the feature.
-The standard branch will be checkout and the local feature branch will be forcibly deleted.
-Make sure that your changes have been merged.
-If there is a backup copy on `origin`, it will also be removed.
+Use the `end` subcommand to safely close out the feature.
+The standard branch will be checkout and the local feature branch will be deleted.
+This command will fail if you have not merged your changes.
+If successful and there is a backup copy on `origin`, it will also be removed.
 
 ```
 feature end
+```
+
+#### Trash
+
+Use the `trash` subcommand to forcibly close out the feature.
+The standard branch will be checkout and the local feature branch will be forcibly deleted.
+Make sure that your changes have been merged because they will be lost.
+If there is a backup copy on `origin`, it will also be removed.
+
+```
+feature trash
 ```
 
 ## Xgrep utility
