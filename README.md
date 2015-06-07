@@ -92,7 +92,7 @@ git checkout master
 Use the `start` subcommand with a feature name.
 
 ```
-feature start my-new-feature
+feature start my new feature
 ```
 
 For example, a new branch will be created called `rkiel-master-my-new-feature`
