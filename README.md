@@ -8,7 +8,7 @@ The command-line scripts include:
 * feature - make working with feature branches easier
 * xgrep - make using `git-grep` easier
 
-The `bash` utilities come directly from the (git source contrib)[https://github.com/git/git/tree/master/contrib] and include:
+The `bash` utilities come directly from the [git source contrib](https://github.com/git/git/tree/master/contrib) and include:
 
 * support for tab completion
 * support for custom shell prompt
