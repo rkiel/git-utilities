@@ -1,6 +1,7 @@
 alias add="git add"
 alias branch="git branch"
 alias checkout="git checkout"
+alias commit="feature commit"
 alias pop="git stash pop --index"
 alias pull="git pull"
 alias push="git push"

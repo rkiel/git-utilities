@@ -4,7 +4,6 @@ This is a collection of simple command-line scripts, bash aliases, and bash util
 
 The command-line scripts include:
 
-* commit - make using `git-commmit` easier
 * feature - make working with feature branches easier
 * xgrep - make using `git-grep` easier
 
@@ -56,18 +55,6 @@ To include the `bash` aliases and enable tab completion for the `feature` script
 ```
 source ~/GitHub/rkiel/git-utilities/dotfiles/bashrc
 ```
-
-## Commit utility
-
-This utility makes it easier to write commit messages.
-No need to specify the `-m` parameter or wrapping the message in quotes.
-For example,
-
-```
-commit this is a sample commit message
-```
-
-generates the command `git commit -m "this is a sample commit message"`.
 
 ## Feature utility
 
@@ -121,6 +108,26 @@ You can also override the default standard branch by specifying another branch.
 
 ```
 feature merge integration
+```
+
+#### Commit
+
+Use the `commit` subcommand to make it easier to write commit messages.
+No need to specify the `-m` parameter or wrapping the message in quotes.
+If you forget and pass in `-m` anyway, it will ignore it.
+For example,
+
+```
+feature commit this is a sample commit message
+feature commit -m this is a sample commit message
+```
+
+generates the command `git commit -m "this is a sample commit message"`.
+
+The commit message will be prepended with the feature name.  For example,
+
+```
+my-feature-name: this is a sample commit message
 ```
 
 #### End
