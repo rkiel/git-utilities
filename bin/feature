@@ -6,5 +6,5 @@ commander = Feature::Commander.new(ARGV)
 if commander.valid?
   commander.execute
 else
-  commander.help
+  commander.usage
 end

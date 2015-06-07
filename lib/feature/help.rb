@@ -2,7 +2,7 @@ require_relative './base'
 
 module Feature
 
-  class Branch < Feature::Base
+  class Help < Feature::Base
     def valid?
       true
     end
@@ -12,7 +12,6 @@ module Feature
     end
 
     def execute
-      git_show_branches
     end
   end
 

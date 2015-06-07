@@ -7,7 +7,7 @@ module Feature
       [1,2].include? argv.size
     end
 
-    def help
+    def usage
       puts
       puts "USAGE: feature merge [branch]"
       puts

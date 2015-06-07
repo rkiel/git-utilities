@@ -6,6 +6,7 @@ require_relative './merge_to'
 require_relative './tab'
 require_relative './branch'
 require_relative './commit'
+require_relative './help'
 
 module Feature
 
@@ -21,7 +22,9 @@ module Feature
         when "merge"  then Feature::MergeTo.new(argv)
         when "tab"    then Feature::Tab.new(argv)
         when "commit" then Feature::Commit.new(argv)
-        else               Feature::Branch.new(argv)
+        when "help"   then Feature::Help.new(argv)
+        when nil      then Feature::Branch.new(argv)
+        else               Feature::Help.new(argv)
       end
     end
 
@@ -29,8 +32,8 @@ module Feature
       subcommand.valid?
     end
 
-    def help
-      subcommand.help
+    def usage
+      subcommand.usage
     end
 
     def execute
