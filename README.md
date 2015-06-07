@@ -40,9 +40,15 @@ To enable `bash` tab completion for `git` commands, add the following to `.bash_
 source ~/GitHub/rkiel/git-utilities/dotfiles/git-completion.bash
 ```
 
-To enable your `bash` prompt to display the current `git` branch, add the following to `.bash_profile`
+To enable your `bash` prompt to display repository status, add the following to `.bash_profile`
 ```
 source ~/GitHub/rkiel/git-utilities/dotfiles/git-prompt.sh
+```
+
+Here's a sample prompt that includes the current branch (i.e. `__git_ps1`)
+
+```
+export PS1='[\[\e[0;35m\]\u@\h\[\e[0m\] \[\e[1;34m\]\W\[\e[0;32m\]$(__git_ps1 " %s")\[\e[0m\]]\$ '
 ```
 
 To include the `bash` aliases and enable tab completion for the `feature` script, add the following to `.bashrc`
