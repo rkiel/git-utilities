@@ -8,6 +8,9 @@ The command-line scripts include:
 * feature - make working with feature branches easier
 * xgrep - make using `git-grep` easier
 
+The command-line scripts are written in Ruby 2.x using just the standard libraries and do not require any gems to be installed.
+For OS X users, these should just work out-of-box.
+
 The `bash` utilities come directly from the [git source contrib](https://github.com/git/git/tree/master/contrib) and include:
 
 * support for [tab completion](https://github.com/git/git/tree/master/contrib/completion/git-completion.bash)
