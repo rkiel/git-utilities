@@ -20,10 +20,7 @@ module Feature
 
       regexp = Regexp.new(pattern)
 
-      # TODO: fix this
-      cmds = Feature::Commander.new(argv).subcommands.keys.map(&:to_s).sort.select { |x| regexp.match(x) }
-
-      puts cmds.join("\n")
+      puts Feature::Commander.commands.select { |x| regexp.match(x.to_s) }.join("\n")
     end
   end
 

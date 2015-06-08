@@ -2,7 +2,7 @@ require_relative './base'
 
 module Feature
 
-  class MergeTo < Feature::Base
+  class Merge < Feature::Base
     def valid?
       [1,2].include? argv.size
     end

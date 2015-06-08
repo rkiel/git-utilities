@@ -13,10 +13,7 @@ module Feature
 
     def execute
       puts
-      # TODO: fix this
-      commander = Feature::Commander.new(argv)
-      commander.subcommands.keys.sort.each do |key|
-        cmd = commander.subcommands[key]
+      Feature::Commander.create_all(argv).each do |cmd|
         puts cmd.help
       end
       puts
