@@ -7,11 +7,8 @@ module Feature
       argv.size > 1
     end
 
-    def usage
-      puts
-      puts "USAGE: feature commit [word....]"
-      puts
-      exit
+    def help
+      "feature commit [word....]"
     end
 
     def execute

@@ -14,6 +14,16 @@ module Feature
       @argv = argv
     end
 
+    def help
+      "TBD"
+    end
+
+    def usage
+      puts
+      puts "USAGE: #{help}"
+      puts
+      exit
+    end
   end
 
 end

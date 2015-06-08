@@ -7,11 +7,8 @@ module Feature
       argv.size > 1
     end
 
-    def usage
-      puts
-      puts "USAGE: feature start feature-words"
-      puts
-      exit
+    def help
+      "feature start feature-words"
     end
 
     def execute

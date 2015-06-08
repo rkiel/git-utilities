@@ -7,8 +7,8 @@ module Feature
       true
     end
 
-    def usage
-      exit
+    def help
+      "feature branch"
     end
 
     def execute

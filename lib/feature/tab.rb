@@ -7,11 +7,8 @@ module Feature
       [1,2].include? argv.size
     end
 
-    def usage
-      puts
-      puts "USAGE: feature tab [pattern]"
-      puts
-      exit
+    def help
+      "feature tab [pattern]"
     end
 
     def execute
@@ -22,8 +19,9 @@ module Feature
       end
 
       regexp = Regexp.new(pattern)
-      cmds = Feature::Commander.tab_completion
-      cmds = cmds.select { |x| regexp.match(x) }
+
+      # TODO: fix this
+      cmds = Feature::Commander.new(argv).subcommands.keys.map(&:to_s).sort.select { |x| regexp.match(x) }
 
       puts cmds.join("\n")
     end

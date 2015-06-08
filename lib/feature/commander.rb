@@ -11,21 +11,24 @@ require_relative './help'
 module Feature
 
   class Commander
-    attr_reader :subcommand
+    attr_reader :subcommands, :subcommand
 
     def initialize (argv)
-      @subcommand = case argv[0]
-        when "start"  then Feature::Start.new(argv)
-        when "end"    then Feature::End.new(argv)
-        when "trash"  then Feature::Trash.new(argv)
-        when "rebase" then Feature::Rebase.new(argv)
-        when "merge"  then Feature::MergeTo.new(argv)
-        when "tab"    then Feature::Tab.new(argv)
-        when "commit" then Feature::Commit.new(argv)
-        when "help"   then Feature::Help.new(argv)
-        when nil      then Feature::Branch.new(argv)
-        else               Feature::Help.new(argv)
-      end
+      @subcommands = {
+        branch: Feature::Branch.new(argv),
+        commit: Feature::Commit.new(argv),
+        help:   Feature::Help.new(argv),
+        end:    Feature::End.new(argv),
+        rebase: Feature::Rebase.new(argv),
+        merge:  Feature::MergeTo.new(argv),
+        start:  Feature::Start.new(argv),
+        tab:    Feature::Tab.new(argv),
+        trash:  Feature::Trash.new(argv)
+      }
+
+      key = (argv[0] ? argv[0].to_sym : :branch)
+
+      @subcommand = (subcommands[key] ? subcommands[key] : subcommands[:help])
     end
 
     def valid?
@@ -38,10 +41,6 @@ module Feature
 
     def execute
       subcommand.execute
-    end
-
-    def self.tab_completion
-      [:start, :end, :trash, :rebase, :merge, :commit].map(&:to_s).sort
     end
 
   end

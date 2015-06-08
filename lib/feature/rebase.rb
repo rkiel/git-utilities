@@ -7,11 +7,8 @@ module Feature
       argv.size == 1
     end
 
-    def usage
-      puts
-      puts "USAGE: feature rebase"
-      puts
-      exit
+    def help
+      "feature rebase"
     end
 
     def execute
