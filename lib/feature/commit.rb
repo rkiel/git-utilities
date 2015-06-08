@@ -18,14 +18,9 @@ module Feature
       parts = parse_branch(current_branch)
 
       comment = argv.reject { |x| x == '-m' }.join(' ')
-      if comment.include? ";"
-        error "invalid character: ';'"
-      else
-        comment = "#{parts[:feature]}: #{comment}"
-        git_commit comment
-      end
+      comment = "#{parts[:feature]}: #{comment}"
 
-
+      git_commit comment
     end
   end
 
