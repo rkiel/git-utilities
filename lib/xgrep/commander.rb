@@ -15,6 +15,8 @@ module Xgrep
       options.debug = false
       options.git_grep = %w{-E}
       options.pathspec = []
+      options.include_pathspec = []
+      options.exclude_pathspec = []
       options.environment = default_environment
 
       @option_parser = OptionParser.new do |op|
@@ -32,6 +34,22 @@ module Xgrep
           options.git_grep << '-v'
         end
 
+        op.on('-p','--include-path PATHS') do |argument|
+          options.include_pathspec << argument.split(",").map {|x| "#{x}" }
+        end
+
+        op.on('-P','--exclude-path PATHS') do |argument|
+          options.exclude_pathspec << argument.split(",").map {|x| ":!#{x}" }
+        end
+
+        op.on('-t','--include-type TYPES') do |argument|
+          options.include_pathspec << argument.split(",").map {|x| ":*.#{x}" }
+        end
+
+        op.on('-T','--exclude-type TYPES') do |argument|
+          options.exclude_pathspec << argument.split(",").map {|x| ":!*.#{x}" }
+        end
+
         op.on_tail('-h','--help') do |argument|
           puts op
           exit
@@ -41,6 +59,12 @@ module Xgrep
 
       @option_parser.parse!(argv)
       options.terms = argv # must be after parse!
+      if options.exclude_pathspec.size > 0 and options.include_pathspec.size == 0
+        options.pathspec = ['.'] + options.exclude_pathspec
+      else
+        options.pathspec = options.include_pathspec + options.exclude_pathspec
+      end
+      options.pathspec = options.pathspec.flatten
     end
 
     def valid?
