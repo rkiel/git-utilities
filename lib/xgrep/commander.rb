@@ -22,18 +22,6 @@ module Xgrep
       @option_parser = OptionParser.new do |op|
         op.banner = "Usage: xgrep options term(s)"
 
-        op.on('-a','--asset') do |argument|
-          options.pathspec << :asset
-        end
-
-        op.on('-b','--db') do |argument|
-          options.pathspec << :db
-        end
-
-        op.on('-c','--controller') do |argument|
-          options.pathspec << :controller
-        end
-
         op.on('-d','--[no-]debug') do |argument|
           options.debug = argument
         end
@@ -42,24 +30,8 @@ module Xgrep
           options.git_grep << "-L"
         end
 
-        op.on('-g','--config') do |argument|
-          options.pathspec << :config
-        end
-
         op.on('-i','--invert') do |argument|
           options.git_grep << '-v'
-        end
-
-        op.on('-l','--lib') do |argument|
-          options.pathspec << :lib
-        end
-
-        op.on('-m','--model') do |argument|
-          options.pathspec << :model
-        end
-
-        op.on('-o','--core') do |argument|
-          options.pathspec << :core
         end
 
         op.on_tail('-h','--help') do |argument|
@@ -123,10 +95,6 @@ module Xgrep
     def default_environment
       if File.exist?('./.xgrep')
         Xgrep::CustomEnv.new
-      elsif File.exist?("Gemfile")
-        Xgrep::RailsEnv.new
-      elsif File.exist?("package.json")
-        Xgrep::NodeEnv.new
       else
         Xgrep::SimpleEnv.new
       end
