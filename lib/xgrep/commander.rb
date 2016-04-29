@@ -2,8 +2,6 @@ require 'ostruct'
 require 'optparse'
 
 require_relative './custom_env'
-require_relative './node_env'
-require_relative './rails_env'
 require_relative './simple_env'
 
 module Xgrep
