@@ -59,6 +59,7 @@ module Xgrep
 
       @option_parser.parse!(argv)
       options.terms = argv # must be after parse!
+
       if options.exclude_pathspec.size > 0 and options.include_pathspec.size == 0
         options.pathspec = ['.'] + options.exclude_pathspec
       else
@@ -115,11 +116,7 @@ module Xgrep
     private
 
     def default_environment
-      if File.exist?('./.xgrep')
-        Xgrep::CustomEnv.new
-      else
-        Xgrep::SimpleEnv.new
-      end
+      Xgrep::SimpleEnv.new
     end
   end
 

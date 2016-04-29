@@ -2,7 +2,14 @@
 
 require_relative '../lib/xgrep/commander'
 
-commander = Xgrep::Commander.new(ARGV)
+if File.exist? './.xgrep'
+  project_argv = File.read('./.xgrep').split(/\s/).reject { |x| x.strip == "" }
+  argv = project_argv + ARGV
+else
+  argv = ARGV
+end
+
+commander = Xgrep::Commander.new(argv)
 if commander.valid?
   commander.execute
 else
