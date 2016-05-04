@@ -15,7 +15,7 @@ module Feature
       subcommand, *feature_words = *argv
 
       feature_name = feature_words.join('-')
-      feature_branch = "#{ENV['USER']}-#{current_branch}-#{feature_name}"
+      feature_branch = "#{ENV['FEATURE_USER']||ENV['USER']}-#{current_branch}-#{feature_name}"
 
       error "invalid base branch: #{current_branch}"  unless standard_branches.include? current_branch
       error "invalid feature branch: #{feature_name}" if     standard_branches.include? feature_name
