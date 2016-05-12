@@ -33,13 +33,13 @@ export GIT_UTILITIES_BIN="~/GitHub/rkiel/git-utilities/bin"
 export PATH=${GIT_UTILITIES_BIN}:$PATH
 ```
 
-To enable `bash` tab completion for `git` commands, add the following to `.bash_profile` (OS X) `.bashrc` (Linux)
+To enable `bash` tab completion for `git` commands, add the following to `.bash_profile` (OS X) or `.bashrc` (Linux)
 
 ```
 source ~/GitHub/rkiel/git-utilities/dotfiles/git-completion.bash
 ```
 
-To enable your `bash` prompt to display repository status, add the following to `.bash_profile` (OS X) `.bashrc` (Linux).
+To enable your `bash` prompt to display repository status, add the following to `.bash_profile` (OS X) or `.bashrc` (Linux).
 ```
 source ~/GitHub/rkiel/git-utilities/dotfiles/git-prompt.sh
 ```
