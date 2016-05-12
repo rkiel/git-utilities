@@ -50,7 +50,7 @@ Here's a sample prompt that includes the current branch (i.e. `$(__git_ps1 " %s"
 export PS1='[\[\e[0;35m\]\u@\h\[\e[0m\] \[\e[1;34m\]\W\[\e[0;32m\]$(__git_ps1 " %s")\[\e[0m\]]\$ '
 ```
 
-To include the `bash` aliases and enable tab completion for the `feature` script, add the following to `.bashrc` (OS X) `.bashrc` (Linux)
+To include the `bash` aliases and enable tab completion for the `feature` script, add the following to `.bashrc`.
 
 ```
 source ~/GitHub/rkiel/git-utilities/dotfiles/bashrc
