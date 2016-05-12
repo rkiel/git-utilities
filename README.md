@@ -56,7 +56,7 @@ To include the `bash` aliases and enable tab completion for the `feature` script
 source ~/GitHub/rkiel/git-utilities/dotfiles/bashrc
 ```
 
-If your user id (i.e. `env|grep USER`) is generic, such as `ec2-user` or `centos` or `ubuntu`, set a `FEATURE_USER` environment variable in your `.bash_profile`.
+If your user id (i.e. `env|grep USER`) is generic, such as `ec2-user` or `centos` or `ubuntu`, set a `FEATURE_USER` environment variable in your `.bash_profile`.  Either your `USER` or `FEATURE_USER` should be unique relative to all the users who will be creating feature branches in your git repository.
 
 ```
 export FEATURE_USER=rkiel
