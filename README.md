@@ -22,7 +22,7 @@ Clone the repository
 ```
 mkdir -p ~/GitHub/rkiel
 cd ~/GitHub/rkiel
-git clone git@github.com:rkiel/git-utilities.git
+git clone https://github.com/rkiel/git-utilities.git
 ```
 
 To add the scripts to your path, add the following to `.bash_profile`
