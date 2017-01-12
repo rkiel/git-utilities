@@ -63,8 +63,12 @@ module Shared
       run_cmd "git checkout -b #{branch}"
     end
 
-    def git_commit (message)
-      run_cmd "git commit -m \"#{message}\""
+    def git_commit (message, force = false)
+      message = force ? message+' (no-verify)' : message
+      message = '"' + message + '"'
+      verify = force ? '--no-verify' : ''
+      cmd = ['git','commit','-m', message, verify].join(' ');
+      run_cmd cmd
     end
   end
 
