@@ -14,12 +14,13 @@ module Feature
     def execute
       parts = parse_branch(current_branch)
 
-      comment = argv.reject { |x| x == '-m' }
+      force = argv.include? '-f'
+      comment = argv.reject { |x| ['-m','-f'].include? x }
       comment.shift if comment[0] == 'commit'
       comment = comment.join(' ')
       comment = "#{parts[:feature]}: #{comment}"
 
-      git_commit comment
+      git_commit comment, force
     end
   end
 
