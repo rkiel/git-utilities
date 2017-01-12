@@ -135,6 +135,17 @@ The commit message will be prepended with the feature name.  For example,
 ```
 my-feature-name: this is a sample commit message
 ```
+If you need to by-pass any git pre-commit hooks, you can use the `-f` option to force the commit.
+This will invoke the commit with the `--no-verify` option.
+It will also add `(no-verify)` to the end of your commit message. For example,
+
+```
+feature commit -f this is a sample commit message
+feature commit -m this is a sample commit message -f
+```
+
+generates the command `git commit -m "this is a sample commit message (no-verify)" --no-verify`.
+
 
 #### End
 
