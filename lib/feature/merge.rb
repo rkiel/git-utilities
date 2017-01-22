@@ -28,6 +28,7 @@ module Feature
       git_pull     merge_to_branch
       git_merge    feature_branch
       git_push     merge_to_branch
+      git_push_tags
       git_checkout feature_branch
     end
   end
