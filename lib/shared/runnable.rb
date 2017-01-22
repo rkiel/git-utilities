@@ -55,6 +55,10 @@ module Shared
       run_cmd "git push origin #{branch}"
     end
 
+    def git_push_tags
+      run_cmd "git push origin --tags"
+    end
+
     def git_rebase (branch)
       run_cmd "git rebase #{branch}"
     end
