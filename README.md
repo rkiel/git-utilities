@@ -164,9 +164,11 @@ Use the `trash` subcommand to forcibly close out the feature.
 The standard branch will be checkout and the local feature branch will be forcibly deleted.
 Make sure that your changes have been merged because they will be lost.
 If there is a backup copy on `origin`, it will also be removed.
+You must supply the name of the local feature branch on the command line as
+a confirmation.
 
 ```
-feature trash
+feature trash local-branch-confirmation
 ```
 
 ## Xgrep utility

@@ -8,7 +8,7 @@ module Feature
     end
 
     def help
-      "feature trash confirmation-branch"
+      "feature trash local-branch-confirmation"
     end
 
     def execute
