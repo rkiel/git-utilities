@@ -15,10 +15,13 @@ alias log="git log --graph --date=short --pretty=format:'%C(yellow)%h %C(white)%
 alias stash="git stash save"
 alias status="git status; echo; echo STASH:; git stash list; echo"
 
-alias d='clear; git diff -w'
 alias a='git add'
-alias s='git status; echo; echo STASH:; git stash list; echo'
 alias c='feature commit'
+alias d='clear; git diff -w'
+alias l="git log --graph --date=short --pretty=format:'%C(yellow)%h %C(white)%ad %C(black)[%C(green)%an%C(black)] %C(blue)%s%C(yellow)%d'"
+alias m='feature merge'
+alias r='feature rebase'
+alias s='git status; echo; echo STASH:; git stash list; echo'
 
 alias sfind='find . -not \( -type d -name .git -prune \) -not \( -type d -name node_modes -prune \) -and \( -type f \)|sort -f'
 alias sgrep='find . -not \( -type d -name .git -prune \) -not \( -type d -name node_modes -prune \) -and \( -type f \)|sort -f|xargs grep --color=always'
