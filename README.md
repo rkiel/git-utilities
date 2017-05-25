@@ -1,7 +1,5 @@
 ## Introduction
 
-This is another test of feature.
-
 This is a collection of simple command-line scripts, bash aliases, and bash utilities that make using `git` even easier.
 
 The command-line scripts include:
