@@ -17,6 +17,7 @@ alias stash="git stash save"
 
 alias a='git add'
 alias c='feature commit'
+alias co='git checkout'
 alias d='clear; git diff -w'
 alias l="git log --graph --date=short --pretty=format:'%C(yellow)%h %C(white)%ad %C(black)[%C(green)%an%C(black)] %C(blue)%s%C(yellow)%d'"
 alias m='feature merge'
