@@ -20,7 +20,7 @@ module Shared
       user     = parts.shift
       standard = parts.shift
       error "invalid user: #{user}" unless [ENV['FEATURE_USER'],ENV['USER']].include? user
-      error "invalid branch: #{standard}" unless standard_branches.include? standard
+      error "invalid branch: #{standard}" unless standard_branches.include? standard or standard =~ /\d+\.\d+\.\d+/
       feature  =  parts.join('-')
       { user: user, standard: standard, feature: feature }
     end

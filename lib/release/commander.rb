@@ -6,7 +6,8 @@ module Release
 
     COMMANDS = [
       :help,
-      :init
+      :init,
+      :patch
     ].sort
 
     DEFAULT = :help

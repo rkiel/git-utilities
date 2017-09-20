@@ -44,7 +44,7 @@ module Shared
     end
 
     def git_local_list_tags
-      `git tag -l 'v*'`.strip.split(/\s+/)
+      `git tag -l 'v*'`.strip.split(/\s+/).sort
     end
 
     def git_prune
@@ -71,8 +71,8 @@ module Shared
       run_cmd "git rebase #{branch}"
     end
 
-    def git_local_branch_create (branch)
-      run_cmd "git checkout -b #{branch}"
+    def git_local_branch_create (branch, commit='')
+      run_cmd "git checkout -b #{branch} #{commit}"
     end
 
     def git_commit (message, force = false)

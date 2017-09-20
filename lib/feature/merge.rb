@@ -22,7 +22,7 @@ module Feature
 
       feature_branch  = current_branch
 
-      error "invalid branch: #{merge_to_branch}" unless standard_branches.include? merge_to_branch
+      error "invalid branch: #{merge_to_branch}" unless standard_branches.include? merge_to_branch or merge_to_branch =~ /\d+\.\d+\.\d+/
 
       git_checkout merge_to_branch
       git_pull     merge_to_branch
