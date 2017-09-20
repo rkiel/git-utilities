@@ -10,7 +10,7 @@ module Shared
     end
 
     def standard_branches
-      ['master','develop','integration']
+      ['master']
     end
 
     def parse_branch (branch)

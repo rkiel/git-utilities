@@ -39,6 +39,14 @@ module Shared
       run_cmd "git branch -D #{branch}"
     end
 
+    def git_local_tag ( tag )
+      run_cmd "git tag -a 'v#{tag}' -m 'v#{tag}'"
+    end
+
+    def git_local_list_tags
+      `git tag -l 'v*'`.strip.split(/\s+/)
+    end
+
     def git_prune
       run_cmd "git remote prune origin"
     end
