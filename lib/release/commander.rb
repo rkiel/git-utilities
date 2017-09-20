@@ -5,6 +5,7 @@ module Release
   class Commander
 
     COMMANDS = [
+      :finish,
       :help,
       :init,
       :major,
