@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/release/commander'
+
+commander = Release::Commander.new(ARGV)
+if commander.valid?
+  commander.execute
+else
+  commander.usage
+end
