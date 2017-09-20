@@ -9,7 +9,8 @@ module Release
       :init,
       :major,
       :minor,
-      :patch
+      :patch,
+      :trash
     ].sort
 
     DEFAULT = :help
