@@ -14,13 +14,13 @@ module Release
     def execute
       subcommand, version, *extras = *argv
 
-      error "invalid version: #{version}"  unless version =~ /\d+\.\d+\.\d+/
-      error "existing version: #{git_local_list_tags.join(' ')}" if git_local_list_tags.include? "v#{version}"
-      error "invalid base branch: #{current_branch}"  unless standard_branches.include? current_branch
+      validate_version_format version
+      validate_version_is_new version
+      validate_current_branch_master
 
       git_pull current_branch
 
-#      git_local_tag version
+      git_local_tag version
 
       git_push_tags
 
