@@ -62,3 +62,8 @@ If your user id (i.e. `env|grep USER`) is generic, such as `ec2-user` or `centos
 ```
 export FEATURE_USER=rkiel
 ```
+## Documention
+
+* [See feature](FEATURE.md)
+* [See release](RELEASE.md)
+* [See xgrep](XGREP.md)
