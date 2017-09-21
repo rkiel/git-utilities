@@ -15,10 +15,11 @@ module Release
       subcommand, version, *extras = *argv
 
       validate_version_format version
-      validate_version_is_new version
+      
       validate_current_branch_master
-
       git_pull current_branch
+
+      validate_version_is_new version
 
       git_local_tag version
 
