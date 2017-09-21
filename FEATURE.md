@@ -79,12 +79,6 @@ Use the `merge` subcommand to merge your feature branch changes to the standard 
 feature merge
 ```
 
-You can also override the default standard branch by specifying another branch.
-
-```
-feature merge integration
-```
-
 #### End
 
 Use the `end` subcommand to safely close out the feature.

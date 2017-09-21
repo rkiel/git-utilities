@@ -4,11 +4,11 @@ module Feature
 
   class Merge < Feature::Base
     def valid?
-      [1,2].include? argv.size
+      [1].include? argv.size
     end
 
     def help
-      "feature merge [branch]"
+      "feature merge"
     end
 
     def execute
