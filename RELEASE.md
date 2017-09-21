@@ -1,4 +1,6 @@
-## Release utility [<<back](README.md)
+[<<back](README.md)
+
+## Release utility
 
 ### Usage
 

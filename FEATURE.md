@@ -1,4 +1,6 @@
-## Feature utility [<<back](README.md)
+[<<back](README.md)
+
+## Feature utility
 
 ### Usage
 
