@@ -14,7 +14,7 @@ module Release
     def execute
       release_branch  = current_branch
 
-      error "invalid release branch: #{release_branch}" unless release_branch =~ /\d+\.\d+\.\d+/
+      validate_current_branch_is_release
 
       git_pull release_branch
 
