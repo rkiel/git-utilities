@@ -20,9 +20,9 @@ module Release
 
       release_branch  = current_branch
 
-      error "missing confirmation of branch: #{release_branch}" if confirmation_branch == ''
-      error "confirmation branch does not match current branch: #{confirmation_branch} vs #{release_branch}" if release_branch != confirmation_branch
-      error "invalid release branch: #{release_branch}" unless current_branch =~ /\d+\.\d+\.\d+/
+      error "Missing confirmation of branch: #{release_branch}" if confirmation_branch == ''
+      error "Confirmation branch does not match current branch: #{confirmation_branch} vs #{release_branch}" if release_branch != confirmation_branch
+      validate_current_branch_is_release
 
       git_checkout 'master'
 

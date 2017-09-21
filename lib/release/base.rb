@@ -39,6 +39,10 @@ module Release
         error "Version does not exist: #{git_local_list_tags.join(' ')}" unless git_local_list_tags.include? "v#{version}"
       end
 
+      def validate_current_branch_is_release
+        error "Invalid release branch: #{current_branch}" unless current_branch =~ /\d+\.\d+\.\d+/
+      end
+
       def validate_current_branch_master
         error "Invalid starting branch: #{current_branch}.  Try switching to #{standard_branches.join(' ')}."  unless standard_branches.include? current_branch
       end
