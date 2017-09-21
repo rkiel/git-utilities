@@ -39,4 +39,14 @@ function get_feature_commands()
   fi
 }
 
+function get_release_commands()
+{
+  if [ -z $2 ] ; then
+    COMPREPLY=(`release tab`)
+  else
+    COMPREPLY=(`release tab $2`)
+  fi
+}
+
 complete -F get_feature_commands feature
+complete -F get_release_commands release

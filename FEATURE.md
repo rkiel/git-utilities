@@ -4,17 +4,17 @@
 
 ### Usage
 
-This utility is built around some standard branch names: `master`, `develop`, and `integration`.
+This utility is built around the standard branch `master` and branches for releases that follow the format of MAJOR.MINOR.PATCH.
 
 Feature branches have specific format: USER-BASE-FEATURE.
 
-* USER is the username as specificied by the USER environment variable
-* BASE is the standard branch to base the feature branch on
+* USER is the username as specified by the USER environment variable
+* BASE is the standard branch or release branch to base the feature branch on
 * FEATURE is the name of the feature
 
 #### Start
 
-To start a new feature, go to one of the standard branches.
+To start a new feature, go to the standard branch or a release branch.
 
 ```
 git checkout master
@@ -27,32 +27,6 @@ feature start my new feature
 ```
 
 For example, a new branch will be created called `rkiel-master-my-new-feature`
-
-#### Rebase
-
-Use the `rebase` subcommand to pull down any changes from the standard branch and then rebase with your feature branch changes.
-In addition, a backup copy of your feature changes will be pushed out to `origin`.
-This backup should not be used to collaborate with others.  It is just a personal backup and will be deleted and recreated with each `rebase`.
-
-```
-feature rebase
-```
-
-For example, `rkiel-master-my-new-feature` will be pushed out to `origin`.
-
-#### Merge
-
-Use the `merge` subcommand to merge your feature branch changes to the standard branch.
-
-```
-feature merge
-```
-
-You can also override the default standard branch by specifying another branch.
-
-```
-feature merge integration
-```
 
 #### Commit
 
@@ -85,6 +59,32 @@ feature commit -m this is a sample commit message -f
 generates the command `git commit -m "this is a sample commit message (no-verify)" --no-verify`.
 
 
+#### Rebase
+
+Use the `rebase` subcommand to pull down any changes from the standard branch and then rebase with your feature branch changes.
+In addition, a backup copy of your feature changes will be pushed out to `origin`.
+This backup should not be used to collaborate with others.  It is just a personal backup and will be deleted and recreated with each `rebase`.
+
+```
+feature rebase
+```
+
+For example, `rkiel-master-my-new-feature` will be pushed out to `origin`.
+
+#### Merge
+
+Use the `merge` subcommand to merge your feature branch changes to the standard branch.
+
+```
+feature merge
+```
+
+You can also override the default standard branch by specifying another branch.
+
+```
+feature merge integration
+```
+
 #### End
 
 Use the `end` subcommand to safely close out the feature.
@@ -108,7 +108,3 @@ a confirmation.
 ```
 feature trash local-branch-confirmation
 ```
-
-## Xgrep utility
-
-This utility makes it easier to use git-grep.

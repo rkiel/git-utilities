@@ -11,6 +11,7 @@ module Release
       :major,
       :minor,
       :patch,
+      :tab,
       :trash
     ].sort
 
