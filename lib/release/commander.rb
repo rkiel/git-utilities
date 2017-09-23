@@ -12,7 +12,8 @@ module Release
       :minor,
       :patch,
       :tab,
-      :trash
+      :trash,
+      :versions
     ].sort
 
     DEFAULT = :help

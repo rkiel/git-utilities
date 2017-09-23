@@ -13,6 +13,30 @@ module Shared
       ['master']
     end
 
+    def version_pattern
+      /\d+\.\d+\.\d+/
+    end
+
+    def release_branch_pattern
+      /rc\d+\.\d+\.\d+/
+    end
+
+    def release_branch_from_version (version)
+      "rc#{version}"
+    end
+
+    def release_tag_prefix
+      'v'
+    end
+    
+    def release_tag_from_version (version)
+      "v#{version}"
+    end
+
+    def version_from_release_branch (branch)
+      branch.sub(/^rc/, '')
+    end
+
     def parse_branch (branch)
       parts = branch.split('-')
       error "invalid branch: user-standard-feature" unless parts.size > 2
@@ -20,7 +44,7 @@ module Shared
       user     = parts.shift
       standard = parts.shift
       error "invalid user: #{user}" unless [ENV['FEATURE_USER'],ENV['USER']].include? user
-      error "invalid branch: #{standard}" unless standard_branches.include? standard or standard =~ /\d+\.\d+\.\d+/
+      error "invalid branch: #{standard}" unless standard_branches.include? standard or standard =~ release_branch_pattern
       feature  =  parts.join('-')
       { user: user, standard: standard, feature: feature }
     end

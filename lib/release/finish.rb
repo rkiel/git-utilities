@@ -18,7 +18,7 @@ module Release
 
       git_pull release_branch
 
-      git_local_tag release_branch
+      git_local_tag release_tag_from_version(version_from_release_branch(release_branch))
 
       git_push release_branch
 

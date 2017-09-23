@@ -21,12 +21,13 @@ module Release
 
       validate_version_exists version
 
-      new_branch = increment_version(version)
-      validate_release_branch_does_not_exist(new_branch)
+      new_version = increment_version(version)
+      validate_version_does_not_exist new_version
+      validate_release_branch_does_not_exist(release_branch_from_version(new_version))
 
-      git_local_branch_create new_branch, "v#{version}"
+      git_local_branch_create release_branch_from_version(new_version), release_tag_from_version(version)
 
-      git_push new_branch
+      git_push release_branch_from_version(new_version)
     end
 
     private

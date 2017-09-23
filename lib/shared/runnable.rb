@@ -40,11 +40,11 @@ module Shared
     end
 
     def git_local_tag ( tag )
-      run_cmd "git tag -a 'v#{tag}' -m 'v#{tag}'"
+      run_cmd "git tag -a '#{tag}' -m '#{tag}'"
     end
 
-    def git_local_list_tags
-      `git tag -l 'v*'`.strip.split(/\s+/).sort
+    def git_local_list_tags (release_tag_prefix)
+      `git tag -l '#{release_tag_prefix}*'`.strip.split(/\s+/).sort
     end
 
     def git_prune

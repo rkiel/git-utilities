@@ -27,20 +27,28 @@ module Release
 
     private
 
+      def show_existing_tags
+        git_local_list_tags(release_tag_prefix).join("\n")
+      end
+
       def validate_version_format (version)
-        error "Invalid version number format. Try using MAJOR.MINOR.PATCH."  unless version =~ /\d+\.\d+\.\d+/
+        error "Invalid version number format. Try using MAJOR.MINOR.PATCH."  unless version =~ version_pattern
       end
 
       def validate_version_is_new (version)
-        error "Version already exists: #{git_local_list_tags.join(' ')}" if git_local_list_tags.include? "v#{version}"
+        error "Version already exists: \n#{show_existing_tags}" if git_local_list_tags(release_tag_prefix).include? release_tag_from_version(version)
       end
 
       def validate_version_exists (version)
-        error "Version does not exist: #{git_local_list_tags.join(' ')}" unless git_local_list_tags.include? "v#{version}"
+        error "Version does not exist: \n#{show_existing_tags}" unless git_local_list_tags(release_tag_prefix).include? release_tag_from_version(version)
+      end
+
+      def validate_version_does_not_exist (version)
+        error "Version already exists: \n#{show_existing_tags}" if git_local_list_tags(release_tag_prefix).include? release_tag_from_version(version)
       end
 
       def validate_current_branch_is_release
-        error "Invalid release branch: #{current_branch}" unless current_branch =~ /\d+\.\d+\.\d+/
+        error "Invalid release branch: #{current_branch}" unless current_branch =~ release_branch_pattern
       end
 
       def validate_current_branch_master
@@ -50,6 +58,8 @@ module Release
       def validate_release_branch_does_not_exist (branch)
         error "Version branch already exists: #{branch}" if remote_branch(branch) != ""
       end
+
+
   end
 
 end
