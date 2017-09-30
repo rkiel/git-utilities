@@ -8,6 +8,8 @@ module Release
       :create,
       :finish,
       :help,
+      :join,
+      :leave,
       :list,
       :start,
       :tab,

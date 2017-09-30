@@ -83,6 +83,10 @@ module Shared
       run_cmd "git checkout -b #{branch} #{commit}"
     end
 
+    def git_checkout_track (branch)
+      run_cmd "git checkout --track origin/#{branch}"
+    end
+
     def git_commit (message, force = false)
       message = force ? message+' (no-verify)' : message
       message = '"' + message + '"'
