@@ -42,8 +42,7 @@ module Release
       validate_release_branch_does_not_exist(release_branch_from_version(new_version))
 
       git_local_branch_create release_branch_from_version(new_version), release_tag_from_version(version)
-
-      git_push release_branch_from_version(new_version)
+      git_push_upstream(release_branch_from_version(new_version))
     end
 
     private

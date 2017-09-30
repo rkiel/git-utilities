@@ -71,6 +71,10 @@ module Shared
       run_cmd "git push origin --tags"
     end
 
+    def git_push_upstream (branch)
+      run_cmd "git push --set-upstream origin #{branch}"
+    end
+
     def git_rebase (branch)
       run_cmd "git rebase #{branch}"
     end
