@@ -31,6 +31,10 @@ module Release
         git_local_list_tags(release_tag_prefix).join("\n")
       end
 
+      def show_existing_branches
+        git_local_list_branches(release_branch_prefix).join("\n")
+      end
+
       def validate_version_format (version)
         error "Invalid version number format. Try using MAJOR.MINOR.PATCH."  unless version =~ version_pattern
       end

@@ -47,6 +47,10 @@ module Shared
       `git tag -l '#{release_tag_prefix}*'`.strip.split(/\s+/).sort
     end
 
+    def git_local_list_branches (release_branch_prefix)
+      `git branch -a|grep 'remotes/origin/rc'`.strip.split(/\s+/).map {|x| x.sub('remotes/origin/','')}.sort
+    end
+
     def git_prune
       run_cmd "git remote prune origin"
     end

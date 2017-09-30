@@ -2,13 +2,13 @@ require_relative './base'
 
 module Release
 
-  class Init < Release::Base
+  class Create < Release::Base
     def valid?
-      argv.size > 1
+      argv.size == 2
     end
 
     def help
-      "release init version"
+      "release create version"
     end
 
     def execute

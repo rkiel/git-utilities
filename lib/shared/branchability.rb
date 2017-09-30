@@ -28,7 +28,11 @@ module Shared
     def release_tag_prefix
       'v'
     end
-    
+
+    def release_branch_prefix
+      'rc'
+    end
+
     def release_tag_from_version (version)
       "v#{version}"
     end

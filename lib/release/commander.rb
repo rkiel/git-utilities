@@ -5,15 +5,15 @@ module Release
   class Commander
 
     COMMANDS = [
+      :create,
       :finish,
       :help,
-      :init,
+      :list,
       :major,
       :minor,
       :patch,
       :tab,
-      :trash,
-      :versions
+      :trash
     ].sort
 
     DEFAULT = :help
