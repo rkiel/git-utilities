@@ -9,9 +9,7 @@ module Release
       :finish,
       :help,
       :list,
-      :major,
-      :minor,
-      :patch,
+      :start,
       :tab,
       :trash
     ].sort

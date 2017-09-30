@@ -2,17 +2,22 @@ require_relative './base'
 
 module Release
 
-  class NewVersion < Release::Base
+  class Start < Release::Base
     def valid?
-      argv.size > 1
+      argv.size == 3 or argv.size == 4
     end
 
     def help
-      "release #{subcommand_name} version"
+      "release start (major|minor|patch) [from] version"
     end
 
     def execute
-      subcommand, version, *extras = *argv
+      case argv.size
+      when 3
+        subcommand, level, version = *argv
+      when 4
+        subcommand, level, verb, version = *argv
+      end
 
       validate_version_format version
 
@@ -21,7 +26,18 @@ module Release
 
       validate_version_exists version
 
-      new_version = increment_version(version)
+      numbers = version.split('.').map { |x| x.to_i }
+      case level
+      when 'major'
+        new_version = "#{numbers[0]+1}.0.0"
+      when 'minor'
+        new_version = "#{numbers[0]}.#{numbers[1]+1}.0"
+      when 'patch'
+        new_version = "#{numbers[0]}.#{numbers[1]}.#{numbers[2]+1}"
+      else
+        error "unknow release level: #{level}"
+      end
+
       validate_version_does_not_exist new_version
       validate_release_branch_does_not_exist(release_branch_from_version(new_version))
 
