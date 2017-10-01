@@ -33,6 +33,7 @@ release create version
 You must be on the `master` branch.  The latest code will be pulled from `master` and a tag created for the last commit.  For example, the following command will create a `v1.0.0` tag.
 
 ```bash
+git checkout master
 release create 1.0.0
 ```
 
