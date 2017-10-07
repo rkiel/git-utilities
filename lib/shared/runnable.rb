@@ -56,9 +56,15 @@ module Shared
       run_cmd "git merge origin/#{branch}"
     end
 
+    def is_remote_branch (branch)
+      `git branch -r|grep origin|grep -v 'HEAD'|grep #{branch}`.strip != ""
+    end
+
     def git_fetch_and_merge (branch)
       git_fetch
-      git_remote_merge branch
+      if is_remote_branch(branch)
+        git_remote_merge branch
+      end
     end
 
     def git_remote_branch_delete ( branch )
