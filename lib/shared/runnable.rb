@@ -1,3 +1,5 @@
+require 'json'
+
 module Shared
 
   module Runnable
@@ -17,6 +19,25 @@ module Shared
       puts "ERROR: #{msg}"
       puts
       exit
+    end
+
+    def update_package_json (version)
+      if File.exist? 'package.json'
+        package_json = File.read('package.json')
+        json = JSON.parse(package_json)
+        json['version'] = version
+        File.write('package.json', JSON.pretty_generate(json))
+        git_add 'package.json'
+        git_commit version
+      end
+    end
+
+    def git_add (path)
+      run_cmd "git add #{path}"
+    end
+
+    def git_commit (msg)
+      run_cmd "git commit -m '#{msg}'"
     end
 
     def git_show_branches

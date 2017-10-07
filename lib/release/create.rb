@@ -21,8 +21,11 @@ module Release
 
       validate_version_is_new version
 
+      update_package_json version
+
       git_local_tag release_tag_from_version(version)
 
+      git_push current_branch
       git_push_tags
 
     end
