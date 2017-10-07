@@ -15,7 +15,7 @@ module Release
       subcommand, version = *argv
 
       validate_current_branch_master
-      git_pull current_branch
+      git_fetch_and_merge current_branch
 
       git_checkout_track release_branch_from_version(version)
     end

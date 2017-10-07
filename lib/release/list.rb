@@ -13,8 +13,8 @@ module Release
 
     def execute
       validate_current_branch_master
-      git_pull current_branch
-      
+      git_fetch_and_merge current_branch
+
       puts
       puts show_existing_tags
       puts

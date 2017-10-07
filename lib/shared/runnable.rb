@@ -48,6 +48,19 @@ module Shared
       run_cmd "git checkout #{branch}"
     end
 
+    def git_fetch
+      run_cmd "git fetch origin && git fetch origin --tags"
+    end
+
+    def git_remote_merge ( branch )
+      run_cmd "git merge origin/#{branch}"
+    end
+
+    def git_fetch_and_merge (branch)
+      git_fetch
+      git_remote_merge branch
+    end
+
     def git_remote_branch_delete ( branch )
       run_cmd "git push origin :#{branch}"
     end

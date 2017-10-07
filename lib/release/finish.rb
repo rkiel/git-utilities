@@ -16,7 +16,7 @@ module Release
 
       validate_current_branch_is_release
 
-      git_pull release_branch
+      git_fetch_and_merge release_branch
 
       update_package_json version_from_release_branch(release_branch)
 
@@ -25,7 +25,8 @@ module Release
       git_push release_branch
       git_push_tags
 
-      git_checkout "master"
+      git_checkout 'master'
+      git_fetch_and_merge current_branch
 
       git_local_branch_delete release_branch
 
