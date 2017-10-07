@@ -84,6 +84,10 @@ module Shared
       run_cmd "git merge #{branch}"
     end
 
+    def git_merge_message (branch, message)
+      run_cmd "git merge -m '#{message}' #{branch}"
+    end
+
     def git_push (branch)
       run_cmd "git push origin #{branch}"
     end

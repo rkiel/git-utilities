@@ -27,6 +27,8 @@ module Release
 
       git_checkout "master"
 
+      #git_merge_message release_branch, "merge #{version_from_release_branch(release_branch)}"
+
       git_local_branch_delete release_branch
 
       if remote_branch(release_branch) != ""
