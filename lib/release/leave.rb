@@ -4,14 +4,24 @@ module Release
 
   class Leave < Release::Base
     def valid?
-      argv.size == 1
+      argv.size == 2
     end
 
     def help
-      "release leave"
+      "release leave local-branch-confirmation"
     end
 
     def execute
+      if argv.size == 2
+        confirmation_branch = argv[1]
+      else
+        confirmation_branch = ''
+      end
+
+      release_branch  = current_branch
+      
+      error "Missing confirmation of branch: #{release_branch}" if confirmation_branch == ''
+      error "Confirmation branch does not match current branch: #{confirmation_branch} vs #{release_branch}" if release_branch != confirmation_branch
       validate_current_branch_is_release
 
       git_checkout 'master'
