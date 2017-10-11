@@ -18,15 +18,13 @@ module Release
 
       git_fetch_and_merge release_branch
 
-      update_package_json version_from_release_branch(release_branch)
-
       git_local_tag release_tag_from_version(version_from_release_branch(release_branch))
 
       git_push release_branch
       git_push_tags
 
-      git_checkout 'master'
-      git_fetch_and_merge current_branch
+      git_checkout :master
+      git_fetch_and_merge :master
 
       git_local_branch_delete release_branch
 

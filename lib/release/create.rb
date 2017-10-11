@@ -21,7 +21,7 @@ module Release
 
       validate_version_is_new version
 
-      update_package_json version
+      update_package_json version, version
 
       git_local_tag release_tag_from_version(version)
 

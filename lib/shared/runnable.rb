@@ -21,14 +21,14 @@ module Shared
       exit
     end
 
-    def update_package_json (version)
+    def update_package_json (version, message)
       if File.exist? 'package.json'
         package_json = File.read('package.json')
         json = JSON.parse(package_json)
         json['version'] = version
         File.write('package.json', JSON.pretty_generate(json))
         git_add 'package.json'
-        git_commit version
+        git_commit message
       end
     end
 
@@ -49,11 +49,11 @@ module Shared
     end
 
     def git_fetch
-      run_cmd "git fetch origin && git fetch origin --tags"
+      run_cmd "git fetch origin -p && git fetch origin --tags"
     end
 
     def git_remote_merge ( branch )
-      run_cmd "git merge origin/#{branch}"
+      run_cmd "git merge origin/#{branch} -m 'merged by release'"
     end
 
     def is_remote_branch (branch)

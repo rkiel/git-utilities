@@ -43,6 +43,8 @@ module Release
 
       git_local_branch_create release_branch_from_version(new_version), release_tag_from_version(version)
       git_push_upstream(release_branch_from_version(new_version))
+
+      update_package_json new_version, "#{new_version} started"
     end
 
     private
