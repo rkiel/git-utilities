@@ -2,6 +2,8 @@ require 'ostruct'
 require 'optparse'
 require 'json'
 
+require_relative './prompt'
+
 module Setup
 
   class Commander
@@ -51,9 +53,11 @@ module Setup
         f.puts 'source ~/GitHub/rkiel/git-utilities/dotfiles/git-completion.bash'
         f.puts 'source ~/GitHub/rkiel/git-utilities/dotfiles/git-prompt.sh'
         f.puts "export FEATURE_USER=#{options.user}" if options.user
+        f.puts "export PS1='#{Setup::Prompt.new.generate(options)}'"
         f.puts '#############################################################'
         f.puts
       end
+
 
       File.open("#{ENV['HOME']}/.bashrc", "a") do |f|
         f.puts
