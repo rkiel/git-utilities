@@ -7,9 +7,7 @@ echo 'source ~/GitHub/rkiel/git-utilities/dotfiles/git-completion.bash' >> ~/.ba
 
 echo 'source ~/GitHub/rkiel/git-utilities/dotfiles/git-prompt.sh' >> ~/.bash_profile
 
-echo "export PS1='[\[\e[0;35m\]\u@\h\[\e[0m\] \[\e[1;34m\]\W\[\e[0;32m\]$(__git_ps1 " %s")\[\e[0m\]]\$ '" >> ~/.bash_profile
-
-echo 'export FEATURE_USER=rkiel' >> ~/.bash_profile
+echo "export FEATURE_USER=$1" >> ~/.bash_profile
 
 echo 'source ~/GitHub/rkiel/git-utilities/dotfiles/bashrc' >> .bashrc
 
