@@ -26,42 +26,13 @@ cd ~/GitHub/rkiel
 git clone https://github.com/rkiel/git-utilities.git
 ```
 
-To add the scripts to your path, add the following to `.bash_profile`
+To update your `.bash_profile` and `.bashrc`.
 
 ```
-export GIT_UTILITIES_BIN="~/GitHub/rkiel/git-utilities/bin"
-
-export PATH=${GIT_UTILITIES_BIN}:$PATH
+cd ~/GitHub/rkiel/git-utilities
+./install/bin/setup --user rkiel
 ```
 
-To enable `bash` tab completion for `git` commands, add the following to `.bash_profile` (OS X) or `.bashrc` (Linux)
-
-```
-source ~/GitHub/rkiel/git-utilities/dotfiles/git-completion.bash
-```
-
-To enable your `bash` prompt to display repository status, add the following to `.bash_profile` (OS X) or `.bashrc` (Linux).
-```
-source ~/GitHub/rkiel/git-utilities/dotfiles/git-prompt.sh
-```
-
-Here's a sample prompt that includes the current branch (i.e. `$(__git_ps1 " %s")`)
-
-```
-export PS1='[\[\e[0;35m\]\u@\h\[\e[0m\] \[\e[1;34m\]\W\[\e[0;32m\]$(__git_ps1 " %s")\[\e[0m\]]\$ '
-```
-
-To include the `bash` aliases and enable tab completion for the `feature` script, add the following to `.bashrc`.
-
-```
-source ~/GitHub/rkiel/git-utilities/dotfiles/bashrc
-```
-
-If your user id (i.e. `env|grep USER`) is generic, such as `ec2-user` or `centos` or `ubuntu`, set a `FEATURE_USER` environment variable in your `.bash_profile`.  Either your `USER` or `FEATURE_USER` should be unique relative to all the users who will be creating feature branches in your git repository.
-
-```
-export FEATURE_USER=rkiel
-```
 ## Documention
 
 * [See feature](FEATURE.md)

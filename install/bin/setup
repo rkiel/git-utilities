@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/setup/commander'
+
+commander = Setup::Commander.new(ARGV)
+if commander.valid?
+  commander.execute
+else
+  commander.help
+end
