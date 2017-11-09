@@ -9,5 +9,5 @@ echo 'source ~/GitHub/rkiel/git-utilities/dotfiles/git-prompt.sh' >> ~/.bash_pro
 
 echo "export FEATURE_USER=$1" >> ~/.bash_profile
 
-echo 'source ~/GitHub/rkiel/git-utilities/dotfiles/bashrc' >> .bashrc
+echo 'source ~/GitHub/rkiel/git-utilities/dotfiles/bashrc' >> ~/.bashrc
 
