@@ -45,7 +45,7 @@ Create a shared, release candidate branch.
 release start (major|minor|patch) from version [using master]
 ```
 
-The `version` specified must be an existing official release version.  The `major`, `minor`, and `patch` options will increment the new version number accordingly.  For example, to create a patch update, the following command will create a `rc1.0.1` release candidate branch.  If the optional `using master` is not specified, the release candiate branch will be created from the version tag (e.g. `v1.0.0`).  Otherwise, the release candiate branch will be created from `master`.
+The `version` specified must be an existing official release version.  The `major`, `minor`, and `patch` options will increment the new version number accordingly.  For example, to create a patch update, the following command will create a `rc1.0.1` release candidate branch.  If the optional `using master` is not specified, the release candiate branch will be created from the version tag (e.g. `v1.0.0`).  Otherwise, the release candiate branch will be created from `master`.  Also, if the repository contains a `package.json` file, the `version` property will automatically be set and committed.
 
 ```bash
 git checkout master
