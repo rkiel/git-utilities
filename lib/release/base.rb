@@ -63,6 +63,9 @@ module Release
         error "Version branch already exists: #{branch}" if remote_branch(branch) != ""
       end
 
+      def validate_branch_is_master (branch)
+        error "Branch must be master: #{branch}" if branch != "master"
+      end
 
   end
 
