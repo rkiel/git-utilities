@@ -28,16 +28,12 @@ module Shared
         json['version'] = version
         File.write('package.json', JSON.pretty_generate(json))
         git_add 'package.json'
-        git_commit message
+        git_commit message, true
       end
     end
 
     def git_add (path)
       run_cmd "git add #{path}"
-    end
-
-    def git_commit (msg)
-      run_cmd "git commit -m '#{msg}'"
     end
 
     def git_show_branches
