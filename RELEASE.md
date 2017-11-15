@@ -17,7 +17,7 @@ release help
 release join version
 release leave
 release list
-release start (major|minor|patch) [from] version
+release start (major|minor|patch) from version [using master]
 release tab [pattern]
 release trash local-branch-confirmation
 ```
@@ -42,14 +42,20 @@ release create 1.0.0
 Create a shared, release candidate branch.
 
 ```bash
-release start (major|minor|patch) [from] version
+release start (major|minor|patch) from version [using master]
 ```
 
-The `version` specified must be an existing official release version.  The `major`, `minor`, and `patch` options will increment the new version number accordingly.  For example, to create a patch update, the following command will create a `rc1.0.1` release candidate branch.
+The `version` specified must be an existing official release version.  The `major`, `minor`, and `patch` options will increment the new version number accordingly.  For example, to create a patch update, the following command will create a `rc1.0.1` release candidate branch.  If the optional `using master` is not specified, the release candiate branch will be created from the version tag (e.g. `v1.0.0`).  Otherwise, the release candiate branch will be created from `master`.
 
 ```bash
 git checkout master
 release start patch from 1.0.0
+```
+or
+
+```bash
+git checkout master
+release start patch from 1.0.0 from master
 ```
 
 Once the shared release candidate branch has been created, use `feature` to create and manage personal feature branches.
