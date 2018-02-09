@@ -10,7 +10,7 @@ module Shared
     end
 
     def standard_branches
-      ['master']
+      ['master','release']
     end
 
     def version_pattern
