@@ -12,8 +12,6 @@ Feature branches have specific format: USER-BASE-FEATURE.
 * BASE is the standard branch or release branch to base the feature branch on
 * FEATURE is the name of the feature
 
-#### TEST
-
 #### Start
 
 To start a new feature, go to the standard branch or a release branch.
