@@ -39,10 +39,35 @@ module Feature
       tags = tags.map {|x| x.to_i }
       tags << 0
       new_number = tags.uniq.max + 1
+      new_tag = "#{version}-#{new_number}"
 
-      git_local_tag "#{version}-#{new_number}"
+      git_local_tag new_tag
       git_push_tags
+      
+      data = republish_push
+      data['push_to'].each do |repo|
+        puts "updating #{repo}"
+        repo_dir = File.join(Dir.pwd, '..', repo)
+        json = package_json_file repo_dir
+        update_tag data['name'], json['dependencies'], new_tag
+        update_tag data['name'], json['devDependencies'], new_tag
+        save_package_json_file json, repo_dir
+      end
+
     end
+
+  private
+
+    def update_tag name, dependencies, new_tag
+      dependencies.keys.each do |key|
+        if key == name
+          value = dependencies[key]
+          parts = value.split('#')
+          dependencies[key] = [parts.first,'#',new_tag].join
+        end
+      end
+    end
+
   end
 
 end
