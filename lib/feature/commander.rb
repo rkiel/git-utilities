@@ -10,6 +10,7 @@ module Feature
       :help,
       :end,
       :rebase,
+      :republish,
       :merge,
       :start,
       :tab,
