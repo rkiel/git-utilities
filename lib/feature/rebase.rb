@@ -22,6 +22,7 @@ module Feature
       error "invalid feature branch: #{feature_branch}" if standard_branches.include? feature_branch
 
       git_checkout standard_branch
+      git_fetch
       git_pull standard_branch
       git_checkout feature_branch
       git_rebase standard_branch
