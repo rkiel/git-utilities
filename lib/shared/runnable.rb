@@ -32,6 +32,16 @@ module Shared
       end
     end
 
+    def package_json_version (default_value)
+      if File.exist? 'package.json'
+        package_json = File.read('package.json')
+        json = JSON.parse(package_json)
+        json['version']
+      else
+        default_value
+      end
+    end
+
     def git_add (path)
       run_cmd "git add #{path}"
     end
