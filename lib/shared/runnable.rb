@@ -42,6 +42,32 @@ module Shared
       end
     end
 
+    def package_json_file (dir = '.')
+      name = File.join(dir, 'package.json')
+      if File.exist? name
+        package_json = File.read(name)
+        JSON.parse(package_json)
+      else
+        {}
+      end
+    end
+
+    def save_package_json_file (json, dir = '.')
+      name = File.join(dir, 'package.json')
+      if File.exist? name
+        File.write(name, JSON.pretty_generate(json))
+      end
+    end
+
+    def republish_push
+      name = '.republish_push.yml'
+      if File.exist? name
+        contents = YAML.load_file(name)
+      else
+        { "push_to" => [] }
+      end
+    end
+
     def git_add (path)
       run_cmd "git add #{path}"
     end
