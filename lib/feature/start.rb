@@ -20,6 +20,7 @@ module Feature
       error "invalid base branch: #{current_branch}"  unless standard_branches.include? current_branch or current_branch =~ /\d+\.\d+\.\d+/
       error "invalid feature branch: #{feature_name}" if     standard_branches.include? feature_name
 
+      git_fetch
       git_pull current_branch
 
       git_local_branch_create feature_branch
