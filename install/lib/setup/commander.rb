@@ -45,27 +45,21 @@ module Setup
 
       File.open("#{ENV['HOME']}/.bash_profile", "a") do |f|
         f.puts
-        f.puts '#############################################################'
         f.puts "# added by ~/GitHub/rkiel/git-utilities/install/bin/setup"
-        f.puts '#############################################################'
         f.puts 'export GIT_UTILITIES_BIN="~/GitHub/rkiel/git-utilities/bin"'
         f.puts 'export PATH=${GIT_UTILITIES_BIN}:$PATH'
         f.puts 'source ~/GitHub/rkiel/git-utilities/dotfiles/git-completion.bash'
         f.puts 'source ~/GitHub/rkiel/git-utilities/dotfiles/git-prompt.sh'
         f.puts "export FEATURE_USER=#{options.user}" if options.user
         f.puts "export PS1='#{Setup::Prompt.new.generate(options)}'"
-        f.puts '#############################################################'
         f.puts
       end
 
 
       File.open("#{ENV['HOME']}/.bashrc", "a") do |f|
         f.puts
-        f.puts '#############################################################'
         f.puts "# added by ~/GitHub/rkiel/git-utilities/install/bin/setup"
-        f.puts '#############################################################'
         f.puts 'source ~/GitHub/rkiel/git-utilities/dotfiles/bashrc'
-        f.puts '#############################################################'
         f.puts
       end
 

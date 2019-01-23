@@ -21,8 +21,7 @@ The `bash` utilities come directly from the [git source contrib](https://github.
 Clone the repository
 
 ```
-mkdir -p ~/GitHub/rkiel
-cd ~/GitHub/rkiel
+mkdir -p ~/GitHub/rkiel && cd $_
 git clone https://github.com/rkiel/git-utilities.git
 ```
 
@@ -30,7 +29,7 @@ To update your `.bash_profile` and `.bashrc`.
 
 ```
 cd ~/GitHub/rkiel/git-utilities
-./install/bin/setup --user rkiel
+./install/bin/setup --user $USER
 ```
 
 ## Documention
