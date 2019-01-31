@@ -21,11 +21,11 @@ module Feature
       error "invalid feature branch: #{feature_name}" if     standard_branches.include? feature_name
 
       git_fetch
-      git_pull current_branch
-
-      git_local_branch_create feature_branch
-
+      git_merge ['origin', current_branch].join('/')
+      git_branch feature_branch
+      git_checkout feature_branch
       git_push feature_branch
+      
     end
   end
 
