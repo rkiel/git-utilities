@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/xfind/commander'
+
+if File.exist? './.xfind'
+  project_argv = File.read('./.xfind').split(/\s/).reject { |x| x.strip == "" }
+  argv = project_argv + ARGV
+else
+  argv = ARGV
+end
+
+commander = Xfind::Commander.new(argv)
+if commander.valid?
+  commander.execute
+else
+  commander.help
+end
