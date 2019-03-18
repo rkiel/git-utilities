@@ -7,6 +7,7 @@ The command-line scripts include:
 * [feature](FEATURE.md) - make working with feature branches easier
 * [release](RELEASE.md)- make working with release branches and tags easier
 * [xgrep](XGREP.md)- make using `git-grep` easier
+* [xfind](XFIND.md)- make using `find` easier
 
 The command-line scripts are written in Ruby 2.x using just the standard libraries and do not require any gems to be installed.
 For OS X users, these should just work out-of-box.
@@ -37,3 +38,4 @@ cd ~/GitHub/rkiel/git-utilities
 * [See feature](FEATURE.md)
 * [See release](RELEASE.md)
 * [See xgrep](XGREP.md)
+* [See xfind](XFIND.md)
