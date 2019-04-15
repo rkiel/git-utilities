@@ -99,15 +99,12 @@ module Xfind
       end
 
       command = commands.join('|')
-      puts command
 
-      puts
       if options.debug
         puts command
       else
         system command
       end
-      puts
     end
 
     private
