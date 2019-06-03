@@ -28,10 +28,6 @@ module Feature
 
       # should match rebase
       git_fetch
-      git_checkout standard_branch
-      git_merge ['origin', standard_branch].join('/')
-      git_checkout feature_branch
-
       git_rebase ['origin', standard_branch].join('/')
       if remote_branch != ""
         git_remote_branch_delete feature_branch
