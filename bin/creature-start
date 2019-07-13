@@ -1,0 +1,61 @@
+#!/usr/bin/env node
+
+const commander = require("commander");
+const program = new commander.Command();
+
+const util = require("util");
+const exec = util.promisify(require("child_process").exec);
+
+program.parse(process.argv);
+
+function setCurrentBranch(dp) {
+  return exec(`git branch|grep '\*'|sed 's/\*\s*//'`)
+    .then(x => x.stdout.trim())
+    .then(x => Object.assign({}, dp, { currentBranch: x }));
+}
+
+function setStandardBranches(dp) {
+  return Object.assign({}, dp, { standardBranches: ["master", "release"] });
+}
+
+function validateCurrentBranch(dp) {
+  if (!dp.standardBranches.includes(dp.currentBranch)) {
+    throw `invalid base branch: ${dp.currentBranch}`;
+  } else {
+    return dp;
+  }
+}
+
+function validateFeatureBranch(dp) {
+  if (dp.standardBranches.includes(dp.featureName)) {
+    throw `invalid feature branch: ${dp.featureName}`;
+  } else {
+    return dp;
+  }
+}
+
+function setFeatureName(dp) {
+  const fn = program.args.join("-");
+  return Object.assign({}, dp, { featureName: fn });
+}
+
+function setPrefix(dp) {
+  const p = process.env.FEATURE_USER || process.env.USER;
+  return Object.assign({}, dp, { prefix: p });
+}
+
+function setFeatureBranch(dp) {
+  const fb = `${dp.prefix}-${dp.currentBranch}-${dp.featureName}`;
+  return Object.assign({}, dp, { featureBranch: fb });
+}
+
+const x = Promise.resolve({ program })
+  .then(setStandardBranches)
+  .then(setFeatureName)
+  .then(setPrefix)
+  .then(setCurrentBranch)
+  .then(validateCurrentBranch)
+  .then(setFeatureBranch)
+  .then(validateFeatureBranch)
+  .then(x => console.log("x", x))
+  .catch(err => console.error(err));

@@ -1,0 +1,26 @@
+{
+  "name": "git-utilities",
+  "version": "1.0.0",
+  "description": "This is a collection of simple command-line scripts, bash aliases, and bash utilities that make using `git` even easier.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rkiel/git-utilities.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rkiel/git-utilities/issues"
+  },
+  "homepage": "https://github.com/rkiel/git-utilities#readme",
+  "dependencies": {
+    "commander": "^2.20.0"
+  }
+}

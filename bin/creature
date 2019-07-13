@@ -1,0 +1,8 @@
+#!/usr/bin/env node
+
+const commander = require("commander");
+const program = new commander.Command();
+
+program
+  .command("start feature-words", "start a new feature")
+  .parse(process.argv);
