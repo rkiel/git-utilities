@@ -80,7 +80,7 @@ function gitBranch(dp) {
 }
 
 function gitCheckout(dp) {
-  const cmd = `git checkout --track origin/${dp.featureBranch}`;
+  const cmd = `git checkout ${dp.featureBranch}`;
   console.log(cmd);
   return exec(cmd).then(x => dp);
 }
