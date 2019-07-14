@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const _ = require("lodash");
 const path = x => require("../" + x);
 const immutable = path("js/immutable");
 
@@ -91,26 +92,23 @@ function gitPush(dp) {
   return exec(cmd).then(x => dp);
 }
 
-function doit(dp) {
+function createFeatureBranch(dp) {
   const cmds = [
-    "git fetch origin -p && git fetch origin --tags",
-    `git merge ${dp.mergeBranch}`,
-    `git branch ${dp.featureBranch}`,
-    `git checkout ${dp.featureBranch}`,
+    "git fetch origin -p",
+    "git fetch origin --tags",
+    `git merge origin/${dp.currentBranch}`,
+    `git checkout -b ${dp.featureBranch}`,
     `git push -u origin ${dp.featureBranch}`
   ];
   return _.reduce(
     cmds,
     (accum, elem) => {
-      console.log(elem);
       return accum
-        .then(() => exec(elem))
-        .then(x => {
-          console.log("STDOUT", x.stdout);
-          console.log("STDERR", x.stderr);
-        });
+        .then(() => console.log(elem))
+        .then(() => console.log())
+        .then(() => exec(elem));
     },
-    Promise.resove({})
+    Promise.resolve({})
   );
 }
 
@@ -126,12 +124,5 @@ const x = toPromise({ program })
   .then(setCurrentBranch)
   .then(validateCurrentBranch)
   .then(setFeatureBranch)
-  .then(setMergeBranch)
-  .then(doit)
-  // .then(gitFetch)
-  // .then(gitMerge)
-  // .then(gitBranch)
-  // .then(gitCheckout)
-  // .then(gitPush)
-  //  .then(x => console.log("x", x))
+  .then(createFeatureBranch)
   .catch(err => console.error(err));
