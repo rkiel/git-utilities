@@ -86,9 +86,32 @@ function gitCheckout(dp) {
 }
 
 function gitPush(dp) {
-  const cmd = `git push origin ${dp.featureBranch}`;
+  const cmd = `git push -u origin ${dp.featureBranch}`;
   console.log(cmd);
   return exec(cmd).then(x => dp);
+}
+
+function doit(dp) {
+  const cmds = [
+    "git fetch origin -p && git fetch origin --tags",
+    `git merge ${dp.mergeBranch}`,
+    `git branch ${dp.featureBranch}`,
+    `git checkout ${dp.featureBranch}`,
+    `git push -u origin ${dp.featureBranch}`
+  ];
+  return _.reduce(
+    cmds,
+    (accum, elem) => {
+      console.log(elem);
+      return accum
+        .then(() => exec(elem))
+        .then(x => {
+          console.log("STDOUT", x.stdout);
+          console.log("STDERR", x.stderr);
+        });
+    },
+    Promise.resove({})
+  );
 }
 
 function toPromise(dp) {
@@ -103,11 +126,12 @@ const x = toPromise({ program })
   .then(setCurrentBranch)
   .then(validateCurrentBranch)
   .then(setFeatureBranch)
-  .then(gitFetch)
   .then(setMergeBranch)
-  .then(gitMerge)
-  .then(gitBranch)
-  .then(gitCheckout)
-  .then(gitPush)
+  .then(doit)
+  // .then(gitFetch)
+  // .then(gitMerge)
+  // .then(gitBranch)
+  // .then(gitCheckout)
+  // .then(gitPush)
   //  .then(x => console.log("x", x))
   .catch(err => console.error(err));
