@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+const path = x => require("../" + x);
+const immutable = path("js/immutable");
+
 const commander = require("commander");
 const program = new commander.Command();
 
@@ -9,13 +12,14 @@ const exec = util.promisify(require("child_process").exec);
 program.parse(process.argv);
 
 function setCurrentBranch(dp) {
-  return exec(`git branch|grep '\*'|sed 's/\*\s*//'`)
+  const cmd = "git rev-parse --abbrev-ref HEAD";
+  return exec(cmd)
     .then(x => x.stdout.trim())
     .then(x => Object.assign({}, dp, { currentBranch: x }));
 }
 
 function setStandardBranches(dp) {
-  return Object.assign({}, dp, { standardBranches: ["master", "release"] });
+  return immutable.set(dp, "standardBranches", ["master", "release"]);
 }
 
 function validateCurrentBranch(dp) {
@@ -26,7 +30,7 @@ function validateCurrentBranch(dp) {
   }
 }
 
-function validateFeatureBranch(dp) {
+function validateFeatureName(dp) {
   if (dp.standardBranches.includes(dp.featureName)) {
     throw `invalid feature branch: ${dp.featureName}`;
   } else {
@@ -49,13 +53,40 @@ function setFeatureBranch(dp) {
   return Object.assign({}, dp, { featureBranch: fb });
 }
 
-const x = Promise.resolve({ program })
+function gitFetch(dp) {
+  const cmd = "git fetch origin -p && git fetch origin --tags";
+  console.log(cmd);
+  return exec(cmd).then(x => dp);
+}
+
+function setMergeBranch(dp) {
+  return immutable.set(
+    dp,
+    "mergeBranch",
+    ["origin", dp.currentBranch].join("/")
+  );
+}
+
+function gitMerge(dp) {
+  const cmd = `git merge ${dp.mergeBranch}`;
+  console.log(cmd);
+  return exec(cmd).then(x => dp);
+}
+
+function toPromise(dp) {
+  return Promise.resolve(dp);
+}
+
+const x = toPromise({ program })
   .then(setStandardBranches)
   .then(setFeatureName)
+  .then(validateFeatureName)
   .then(setPrefix)
   .then(setCurrentBranch)
   .then(validateCurrentBranch)
   .then(setFeatureBranch)
-  .then(validateFeatureBranch)
+  .then(gitFetch)
+  .then(setMergeBranch)
+  .then(gitMerge)
   .then(x => console.log("x", x))
   .catch(err => console.error(err));

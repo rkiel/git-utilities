@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/rkiel/git-utilities#readme",
   "dependencies": {
-    "commander": "^2.20.0"
+    "commander": "^2.20.0",
+    "lodash": "^4.17.14"
   }
 }
