@@ -73,6 +73,24 @@ function gitMerge(dp) {
   return exec(cmd).then(x => dp);
 }
 
+function gitBranch(dp) {
+  const cmd = `git branch ${dp.featureBranch}`;
+  console.log(cmd);
+  return exec(cmd).then(x => dp);
+}
+
+function gitCheckout(dp) {
+  const cmd = `git checkout --track origin/#{dp.featureBranch}`;
+  console.log(cmd);
+  return exec(cmd).then(x => dp);
+}
+
+function gitPush(dp) {
+  const cmd = `git push origin ${dp.featureBranch}`;
+  console.log(cmd);
+  return exec(cmd).then(x => dp);
+}
+
 function toPromise(dp) {
   return Promise.resolve(dp);
 }
@@ -88,5 +106,8 @@ const x = toPromise({ program })
   .then(gitFetch)
   .then(setMergeBranch)
   .then(gitMerge)
+  .then(gitBranch)
+  .then(gitCheckout)
+  .then(gitPush)
   .then(x => console.log("x", x))
   .catch(err => console.error(err));
