@@ -5,4 +5,5 @@ const program = new commander.Command();
 
 program
   .command("start feature-words", "start a new feature")
+  .command("end", "end a feature")
   .parse(process.argv);

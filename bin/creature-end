@@ -1,0 +1,59 @@
+#!/usr/bin/env node
+
+const _ = require("lodash");
+const path = x => require("../" + x);
+const immutable = path("js/immutable");
+const git = path("js/git");
+const shell = path("js/shell");
+
+const commander = require("commander");
+const program = new commander.Command();
+
+program.parse(process.argv);
+
+function endFeatureBranch(dp) {
+  const cmds = [
+    "git fetch origin -p",
+    "git fetch origin --tags",
+    `git merge origin/${dp.currentBranch}`,
+    `git checkout -b ${dp.featureBranch}`,
+    `git push -u origin ${dp.featureBranch}`
+  ];
+  return _.reduce(
+    cmds,
+    (accum, elem) => {
+      return accum
+        .then(() => console.log(elem))
+        .then(() => console.log())
+        .then(() => shell.run(elem));
+    },
+    Promise.resolve({})
+  );
+}
+// function setBranchParts(dp) {
+//   def parse_branch (branch)
+//     parts = branch.split('-')
+//     error "invalid branch: user-standard-feature" unless parts.size > 2
+//
+//     user     = parts.shift
+//     standard = parts.shift
+//     error "invalid user: #{user}" unless [ENV['FEATURE_USER'],ENV['USER']].include? user
+//     error "invalid branch: #{standard}" unless standard_branches.include? standard or standard =~ release_branch_pattern
+//     feature  =  parts.join('-')
+//     { user: user, standard: standard, feature: feature }
+// }
+
+function toPromise(dp) {
+  return Promise.resolve(dp);
+}
+
+const x = toPromise({ program })
+  .then(setStandardBranches)
+  .then(setFeatureName)
+  .then(validateFeatureName)
+  .then(setPrefix)
+  .then(setCurrentBranch)
+  .then(validateCurrentBranch)
+  .then(setFeatureBranch)
+  .then(createFeatureBranch)
+  .catch(err => console.error(err));
