@@ -1,23 +1,12 @@
 #!/usr/bin/env node
 
 const _ = require("lodash");
+
 const path = x => require("../" + x);
 const immutable = path("js/immutable");
-
-const commander = require("commander");
-const program = new commander.Command();
-
-const util = require("util");
-const exec = util.promisify(require("child_process").exec);
-
-program.parse(process.argv);
-
-function setCurrentBranch(dp) {
-  const cmd = "git rev-parse --abbrev-ref HEAD";
-  return exec(cmd)
-    .then(x => x.stdout.trim())
-    .then(x => Object.assign({}, dp, { currentBranch: x }));
-}
+const git = path("js/git");
+const shell = path("js/shell");
+const commander = path("js/commander");
 
 function setStandardBranches(dp) {
   return immutable.set(dp, "standardBranches", ["master", "release"]);
@@ -40,7 +29,7 @@ function validateFeatureName(dp) {
 }
 
 function setFeatureName(dp) {
-  const fn = program.args.join("-");
+  const fn = commander.args().join("-");
   return Object.assign({}, dp, { featureName: fn });
 }
 
@@ -57,7 +46,7 @@ function setFeatureBranch(dp) {
 function gitFetch(dp) {
   const cmd = "git fetch origin -p && git fetch origin --tags";
   console.log(cmd);
-  return exec(cmd).then(x => dp);
+  return shell.something(cmd, dp);
 }
 
 function setMergeBranch(dp) {
@@ -71,25 +60,25 @@ function setMergeBranch(dp) {
 function gitMerge(dp) {
   const cmd = `git merge ${dp.mergeBranch}`;
   console.log(cmd);
-  return exec(cmd).then(x => dp);
+  return shell.something(cmd, dp);
 }
 
 function gitBranch(dp) {
   const cmd = `git branch ${dp.featureBranch}`;
   console.log(cmd);
-  return exec(cmd).then(x => dp);
+  return shell.something(cmd, dp);
 }
 
 function gitCheckout(dp) {
   const cmd = `git checkout ${dp.featureBranch}`;
   console.log(cmd);
-  return exec(cmd).then(x => dp);
+  return shell.something(cmd, dp);
 }
 
 function gitPush(dp) {
   const cmd = `git push -u origin ${dp.featureBranch}`;
   console.log(cmd);
-  return exec(cmd).then(x => dp);
+  return shell.something(cmd, dp);
 }
 
 function createFeatureBranch(dp) {
@@ -106,7 +95,7 @@ function createFeatureBranch(dp) {
       return accum
         .then(() => console.log(elem))
         .then(() => console.log())
-        .then(() => exec(elem));
+        .then(() => shell.run(elem));
     },
     Promise.resolve({})
   );
@@ -116,12 +105,12 @@ function toPromise(dp) {
   return Promise.resolve(dp);
 }
 
-const x = toPromise({ program })
+const x = toPromise({ program: commander.parse() })
   .then(setStandardBranches)
   .then(setFeatureName)
   .then(validateFeatureName)
   .then(setPrefix)
-  .then(setCurrentBranch)
+  .then(git.setCurrentBranch)
   .then(validateCurrentBranch)
   .then(setFeatureBranch)
   .then(createFeatureBranch)
