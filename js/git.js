@@ -1,6 +1,7 @@
 const _ = require("lodash");
 
 const path = x => require("../" + x);
+const commander = path("js/commander");
 const immutable = path("js/immutable");
 const shell = path("js/shell");
 
@@ -12,8 +13,18 @@ function setCurrentBranch(dp) {
   return shell.capture(cmd).then(x => immutable.set(dp, "branch.current", x));
 }
 
+function setFeatureBranch(dp) {
+  const fb = [
+    commander.prefix(),
+    dp.branch.current,
+    commander.featureName()
+  ].join("-");
+  return immutable.set(dp, "branch.feature", fb);
+}
+
 lib = {
-  setCurrentBranch
+  setCurrentBranch,
+  setFeatureBranch
 };
 
 module.exports = lib;

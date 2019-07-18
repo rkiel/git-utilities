@@ -3,36 +3,10 @@
 const _ = require("lodash");
 
 const path = x => require("../" + x);
-const immutable = path("js/immutable");
 const git = path("js/git");
 const shell = path("js/shell");
 const commander = path("js/commander");
-const branch = path("js/branch");
-
-function validateCurrentBranch(dp) {
-  if (branch.isNonStandard(dp.branch.current)) {
-    throw `invalid base branch: ${dp.branch.current}`;
-  } else {
-    return dp;
-  }
-}
-
-function validateFeatureName(dp) {
-  if (branch.isStandard(commander.featureName())) {
-    throw `invalid feature branch: ${commander.featureName()}`;
-  } else {
-    return dp;
-  }
-}
-
-function setFeatureBranch(dp) {
-  const fb = [
-    commander.prefix(),
-    dp.branch.current,
-    commander.featureName()
-  ].join("-");
-  return immutable.set(dp, "branch.feature", fb);
-}
+const validate = path("js/validate");
 
 function createFeatureBranch(dp) {
   return shell.pipeline([
@@ -44,14 +18,11 @@ function createFeatureBranch(dp) {
   ]);
 }
 
-function toPromise(dp) {
-  return Promise.resolve(dp);
-}
-
-const x = toPromise(commander.parse())
-  .then(validateFeatureName)
+commander
+  .start()
   .then(git.setCurrentBranch)
-  .then(validateCurrentBranch)
-  .then(setFeatureBranch)
+  .then(validate.currentIsStandardBranch)
+  .then(git.setFeatureBranch)
+  .then(validate.featureIsNotStandardBranch)
   .then(createFeatureBranch)
   .catch(err => console.error(err));

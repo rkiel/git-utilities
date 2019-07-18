@@ -1,23 +1,33 @@
+const path = x => require("../" + x);
 const branch = path("js/branch");
+const commander = path("js/commander");
 
 let lib;
 
-function validateCurrentBranch(dp) {
+function currentIsStandardBranch(dp) {
   if (branch.isNonStandard(dp.branch.current)) {
-    throw `invalid base branch: ${dp.branch.current}`;
+    const branches = branch
+      .standard()
+      .sort()
+      .join(", ");
+    throw `ERROR: starting branch must be one of: ${branches}`;
   } else {
     return dp;
   }
 }
 
-function validateFeatureName(dp) {
+function featureIsNotStandardBranch(dp) {
   if (branch.isStandard(commander.featureName())) {
-    throw `invalid feature branch: ${commander.featureName()}`;
+    const branches = branch
+      .standard()
+      .sort()
+      .join(", ");
+    throw `ERROR: feature branch cannot be any of: ${branches}`;
   } else {
     return dp;
   }
 }
 
-lib = { validateCurrentBranch, validateFeatureName };
+lib = { currentIsStandardBranch, featureIsNotStandardBranch };
 
 module.exports = lib;

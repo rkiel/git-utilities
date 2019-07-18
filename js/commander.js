@@ -20,11 +20,25 @@ function prefix() {
   return process.env.FEATURE_USER || process.env.USER;
 }
 
+function toPromise(dp) {
+  return Promise.resolve(dp);
+}
+
+function echo(dp) {
+  console.log(JSON.stringify(dp));
+  return dp;
+}
+
+function start() {
+  return toPromise(parse());
+}
+
 lib = {
   args,
   parse,
   featureName,
-  prefix
+  prefix,
+  start
 };
 
 module.exports = lib;
