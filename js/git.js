@@ -9,7 +9,7 @@ let lib;
 function setCurrentBranch(dp) {
   const cmd = "git rev-parse --abbrev-ref HEAD";
 
-  return shell.capture(cmd).then(x => immutable.set(dp, "currentBranch", x));
+  return shell.capture(cmd).then(x => immutable.set(dp, "branch.current", x));
 }
 
 lib = {

@@ -7,109 +7,49 @@ const immutable = path("js/immutable");
 const git = path("js/git");
 const shell = path("js/shell");
 const commander = path("js/commander");
-
-function setStandardBranches(dp) {
-  return immutable.set(dp, "standardBranches", ["master", "release"]);
-}
+const branch = path("js/branch");
 
 function validateCurrentBranch(dp) {
-  if (!dp.standardBranches.includes(dp.currentBranch)) {
-    throw `invalid base branch: ${dp.currentBranch}`;
+  if (branch.isNonStandard(dp.branch.current)) {
+    throw `invalid base branch: ${dp.branch.current}`;
   } else {
     return dp;
   }
 }
 
 function validateFeatureName(dp) {
-  if (dp.standardBranches.includes(dp.featureName)) {
-    throw `invalid feature branch: ${dp.featureName}`;
+  if (branch.isStandard(commander.featureName())) {
+    throw `invalid feature branch: ${commander.featureName()}`;
   } else {
     return dp;
   }
 }
 
-function setFeatureName(dp) {
-  const fn = commander.args().join("-");
-  return Object.assign({}, dp, { featureName: fn });
-}
-
-function setPrefix(dp) {
-  const p = process.env.FEATURE_USER || process.env.USER;
-  return Object.assign({}, dp, { prefix: p });
-}
-
 function setFeatureBranch(dp) {
-  const fb = `${dp.prefix}-${dp.currentBranch}-${dp.featureName}`;
-  return Object.assign({}, dp, { featureBranch: fb });
-}
-
-function gitFetch(dp) {
-  const cmd = "git fetch origin -p && git fetch origin --tags";
-  console.log(cmd);
-  return shell.something(cmd, dp);
-}
-
-function setMergeBranch(dp) {
-  return immutable.set(
-    dp,
-    "mergeBranch",
-    ["origin", dp.currentBranch].join("/")
-  );
-}
-
-function gitMerge(dp) {
-  const cmd = `git merge ${dp.mergeBranch}`;
-  console.log(cmd);
-  return shell.something(cmd, dp);
-}
-
-function gitBranch(dp) {
-  const cmd = `git branch ${dp.featureBranch}`;
-  console.log(cmd);
-  return shell.something(cmd, dp);
-}
-
-function gitCheckout(dp) {
-  const cmd = `git checkout ${dp.featureBranch}`;
-  console.log(cmd);
-  return shell.something(cmd, dp);
-}
-
-function gitPush(dp) {
-  const cmd = `git push -u origin ${dp.featureBranch}`;
-  console.log(cmd);
-  return shell.something(cmd, dp);
+  const fb = [
+    commander.prefix(),
+    dp.branch.current,
+    commander.featureName()
+  ].join("-");
+  return immutable.set(dp, "branch.feature", fb);
 }
 
 function createFeatureBranch(dp) {
-  const cmds = [
-    "git fetch origin -p",
-    "git fetch origin --tags",
-    `git merge origin/${dp.currentBranch}`,
-    `git checkout -b ${dp.featureBranch}`,
-    `git push -u origin ${dp.featureBranch}`
-  ];
-  return _.reduce(
-    cmds,
-    (accum, elem) => {
-      return accum
-        .then(() => console.log(elem))
-        .then(() => console.log())
-        .then(() => shell.run(elem));
-    },
-    Promise.resolve({})
-  );
+  return shell.pipeline([
+    "git fetch --prune --prune-tags --tags origin",
+    `git merge origin/${dp.branch.current}`,
+    "git push",
+    `git checkout -b ${dp.branch.feature}`,
+    `git push -u origin ${dp.branch.feature}`
+  ]);
 }
 
 function toPromise(dp) {
   return Promise.resolve(dp);
 }
 
-const x = toPromise({ program: commander.parse() })
-  .then(setStandardBranches)
-  .then(setFeatureName)
+const x = toPromise(commander.parse())
   .then(validateFeatureName)
-  .then(setPrefix)
   .then(git.setCurrentBranch)
   .then(validateCurrentBranch)
   .then(setFeatureBranch)

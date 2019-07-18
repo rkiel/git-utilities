@@ -23,10 +23,24 @@ function something(cmd, dp) {
   return lib.run(cmd).then(lib._something(dp));
 }
 
+function pipeline(cmds) {
+  return _.reduce(
+    cmds,
+    (accum, elem) => {
+      return accum
+        .then(() => console.log())
+        .then(() => console.log(elem))
+        .then(() => exec(elem));
+    },
+    Promise.resolve({})
+  ).then(() => console.log());
+}
+
 lib = {
   _something,
   run,
   capture,
+  pipeline,
   something: _.curry(something)
 };
 
