@@ -22,9 +22,35 @@ function setFeatureBranch(dp) {
   return immutable.set(dp, "branch.feature", fb);
 }
 
+function parseCurrentBranch(dp) {
+  const parts = dp.branch.current.split("-");
+  return immutable.set(dp, "branch.parts", parts);
+}
+
+function setStandardBranch(dp) {
+  const parts = _.get(dp, "branch.parts", []);
+  return immutable.set(dp, "branch.standard", parts[1]);
+}
+
+function isBranchRemote(dp) {
+  const branch = _.get(dp, "branch.current");
+  const cmd = `git branch -r|grep origin|grep -v 'HEAD'|grep ${branch}`;
+  return shell
+    .capture(cmd)
+    .then(x => x.trim())
+    .then(x =>
+      x === ""
+        ? immutable.set(dp, "branch.remote", false)
+        : immutable.set(dp, "branch.remote", branch)
+    );
+}
+
 lib = {
   setCurrentBranch,
-  setFeatureBranch
+  setFeatureBranch,
+  setStandardBranch,
+  parseCurrentBranch,
+  isBranchRemote
 };
 
 module.exports = lib;

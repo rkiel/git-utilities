@@ -28,6 +28,23 @@ function featureIsNotStandardBranch(dp) {
   }
 }
 
-lib = { currentIsStandardBranch, featureIsNotStandardBranch };
+function mustBeFeatureBranch(dp) {
+  const parts = dp.branch.parts;
+  if (
+    parts.length > 2 &&
+    commander.prefix() === parts[0] &&
+    branch.isStandard(parts[1])
+  ) {
+    return dp;
+  } else {
+    throw `ERROR: ${dp.branch.current} is not a feature branch`;
+  }
+}
+
+lib = {
+  currentIsStandardBranch,
+  mustBeFeatureBranch,
+  featureIsNotStandardBranch
+};
 
 module.exports = lib;

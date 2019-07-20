@@ -25,7 +25,7 @@ function toPromise(dp) {
 }
 
 function echo(dp) {
-  console.log(JSON.stringify(dp));
+  console.log(JSON.stringify(dp, null, 2));
   return dp;
 }
 
@@ -38,7 +38,8 @@ lib = {
   parse,
   featureName,
   prefix,
-  start
+  start,
+  echo
 };
 
 module.exports = lib;
