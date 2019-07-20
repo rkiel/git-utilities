@@ -22,10 +22,12 @@ function endFeatureBranch(dp) {
 
 commander
   .start()
-  .then(git.setCurrentBranch)
-  .then(git.parseCurrentBranch)
-  .then(validate.mustBeFeatureBranch)
-  .then(git.setStandardBranch)
-  .then(git.isBranchRemote)
-  .then(endFeatureBranch)
+  .then(git.gather)
+  .then(commander.echo)
+  // .then(git.setCurrentBranch)
+  // .then(git.parseCurrentBranch)
+  // .then(validate.mustBeFeatureBranch)
+  // .then(git.setStandardBranch)
+  // .then(git.isBranchRemote)
+  // .then(endFeatureBranch)
   .catch(err => console.error(err));
