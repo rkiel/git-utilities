@@ -1,10 +1,14 @@
 REPO="~/GitHub/rkiel/git-utilities"
 
-if [ "$1" == "zsh" ] ; then
+if [ "$2" == "zsh" ] ; then
   FILE=~/.zprofile
   echo                                          >> $FILE
   echo "GIT_UTILITIES_BIN=${REPO}/bin"          >> $FILE
   echo "export PATH=${GIT_UTILITIES_BIN}:$PATH" >> $FILE
+  if [ ! -z "$1" ]; then
+    echo "export FEATURE_USER=$1"               >> $FILE
+  fi
+
 
   FILE=~/.zshrc
   echo                        >> $FILE
@@ -14,6 +18,9 @@ else
   echo                                          >> $FILE
   echo "GIT_UTILITIES_BIN=${REPO}/bin"          >> $FILE
   echo "export PATH=${GIT_UTILITIES_BIN}:$PATH" >> $FILE
+  if [ ! -z "$1" ]; then
+    echo "export FEATURE_USER=$1"               >> $FILE
+  fi
 
   FILE=~/.bashrc
   echo                         >> $FILE
