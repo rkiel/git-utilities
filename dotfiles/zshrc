@@ -41,7 +41,7 @@ function get_feature_commands()
 
 complete -F get_feature_commands feature
 
-LOCALS=~/.bashrc_locals
+LOCALS=~/.zshrc_locals
 if [ -f $LOCALS ]; then
   source $LOCALS
 fi

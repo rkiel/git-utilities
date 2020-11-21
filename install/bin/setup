@@ -1,10 +1,21 @@
-#!/usr/bin/env ruby
+REPO="~/GitHub/rkiel/git-utilities"
 
-require_relative '../lib/setup/commander'
+if [ "$1" == "zsh" ] ; then
+  FILE=~/.zprofile
+  echo                                          >> $FILE
+  echo "GIT_UTILITIES_BIN=${REPO}/bin"          >> $FILE
+  echo "export PATH=${GIT_UTILITIES_BIN}:$PATH" >> $FILE
 
-commander = Setup::Commander.new(ARGV)
-if commander.valid?
-  commander.execute
+  FILE=~/.zshrc
+  echo                        >> $FILE
+  echo "source ${REPO}/zshrc" >> $FILE
 else
-  commander.help
-end
+  FILE=~/.bash_profile
+  echo                                          >> $FILE
+  echo "GIT_UTILITIES_BIN=${REPO}/bin"          >> $FILE
+  echo "export PATH=${GIT_UTILITIES_BIN}:$PATH" >> $FILE
+
+  FILE=~/.bashrc
+  echo                         >> $FILE
+  echo "source ${REPO}/bashrc" >> $FILE
+fi
