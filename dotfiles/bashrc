@@ -24,11 +24,16 @@ alias show='git show -w'
 alias stash="git stash save"
 alias x='xgrep'
 
-
 alias sfind='find . -not \( -type d -name .git -prune \) -not \( -type d -name node_modes -prune \) -and \( -type f \)|sort -f'
 alias sgrep='find . -not \( -type d -name .git -prune \) -not \( -type d -name node_modes -prune \) -and \( -type f \)|sort -f|xargs grep --color=always'
 alias cgrep='grep --color=always'
 alias vgrep='grep -v'
+
+function default() 
+{
+  default_branch=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
+  git checkout $default_branch
+}
 
 function get_feature_commands()
 {
