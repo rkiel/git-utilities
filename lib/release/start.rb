@@ -8,7 +8,7 @@ module Release
     end
 
     def help
-      "release start (major|minor|patch) from version [using master]"
+      "release start (major|minor|patch) from version [using #{default_branch}]"
     end
 
     def execute
