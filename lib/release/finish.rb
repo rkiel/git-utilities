@@ -23,8 +23,8 @@ module Release
       git_push release_branch
       git_push_tags
 
-      git_checkout :master
-      git_fetch_and_merge :master
+      git_checkout default_branch
+      git_fetch_and_merge default_branch
 
       git_local_branch_delete release_branch
 

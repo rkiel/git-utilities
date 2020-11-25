@@ -12,7 +12,7 @@ module Release
     end
 
     def execute
-      validate_current_branch_master
+      validate_current_branch_default
       git_fetch_and_merge current_branch
 
       puts

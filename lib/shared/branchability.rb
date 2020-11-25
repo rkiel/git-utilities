@@ -9,8 +9,12 @@ module Shared
       @remote_branch  ||= `git branch -r|grep origin|grep -v 'HEAD'|grep #{branch}`.strip
     end
 
+    def default_branch
+      @default_branch ||= `git remote show origin | grep 'HEAD branch' | cut -d' ' -f5`.strip
+    end
+
     def standard_branches
-      ['master','release']
+      [default_branch, 'release']
     end
 
     def version_pattern

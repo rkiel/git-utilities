@@ -16,7 +16,7 @@ module Release
 
       validate_version_format version
 
-      validate_current_branch_master
+      validate_current_branch_default
       git_fetch_and_merge current_branch
 
       validate_version_is_new version

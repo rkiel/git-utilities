@@ -18,12 +18,12 @@ module Release
         starting_branch = nil
       when 6
         subcommand, level, verb, version, verb2, starting_branch = *argv
-        validate_branch_is_master(starting_branch)
+        validate_branch_is_default(starting_branch)
       end
 
       validate_version_format version
 
-      validate_current_branch_master
+      validate_current_branch_default
       git_fetch_and_merge current_branch
 
       validate_version_exists version

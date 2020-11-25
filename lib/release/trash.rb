@@ -24,8 +24,8 @@ module Release
       error "Confirmation branch does not match current branch: #{confirmation_branch} vs #{release_branch}" if release_branch != confirmation_branch
       validate_current_branch_is_release
 
-      git_checkout :master
-      git_fetch_and_merge :master
+      git_checkout default_branch
+      git_fetch_and_merge default_branch
 
       git_local_branch_trash release_branch
 
