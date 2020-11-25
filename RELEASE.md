@@ -17,7 +17,7 @@ release help
 release join version
 release leave
 release list
-release start (major|minor|patch) from version [using master]
+release start (major|minor|patch) from version [using main]
 release tab [pattern]
 release trash local-branch-confirmation
 ```
@@ -30,10 +30,10 @@ Create an official release tag.
 release create version
 ```
 
-You must be on the `master` branch.  The latest code will be pulled from `master` and a tag created for the last commit.  For example, the following command will create a `v1.0.0` tag.
+You must be on the default branch.  The latest code will be pulled from the default branch and a tag created for the last commit.  For example, the following command will create a `v1.0.0` tag.
 
 ```bash
-git checkout master
+git checkout <your-default-branch-name>
 release create 1.0.0
 ```
 
@@ -42,20 +42,20 @@ release create 1.0.0
 Create a shared, release candidate branch.
 
 ```bash
-release start (major|minor|patch) from version [using master]
+release start (major|minor|patch) from version [using your-default-branch-name]
 ```
 
-The `version` specified must be an existing official release version.  The `major`, `minor`, and `patch` options will increment the new version number accordingly.  For example, to create a patch update, the following command will create a `rc1.0.1` release candidate branch.  If the optional `using master` is not specified, the release candiate branch will be created from the version tag (e.g. `v1.0.0`).  Otherwise, the release candiate branch will be created from `master`.  Also, if the repository contains a `package.json` file, the `version` property will automatically be set and committed.
+The `version` specified must be an existing official release version.  The `major`, `minor`, and `patch` options will increment the new version number accordingly.  For example, to create a patch update, the following command will create a `rc1.0.1` release candidate branch.  If the optional `using <your-default-branch-name>` is not specified, the release candiate branch will be created from the version tag (e.g. `v1.0.0`).  Otherwise, the release candiate branch will be created from the default branch.  Also, if the repository contains a `package.json` file, the `version` property will automatically be set and committed.
 
 ```bash
-git checkout master
+git checkout <your-default-branch-name>
 release start patch from 1.0.0
 ```
 or
 
 ```bash
-git checkout master
-release start patch from 1.0.0 from master
+git checkout <your-default-branch-name>
+release start patch from 1.0.0 from 
 ```
 
 Once the shared release candidate branch has been created, use `feature` to create and manage personal feature branches.
@@ -71,7 +71,7 @@ release join version
 The `version` specified must be an existing release candidate branch version.  A local tracking branch will be created.  For example, the following command will create `rc1.0.1` as a local tracking branch.
 
 ```bash
-git checkout master
+git checkout <your-default-branch-name>
 release join 1.0.1
 ```
 

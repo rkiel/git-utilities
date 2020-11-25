@@ -4,7 +4,7 @@
 
 ### Usage
 
-This utility is built around the standard branch `master` and branches for releases that follow the format of MAJOR.MINOR.PATCH.
+This utility is built around the default branch and branches for releases that follow the format of MAJOR.MINOR.PATCH.
 
 Feature branches have specific format: USER-BASE-FEATURE.
 
@@ -17,7 +17,7 @@ Feature branches have specific format: USER-BASE-FEATURE.
 To start a new feature, go to the standard branch or a release branch.
 
 ```
-git checkout master
+git checkout <your-default-branch-name>
 ```
 
 Use the `start` subcommand with a feature name.
@@ -26,7 +26,7 @@ Use the `start` subcommand with a feature name.
 feature start my new feature
 ```
 
-For example, a new branch will be created called `rkiel-master-my-new-feature`
+For example, a new branch will be created called `rkiel-main-my-new-feature`
 
 #### Commit
 
@@ -69,7 +69,7 @@ This backup should not be used to collaborate with others.  It is just a persona
 feature rebase
 ```
 
-For example, `rkiel-master-my-new-feature` will be pushed out to `origin`.
+For example, `rkiel-default-my-new-feature` will be pushed out to `origin`.
 
 #### Merge
 
