@@ -2,11 +2,13 @@
 
 ## Release
 
-`release` is a command line utility to make working with releases easier.  Releases are built and managed using branches and tags.  
+NOTE: This command is DEPRECATED.
 
-Official release versions are tagged using a simplified [Semantic Versioning](http://semver.org/) format.  The tags start with the letter `v` followed by MAJOR.MINOR.PATCH.
+`release` is a command line utility to make working with releases easier. Releases are built and managed using branches and tags.
 
-Before a release is tagged with a version, a release candidate branch can be created and used for development.  The intent of the release candidate branch is to be short-term support for multiple developers and deployment to test environments.  They are prefixed by `rc`.
+Official release versions are tagged using a simplified [Semantic Versioning](http://semver.org/) format. The tags start with the letter `v` followed by MAJOR.MINOR.PATCH.
+
+Before a release is tagged with a version, a release candidate branch can be created and used for development. The intent of the release candidate branch is to be short-term support for multiple developers and deployment to test environments. They are prefixed by `rc`.
 
 ### Usage
 
@@ -30,7 +32,7 @@ Create an official release tag.
 release create version
 ```
 
-You must be on the `master` branch.  The latest code will be pulled from `master` and a tag created for the last commit.  For example, the following command will create a `v1.0.0` tag.
+You must be on the `master` branch. The latest code will be pulled from `master` and a tag created for the last commit. For example, the following command will create a `v1.0.0` tag.
 
 ```bash
 git checkout master
@@ -45,12 +47,13 @@ Create a shared, release candidate branch.
 release start (major|minor|patch) from version [using master]
 ```
 
-The `version` specified must be an existing official release version.  The `major`, `minor`, and `patch` options will increment the new version number accordingly.  For example, to create a patch update, the following command will create a `rc1.0.1` release candidate branch.  If the optional `using master` is not specified, the release candiate branch will be created from the version tag (e.g. `v1.0.0`).  Otherwise, the release candiate branch will be created from `master`.  Also, if the repository contains a `package.json` file, the `version` property will automatically be set and committed.
+The `version` specified must be an existing official release version. The `major`, `minor`, and `patch` options will increment the new version number accordingly. For example, to create a patch update, the following command will create a `rc1.0.1` release candidate branch. If the optional `using master` is not specified, the release candiate branch will be created from the version tag (e.g. `v1.0.0`). Otherwise, the release candiate branch will be created from `master`. Also, if the repository contains a `package.json` file, the `version` property will automatically be set and committed.
 
 ```bash
 git checkout master
 release start patch from 1.0.0
 ```
+
 or
 
 ```bash
@@ -68,7 +71,7 @@ Join in on using a shared, release candidate branch that someone else has previo
 release join version
 ```
 
-The `version` specified must be an existing release candidate branch version.  A local tracking branch will be created.  For example, the following command will create `rc1.0.1` as a local tracking branch.
+The `version` specified must be an existing release candidate branch version. A local tracking branch will be created. For example, the following command will create `rc1.0.1` as a local tracking branch.
 
 ```bash
 git checkout master
@@ -85,7 +88,7 @@ Stop using a shared, release candidate branch but leave it intact for others to 
 release leave
 ```
 
-Your local tracking branch will be forcibly removed.  If there are any local changes on the branch, they will be lost.  For example, the following command will remove `rc1.0.1` as a local tracking branch.
+Your local tracking branch will be forcibly removed. If there are any local changes on the branch, they will be lost. For example, the following command will remove `rc1.0.1` as a local tracking branch.
 
 ```bash
 git checkout rc1.0.1
@@ -100,7 +103,7 @@ Finish the release candidate and create an official release.
 release finish
 ```
 
-The latest code from the release candidate branch will be pulled and a tag created.  The shared release candidate branch will then be removed.  For example, the following command will create `v1.0.1` version tag and removed `rc1.0.1` branch.
+The latest code from the release candidate branch will be pulled and a tag created. The shared release candidate branch will then be removed. For example, the following command will create `v1.0.1` version tag and removed `rc1.0.1` branch.
 
 ```bash
 git checkout rc1.0.1
@@ -123,7 +126,7 @@ Throw away the release candidate.
 release trash local-branch-confirmation
 ```
 
-The shared release candidate branch will be forcibly removed and no version tag will be created.  The release candidate branch must be checked out and entered as the `local-branch-confirmation`.  For example, the following command will remove the `rc1.0.1` release candidate branch.
+The shared release candidate branch will be forcibly removed and no version tag will be created. The release candidate branch must be checked out and entered as the `local-branch-confirmation`. For example, the following command will remove the `rc1.0.1` release candidate branch.
 
 ```branch
 git checkout rc1.0.1
