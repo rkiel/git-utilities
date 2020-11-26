@@ -1,7 +1,8 @@
 let lib;
 
+// TODO:  read from .git-utilities
 function standard() {
-  return ["master", "release"];
+  return ["master", "release", "main", "develop"];
 }
 
 function isStandard(b) {

@@ -4,76 +4,97 @@
 
 ### Usage
 
-This utility is built around the standard branch `master` and branches for releases that follow the format of MAJOR.MINOR.PATCH.
+This feature branch utility is built to work with a set of standard branches (`develop`,`main`,`master`,`release`).
+These are the starting point branches from which you can create feature branches.
+It is assumed that your starting point branch exists both locally and remotely.
 
-Feature branches have specific format: USER-BASE-FEATURE.
+You can override the default set of standard branches by incorporating a `.git-utilities-rc` file (JSON) into your project repository.
+Branch names should be limited to a single word.
 
-* USER is the username as specified by the USER environment variable
-* BASE is the standard branch or release branch to base the feature branch on
-* FEATURE is the name of the feature
+```json
+{
+  "branches": ["develop", "test", "production"]
+}
+```
+
+Feature branch names have a specific format: USER-BRANCH-DESCRIPTION.
+
+- USER is the owner of the feature branch and is specified by either the FEATURE_USER or USER environment variables. This should prevent any feature branch name conflicts and make it easier to know who to talk to about deleting old/unused feature branches.
+- BRANCH is the standard branch from which the feature branch was started
+- DESCRIPTION is a series of one or more words which describe the feature. The description will be prepended to all commit messages.
 
 #### Start
 
-To start a new feature, go to the standard branch or a release branch.
+To start a new feature, checkout one of the standard branches.
+Use the `start` subcommand followed by a short series of words to describe the feature.
+For example, use a bug number and a short phrase as the description.
 
 ```
-git checkout master
+git checkout develop
+feature start 4365 update help
 ```
 
-Use the `start` subcommand with a feature name.
+In this example, user `bob` will create a new branch called `bob-develop-4365-update-help`.
+
+If you start with a branch other than one of the standard branches you will get an error.
+For example,
 
 ```
-feature start my new feature
-```
+git checkout hotfixes
+feature start 4365 update help
 
-For example, a new branch will be created called `rkiel-master-my-new-feature`
+ERROR: invalid base branch. must be one of: develop, main, master, release
+```
 
 #### Commit
 
 Use the `commit` subcommand to make it easier to write commit messages.
 No need to specify the `-m` parameter or wrapping the message in quotes.
-If you forget and pass in `-m` anyway, it will ignore it.
+Of course, if you forget and pass in `-m` anyway, it will be ignore it.
+The feature branch description will be prepended to your commit message.
 For example,
 
 ```
-feature commit this is a sample commit message
-feature commit -m this is a sample commit message
+feature commit corrected spelling mistakes
 ```
 
-generates the command `git commit -m "this is a sample commit message"`.
-
-The commit message will be prepended with the feature name.  For example,
+will generate the following commit message:
 
 ```
-my-feature-name: this is a sample commit message
+4365-update-help: corrected spelling mistakes
 ```
+
 If you need to by-pass any git pre-commit hooks, you can use the `-f` option to force the commit.
 This will invoke the commit with the `--no-verify` option.
 It will also add `(no-verify)` to the end of your commit message. For example,
 
 ```
-feature commit -f this is a sample commit message
-feature commit -m this is a sample commit message -f
+feature commit -f corrected spelling mistakes
 ```
 
-generates the command `git commit -m "this is a sample commit message (no-verify)" --no-verify`.
+will generate the following commit message:
 
+```
+4365-update-help: corrected spelling mistakes (no-verify)
+```
 
 #### Rebase
 
 Use the `rebase` subcommand to pull down any changes from the standard branch and then rebase with your feature branch changes.
 In addition, a backup copy of your feature changes will be pushed out to `origin`.
-This backup should not be used to collaborate with others.  It is just a personal backup and will be deleted and recreated with each `rebase`.
+This remote backup branch should NEVER be used to collaborate with others.
+It is just a personal backup and will be deleted and recreated with each `rebase`.
 
 ```
 feature rebase
 ```
 
-For example, `rkiel-master-my-new-feature` will be pushed out to `origin`.
+For example, the `bob-develop-4365-update-help` branch will be pushed out to `origin`.
 
 #### Merge
 
 Use the `merge` subcommand to merge your feature branch changes to the standard branch.
+A `rebase` will be performed automatically before the merge.
 
 ```
 feature merge
@@ -94,11 +115,14 @@ feature end
 
 Use the `trash` subcommand to forcibly close out the feature.
 The standard branch will be checkout and the local feature branch will be forcibly deleted.
-Make sure that your changes have been merged because they will be lost.
 If there is a backup copy on `origin`, it will also be removed.
-You must supply the name of the local feature branch on the command line as
-a confirmation.
+As a safety precaution, you must supply the name of the local feature branch on the command line as
+a confirmation. This will hopefully protect you from accidentally running `feature trash` when you meant `feature end`.
+
+WARNING: Make sure that your changes have been merged because they will be lost.
+
+For example,
 
 ```
-feature trash local-branch-confirmation
+feature trash bob-develop-4365-update-help
 ```

@@ -17,7 +17,7 @@ module Feature
       feature_name = feature_words.join('-')
       feature_branch = "#{ENV['FEATURE_USER']||ENV['USER']}-#{current_branch}-#{feature_name}"
 
-      error "invalid base branch: #{current_branch}"  unless standard_branches.include? current_branch or current_branch =~ /\d+\.\d+\.\d+/
+      error "invalid base branch. must be one of: #{standard_branches.sort.join(', ')}"  unless standard_branches.include? current_branch or current_branch =~ /\d+\.\d+\.\d+/
       error "invalid feature branch: #{feature_name}" if     standard_branches.include? feature_name
 
       git_fetch
@@ -25,7 +25,7 @@ module Feature
       git_branch feature_branch
       git_checkout feature_branch
       git_push feature_branch
-      
+
     end
   end
 

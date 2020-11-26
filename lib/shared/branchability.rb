@@ -10,7 +10,14 @@ module Shared
     end
 
     def standard_branches
-      ['master','release']
+      defaults = ['master','release','main','develop']
+      dot_file =  ".git-utilities-rc"
+      if File.exist? dot_file
+        json = JSON.parse(File.read(dot_file))
+        json['branches'] or defaults
+      else
+        defaults
+      end
     end
 
     def version_pattern
