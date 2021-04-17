@@ -23,7 +23,8 @@ if [ "$2" == "zsh" ] ; then
   if [ ! -z "$1" ] ; then
     echo "export FEATURE_USER=$1"                            >> $FILE
   fi
-  echo "source ${REPO}/dotfiles/zshrc"                       >> $FILE
+  echo "GIT_UTILITIES=${REPO}"                               >> $FILE
+  echo 'source ${GIT_UTILITIES}/dotfiles/zshrc'              >> $FILE
 else
   FILE=~/.bash_profile
   echo                                                        >> $FILE
@@ -38,5 +39,6 @@ else
 
   FILE=~/.bashrc
   echo                                                        >> $FILE
-  echo "source ${REPO}/dotfiles/bashrc"                       >> $FILE
+  echo "GIT_UTILITIES=${REPO}"                                >> $FILE
+  echo 'source ${GIT_UTILITIES}/dotfiles/bashrc'              >> $FILE
 fi
