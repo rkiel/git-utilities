@@ -1,6 +1,6 @@
 # Feature Workflow
 
-`bin/feature` is a Bash helper for short-lived, personal feature branches. The
+`bin/bash/feature` is a Bash helper for short-lived, personal feature branches. The
 remote feature branch is treated as a backup and code-review copy of local work;
 the branch owner is expected to be the only person changing it.
 
@@ -82,7 +82,7 @@ branch presence, and ahead/behind counts.
 
 ## Testing
 
-Run the regression tests after changing `bin/feature`:
+Run the regression tests after changing `bin/bash/feature`:
 
 ```bash
 tests/feature_test.sh
@@ -93,7 +93,7 @@ They do not touch real repositories or remotes.
 
 ## Maintenance Rule
 
-Any behavior change to `bin/feature` must update `tests/feature_test.sh` in the
+Any behavior change to `bin/bash/feature` must update `tests/feature_test.sh` in the
 same change. New subcommands need at least one happy-path test and one
 guard/error test. Branch-format or safety-rule changes must update both this
 document and the tests. Before considering a change complete, run:
