@@ -1,128 +1,109 @@
-[<<back](README.md)
+# Feature Workflow
 
-## Feature utility
+`bin/feature` is a Bash helper for short-lived, personal feature branches. The
+remote feature branch is treated as a backup and code-review copy of local work;
+the branch owner is expected to be the only person changing it.
 
-### Usage
+## Branch Format
 
-This feature branch utility is built to work with a set of standard branches (`develop`,`main`,`master`,`release`).
-These are the starting point branches from which you can create feature branches.
-It is assumed that your starting point branch exists both locally and remotely.
+Feature branches created by the script use:
 
-You can override the default set of standard branches by incorporating a `.git-utilities-rc` file (JSON) into your project repository.
-Branch names should be limited to a single word.
-
-```json
-{
-  "branches": ["develop", "test", "production"]
-}
+```text
+f-<initial-branch>-<ticket>-<user>-<description>
 ```
 
-Feature branch names have a specific format: USER-BRANCH-DESCRIPTION.
+Example:
 
-- USER is the owner of the feature branch and is specified by either the FEATURE_USER or USER environment variables. This should prevent any feature branch name conflicts and make it easier to know who to talk to about deleting old/unused feature branches.
-- BRANCH is the standard branch from which the feature branch was started
-- DESCRIPTION is a series of one or more words which describe the feature. The description will be prepended to all commit messages.
-
-#### Start
-
-To start a new feature, checkout one of the standard branches.
-Use the `start` subcommand followed by a short series of words to describe the feature.
-For example, use a bug number and a short phrase as the description.
-
-```
-git checkout develop
-feature start 4365 update help
+```bash
+FEATURE_USER=sam feature start 123 add login
+# f-main-123-sam-add-login
 ```
 
-In this example, user `bob` will create a new branch called `bob-develop-4365-update-help`.
+`FEATURE_USER` overrides the user field. If unset, the script uses `id -un`.
+The user field may contain only letters, numbers, and underscores.
 
-If you start with a branch other than one of the standard branches you will get an error.
-For example,
+The initial branch must contain only letters and numbers, such as `main`,
+`master`, or `release2026`.
 
-```
-git checkout hotfixes
-feature start 4365 update help
+## Commands
 
-ERROR: invalid base branch. must be one of: develop, main, master, release
-```
-
-#### Commit
-
-Use the `commit` subcommand to make it easier to write commit messages.
-No need to specify the `-m` parameter or wrapping the message in quotes.
-Of course, if you forget and pass in `-m` anyway, it will be ignore it.
-The feature branch description will be prepended to your commit message.
-For example,
-
-```
-feature commit corrected spelling mistakes
-```
-
-will generate the following commit message:
-
-```
-4365-update-help: corrected spelling mistakes
-```
-
-If you need to by-pass any git pre-commit hooks, you can use the `-f` option to force the commit.
-This will invoke the commit with the `--no-verify` option.
-It will also add `(no-verify)` to the end of your commit message. For example,
-
-```
-feature commit -f corrected spelling mistakes
-```
-
-will generate the following commit message:
-
-```
-4365-update-help: corrected spelling mistakes (no-verify)
-```
-
-#### Rebase
-
-Use the `rebase` subcommand to pull down any changes from the standard branch and then rebase with your feature branch changes.
-In addition, a backup copy of your feature changes will be pushed out to `origin`.
-This remote backup branch should NEVER be used to collaborate with others.
-It is just a personal backup and will be deleted and recreated with each `rebase`.
-
-```
+```bash
+feature help
+feature status
+feature start <ticket-number> <words...>
+feature commit <message...>
 feature rebase
-```
-
-For example, the `bob-develop-4365-update-help` branch will be pushed out to `origin`.
-
-#### Merge
-
-Use the `merge` subcommand to merge your feature branch changes to the standard branch.
-A `rebase` will be performed automatically before the merge.
-
-```
 feature merge
-```
-
-#### End
-
-Use the `end` subcommand to safely close out the feature.
-The standard branch will be checkout and the local feature branch will be deleted.
-This command will fail if you have not merged your changes.
-If successful and there is a backup copy on `origin`, it will also be removed.
-
-```
 feature end
+feature trash <feature-branch>
 ```
 
-#### Trash
+`feature start` must be run from an initial branch. It fetches all remotes,
+prunes stale refs, fetches tags, rebases the initial branch on
+`origin/<initial-branch>` with autostash, creates the feature branch, pushes it
+to `origin`, and sets upstream tracking.
 
-Use the `trash` subcommand to forcibly close out the feature.
-The standard branch will be checkout and the local feature branch will be forcibly deleted.
-If there is a backup copy on `origin`, it will also be removed.
-As a safety precaution, you must supply the name of the local feature branch on the command line as
-a confirmation. This will hopefully protect you from accidentally running `feature trash` when you meant `feature end`.
+`feature commit` must be run from a feature branch. It runs `git add --patch`,
+commits with a message in the form `#<ticket> <message>`, then force-pushes the
+feature branch to `origin`.
 
-WARNING: Make sure that your changes have been merged because they will be lost.
+`feature rebase` must be run from a feature branch with no staged changes and no
+unstaged tracked changes. Untracked files are allowed. It updates the initial
+branch, interactively rebases the feature branch onto it using `;` as Git's
+comment character, then force-pushes the feature branch to `origin`.
 
-For example,
+`feature merge` does everything `feature rebase` does, then switches to the
+initial branch, fast-forwards it from the feature branch, pushes the initial
+branch normally to `origin`, and switches back to the feature branch.
 
+`feature end` must be run from a feature branch. It fails unless the feature
+branch and initial branch agree. If they do, it switches to the initial branch,
+deletes the remote feature branch, deletes the local feature branch, and prunes
+`origin`.
+
+`feature trash <feature-branch>` must be run from that exact feature branch. It
+does not check whether work was merged. It switches to the initial branch,
+deletes the remote feature branch, deletes the local feature branch, and prunes
+`origin`.
+
+`feature status` reports the current branch, parsed feature metadata when
+available, staged changes, unstaged tracked changes, untracked files, remote
+branch presence, and ahead/behind counts.
+
+## Safety Rules
+
+- Feature branches are considered personal and single-owner.
+- Feature branch pushes use `--force` because local work is the source of truth.
+- Initial branch pushes are normal pushes, never force pushes.
+- `rebase` and `merge` block staged changes and unstaged tracked changes.
+- Untracked files are allowed so local scratch files do not block the workflow.
+- `trash` requires the exact feature branch name as confirmation.
+- `end` only deletes a feature branch after it agrees with the initial branch.
+
+## Testing
+
+Run the regression tests after changing `bin/feature`:
+
+```bash
+tests/feature_test.sh
 ```
-feature trash bob-develop-4365-update-help
+
+The tests create disposable Git repositories and bare remotes under `/tmp`.
+They do not touch real repositories or remotes.
+
+## Maintenance Rule
+
+Any behavior change to `bin/feature` must update `tests/feature_test.sh` in the
+same change. New subcommands need at least one happy-path test and one
+guard/error test. Branch-format or safety-rule changes must update both this
+document and the tests. Before considering a change complete, run:
+
+```bash
+tests/feature_test.sh
 ```
+
+## Open Question
+
+`feature merge` pushes directly to the initial branch. That fits repos where the
+user may push to `main`/`master` directly. For repos with protected branches or
+PR-only policies, this command may need a different final step.

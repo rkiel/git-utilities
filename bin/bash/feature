@@ -1,0 +1,433 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_NAME="$(basename "$0")"
+
+print_help() {
+  cat <<HELP
+Usage:
+  $SCRIPT_NAME help
+  $SCRIPT_NAME status
+  $SCRIPT_NAME start <ticket-number> <words...>
+  $SCRIPT_NAME commit <message...>
+  $SCRIPT_NAME rebase
+  $SCRIPT_NAME merge
+  $SCRIPT_NAME end
+  $SCRIPT_NAME trash <feature-branch>
+
+Examples:
+  $SCRIPT_NAME start 123 add login
+  $SCRIPT_NAME commit implement form validation
+  $SCRIPT_NAME rebase
+  $SCRIPT_NAME merge
+  $SCRIPT_NAME end
+  $SCRIPT_NAME trash f-main-123-bob-add-login
+
+Branch format:
+  f-<initial-branch>-<ticket>-<user>-<description>
+
+Environment:
+  FEATURE_USER overrides the user field in new feature branch names.
+  If unset, the current system user from id -un is used.
+  FEATURE_USER may contain only letters, numbers, and underscores.
+HELP
+}
+
+usage() {
+  print_help >&2
+}
+
+die_usage() {
+  usage
+  exit 2
+}
+
+show_help() {
+  if [ "$#" -ne 0 ]; then
+    die_usage
+  fi
+
+  print_help
+}
+
+require_git_work_tree() {
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    printf 'feature: must be run inside a Git work tree\n' >&2
+    exit 1
+  fi
+}
+
+require_ticket_number() {
+  if [[ ! "$1" =~ ^[0-9]+$ ]]; then
+    die_usage
+  fi
+}
+
+require_no_staged_changes() {
+  if ! git diff --cached --quiet; then
+    printf 'feature: command requires no staged changes\n' >&2
+    exit 1
+  fi
+}
+
+require_no_unstaged_tracked_changes() {
+  if ! git diff --quiet; then
+    printf 'feature: command requires no unstaged tracked changes\n' >&2
+    exit 1
+  fi
+}
+
+current_named_branch() {
+  local branch
+
+  if ! branch="$(git branch --show-current)"; then
+    printf 'feature: could not determine the current branch\n' >&2
+    exit 1
+  fi
+
+  if [ -z "$branch" ]; then
+    printf 'feature: must be run from a named branch\n' >&2
+    exit 1
+  fi
+
+  printf '%s\n' "$branch"
+}
+
+require_initial_branch_name() {
+  local branch="$1"
+
+  if [[ ! "$branch" =~ ^[A-Za-z0-9]+$ ]]; then
+    printf 'feature: start must be run from a branch containing only letters and numbers, like main or master\n' >&2
+    exit 1
+  fi
+}
+
+require_feature_user_name() {
+  local user="$1"
+
+  if [[ ! "$user" =~ ^[A-Za-z0-9_]+$ ]]; then
+    printf 'feature: user name must contain only letters, numbers, and underscores\n' >&2
+    exit 1
+  fi
+}
+
+is_feature_branch() {
+  local branch="$1"
+  local -a parts
+
+  IFS=- read -r -a parts <<<"$branch"
+
+  [ "${#parts[@]}" -ge 5 ] && [ "${parts[0]}" = "f" ] && [[ "${parts[1]}" =~ ^[A-Za-z0-9]+$ ]] && [[ "${parts[2]}" =~ ^[0-9]+$ ]]
+}
+
+feature_branch_part() {
+  local branch="$1"
+  local part_index="$2"
+  local -a parts
+
+  IFS=- read -r -a parts <<<"$branch"
+
+  if is_feature_branch "$branch"; then
+    printf '%s\n' "${parts[$part_index]}"
+    return 0
+  fi
+
+  printf 'feature: branch does not look like a feature branch created by this script\n' >&2
+  exit 1
+}
+
+require_feature_branch() {
+  feature_branch_part "$1" 0 >/dev/null
+}
+
+initial_branch_for() {
+  feature_branch_part "$1" 1
+}
+
+ticket_for() {
+  feature_branch_part "$1" 2
+}
+
+branch_name_for() {
+  local base_branch="$1"
+  local ticket="$2"
+  shift 2
+
+  local user description
+  user="${FEATURE_USER:-$(id -un)}"
+  require_feature_user_name "$user"
+  description="$(IFS=-; printf '%s' "$*")"
+  printf 'f-%s-%s-%s-%s\n' "$base_branch" "$ticket" "$user" "$description"
+}
+
+status() {
+  if [ "$#" -ne 0 ]; then
+    die_usage
+  fi
+
+  local branch remote_ref staged unstaged untracked
+
+  require_git_work_tree
+
+  branch="$(current_named_branch)"
+
+  printf 'Current branch: %s\n' "$branch"
+
+  if is_feature_branch "$branch"; then
+    local base_branch ticket
+    base_branch="$(initial_branch_for "$branch")"
+    ticket="$(ticket_for "$branch")"
+
+    printf 'Feature branch: yes\n'
+    printf 'Initial branch: %s\n' "$base_branch"
+    printf 'Ticket: #%s\n' "$ticket"
+
+    if git show-ref --verify --quiet "refs/heads/$base_branch"; then
+      if git diff --quiet "$base_branch" "$branch"; then
+        printf 'Agrees with initial branch: yes\n'
+      else
+        printf 'Agrees with initial branch: no\n'
+      fi
+    else
+      printf 'Agrees with initial branch: initial branch missing locally\n'
+    fi
+  else
+    printf 'Feature branch: no\n'
+  fi
+
+  staged="no"
+  if ! git diff --cached --quiet; then
+    staged="yes"
+  fi
+
+  unstaged="no"
+  if ! git diff --quiet; then
+    unstaged="yes"
+  fi
+
+  untracked="no"
+  if [ -n "$(git ls-files --others --exclude-standard)" ]; then
+    untracked="yes"
+  fi
+
+  printf 'Staged changes: %s\n' "$staged"
+  printf 'Unstaged tracked changes: %s\n' "$unstaged"
+  printf 'Untracked files: %s\n' "$untracked"
+
+  remote_ref="origin/$branch"
+  if git show-ref --verify --quiet "refs/remotes/$remote_ref"; then
+    local behind ahead
+    read -r behind ahead < <(git rev-list --left-right --count "$remote_ref...$branch")
+    printf 'Remote branch: %s\n' "$remote_ref"
+    printf 'Ahead of remote: %s\n' "$ahead"
+    printf 'Behind remote: %s\n' "$behind"
+  else
+    printf 'Remote branch: missing (%s)\n' "$remote_ref"
+  fi
+}
+
+sync_initial_branch() {
+  local base_branch="$1"
+  local remote_ref="origin/$base_branch"
+
+  git fetch --all --prune --tags
+
+  if ! git show-ref --verify --quiet "refs/remotes/$remote_ref"; then
+    printf 'feature: remote branch "%s" does not exist\n' "$remote_ref" >&2
+    exit 1
+  fi
+
+  git rebase --autostash "$remote_ref"
+}
+
+start() {
+  if [ "$#" -lt 2 ]; then
+    die_usage
+  fi
+
+  local ticket base_branch branch_name
+  ticket="$1"
+  shift
+
+  require_ticket_number "$ticket"
+  require_git_work_tree
+
+  base_branch="$(current_named_branch)"
+  require_initial_branch_name "$base_branch"
+  branch_name="$(branch_name_for "$base_branch" "$ticket" "$@")"
+  sync_initial_branch "$base_branch"
+
+  git switch -c "$branch_name"
+  git push -u origin "$branch_name"
+}
+
+commit() {
+  if [ "$#" -lt 1 ]; then
+    die_usage
+  fi
+
+  local feature_branch ticket message
+
+  require_git_work_tree
+
+  feature_branch="$(current_named_branch)"
+  require_feature_branch "$feature_branch"
+  ticket="$(ticket_for "$feature_branch")"
+  message="$*"
+
+  git add --patch
+  git commit -m "#${ticket} ${message}"
+  git push --force origin "$feature_branch"
+}
+
+sync_and_rebase_feature_branch() {
+  local result_prefix="$1"
+  local feature_branch base_branch
+
+  require_git_work_tree
+  require_no_staged_changes
+  require_no_unstaged_tracked_changes
+
+  feature_branch="$(current_named_branch)"
+  require_feature_branch "$feature_branch"
+  base_branch="$(initial_branch_for "$feature_branch")"
+
+  if ! git show-ref --verify --quiet "refs/heads/$base_branch"; then
+    printf 'feature: initial branch "%s" does not exist locally\n' "$base_branch" >&2
+    exit 1
+  fi
+
+  git switch "$base_branch"
+  sync_initial_branch "$base_branch"
+  git switch "$feature_branch"
+  git -c core.commentChar=';' rebase -i "$base_branch"
+  git push --force origin "$feature_branch"
+
+  printf -v "${result_prefix}_feature_branch" '%s' "$feature_branch"
+  printf -v "${result_prefix}_base_branch" '%s' "$base_branch"
+}
+
+rebase() {
+  if [ "$#" -ne 0 ]; then
+    die_usage
+  fi
+
+  sync_and_rebase_feature_branch rebase
+}
+
+merge() {
+  if [ "$#" -ne 0 ]; then
+    die_usage
+  fi
+
+  local feature_branch base_branch
+  local merge_feature_branch merge_base_branch
+  sync_and_rebase_feature_branch merge
+  feature_branch="$merge_feature_branch"
+  base_branch="$merge_base_branch"
+
+  git switch "$base_branch"
+  git merge --ff-only "$feature_branch"
+  git push origin "$base_branch"
+  git switch "$feature_branch"
+}
+
+delete_feature_branch() {
+  local base_branch="$1"
+  local feature_branch="$2"
+
+  git switch "$base_branch"
+  git push origin --delete "$feature_branch"
+  git branch -D "$feature_branch"
+  git fetch origin --prune
+}
+
+end() {
+  if [ "$#" -ne 0 ]; then
+    die_usage
+  fi
+
+  local feature_branch base_branch
+
+  require_git_work_tree
+
+  feature_branch="$(current_named_branch)"
+  require_feature_branch "$feature_branch"
+  base_branch="$(initial_branch_for "$feature_branch")"
+
+  if ! git show-ref --verify --quiet "refs/heads/$base_branch"; then
+    printf 'feature: initial branch "%s" does not exist locally\n' "$base_branch" >&2
+    exit 1
+  fi
+
+  if ! git diff --quiet "$base_branch" "$feature_branch"; then
+    printf 'feature: "%s" and "%s" do not agree; merge back before ending\n' "$base_branch" "$feature_branch" >&2
+    exit 1
+  fi
+
+  delete_feature_branch "$base_branch" "$feature_branch"
+}
+
+trash() {
+  if [ "$#" -ne 1 ]; then
+    die_usage
+  fi
+
+  local expected_branch feature_branch base_branch
+  expected_branch="$1"
+
+  require_git_work_tree
+
+  feature_branch="$(current_named_branch)"
+  require_feature_branch "$feature_branch"
+  if [ "$expected_branch" != "$feature_branch" ]; then
+    printf 'feature: trash confirmation "%s" does not match current branch "%s"\n' "$expected_branch" "$feature_branch" >&2
+    exit 1
+  fi
+
+  base_branch="$(initial_branch_for "$feature_branch")"
+
+  if ! git show-ref --verify --quiet "refs/heads/$base_branch"; then
+    printf 'feature: initial branch "%s" does not exist locally\n' "$base_branch" >&2
+    exit 1
+  fi
+
+  delete_feature_branch "$base_branch" "$feature_branch"
+}
+
+if [ "$#" -lt 1 ]; then
+  die_usage
+fi
+
+command="$1"
+shift
+
+case "$command" in
+  help)
+    show_help "$@"
+    ;;
+  status)
+    status "$@"
+    ;;
+  start)
+    start "$@"
+    ;;
+  commit)
+    commit "$@"
+    ;;
+  rebase)
+    rebase "$@"
+    ;;
+  merge)
+    merge "$@"
+    ;;
+  end)
+    end "$@"
+    ;;
+  trash)
+    trash "$@"
+    ;;
+  *)
+    die_usage
+    ;;
+esac
