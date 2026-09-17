@@ -9,21 +9,23 @@ the branch owner is expected to be the only person changing it.
 Feature branches created by the script use:
 
 ```text
-f-<initial-branch>-<ticket>-<user>-<description>
+<initial-branch>--<user>--<ticket>--<description>
 ```
 
 Example:
 
 ```bash
 FEATURE_USER=sam feature start 123 add login
-# f-main-123-sam-add-login
+# main--sam--123--add-login
 ```
 
 `FEATURE_USER` overrides the user field. If unset, the script uses `id -un`.
 The user field may contain only letters, numbers, and underscores.
 
-The initial branch must contain only letters and numbers, such as `main`,
-`master`, or `release2026`.
+The initial branch may use any valid Git branch name except one containing
+`--`. The double dash is reserved for separating feature branch metadata, so
+names such as `main`, `release/1.2.3`, and `release_candidate/2.0+qa` are
+supported.
 
 ## Commands
 
@@ -41,7 +43,8 @@ feature trash <feature-branch>
 `feature start` must be run from an initial branch. It fetches all remotes,
 prunes stale refs, fetches tags, rebases the initial branch on
 `origin/<initial-branch>` with autostash, creates the feature branch, pushes it
-to `origin`, and sets upstream tracking.
+to `origin`, and sets upstream tracking. It rejects feature branches and any
+other initial branch containing the reserved `--` delimiter.
 
 `feature commit` must be run from a feature branch. It runs `git add --patch`,
 commits with a message in the form `#<ticket> <message>`, then force-pushes the
@@ -73,6 +76,9 @@ branch presence, and ahead/behind counts.
 ## Safety Rules
 
 - Feature branches are considered personal and single-owner.
+- Feature branches use `<initial>--<user>--<ticket>--<description>`.
+- Initial branches may use any Git-valid name except one containing `--`.
+- A feature branch cannot be started from another feature branch.
 - Feature branch pushes use `--force` because local work is the source of truth.
 - Initial branch pushes are normal pushes, never force pushes.
 - `rebase` and `merge` block staged changes and unstaged tracked changes.

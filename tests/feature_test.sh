@@ -87,6 +87,14 @@ make_repo() {
   printf '%s\n' "$repo"
 }
 
+create_initial_branch() {
+  local repo="$1"
+  local branch="$2"
+
+  git -C "$repo" switch -c "$branch" >/dev/null
+  git -C "$repo" push -u origin "$branch" >/dev/null 2>&1
+}
+
 run_test() {
   local name="$1"
   shift
@@ -118,9 +126,9 @@ test_start_and_status() {
   (cd "$repo" && FEATURE_USER=sam "$FEATURE" start 123 add login >/dev/null 2>&1)
 
   branch="$(git -C "$repo" branch --show-current)"
-  remote_ref="$(git -C "$repo" ls-remote --heads origin f-main-123-sam-add-login)"
+  remote_ref="$(git -C "$repo" ls-remote --heads origin main--sam--123--add-login)"
 
-  assert_eq "f-main-123-sam-add-login" "$branch" "start switches to feature branch"
+  assert_eq "main--sam--123--add-login" "$branch" "start switches to feature branch"
   if [ -z "$remote_ref" ]; then
     printf 'not ok: start did not create remote feature branch\n' >&2
     exit 1
@@ -160,9 +168,9 @@ test_commit_pushes_feature_branch() {
   branch="$(git -C "$repo" branch --show-current)"
   subject="$(git -C "$repo" log -1 --format=%s)"
   local_head="$(git -C "$repo" rev-parse HEAD)"
-  remote_head="$(git -C "$repo" rev-parse origin/f-main-901-sam-commit-pushes)"
+  remote_head="$(git -C "$repo" rev-parse origin/main--sam--901--commit-pushes)"
 
-  assert_eq "f-main-901-sam-commit-pushes" "$branch" "commit remains on feature branch"
+  assert_eq "main--sam--901--commit-pushes" "$branch" "commit remains on feature branch"
   assert_eq "#901 push after commit" "$subject" "commit prefixes ticket"
   assert_eq "$local_head" "$remote_head" "commit force-pushes feature branch"
 }
@@ -181,7 +189,7 @@ test_rebase_blocks_tracked_changes_but_allows_untracked() {
 
   assert_eq 1 "$status" "rebase blocks unstaged tracked changes"
   assert_contains "no unstaged tracked changes" "$output" "rebase explains dirty tracked failure"
-  assert_eq "f-main-111-sam-dirty-rebase" "$(git -C "$repo" branch --show-current)" "failed rebase keeps feature branch"
+  assert_eq "main--sam--111--dirty-rebase" "$(git -C "$repo" branch --show-current)" "failed rebase keeps feature branch"
 
   git -C "$repo" checkout -- README.md
   printf 'feature\n' >"$repo/feature.txt"
@@ -192,10 +200,10 @@ test_rebase_blocks_tracked_changes_but_allows_untracked() {
 
   branch="$(git -C "$repo" branch --show-current)"
   local_head="$(git -C "$repo" rev-parse HEAD)"
-  remote_head="$(git -C "$repo" rev-parse origin/f-main-111-sam-dirty-rebase)"
+  remote_head="$(git -C "$repo" rev-parse origin/main--sam--111--dirty-rebase)"
   junk="$(sed -n '1p' "$repo/junk.tmp")"
 
-  assert_eq "f-main-111-sam-dirty-rebase" "$branch" "rebase stays on feature branch"
+  assert_eq "main--sam--111--dirty-rebase" "$branch" "rebase stays on feature branch"
   assert_eq "$local_head" "$remote_head" "rebase force-pushes feature branch"
   assert_eq "local junk" "$junk" "rebase allows untracked files"
 }
@@ -212,10 +220,10 @@ test_merge_pushes_initial_branch() {
 
   branch="$(git -C "$repo" branch --show-current)"
   main_head="$(git -C "$repo" rev-parse main)"
-  feature_head="$(git -C "$repo" rev-parse f-main-222-sam-merge-flow)"
+  feature_head="$(git -C "$repo" rev-parse main--sam--222--merge-flow)"
   origin_main="$(git -C "$repo" rev-parse origin/main)"
 
-  assert_eq "f-main-222-sam-merge-flow" "$branch" "merge returns to feature branch"
+  assert_eq "main--sam--222--merge-flow" "$branch" "merge returns to feature branch"
   assert_eq "$feature_head" "$main_head" "merge fast-forwards initial branch"
   assert_eq "$main_head" "$origin_main" "merge pushes initial branch"
 }
@@ -228,8 +236,8 @@ test_end_and_trash_cleanup() {
   (cd "$repo" && "$FEATURE" end >/dev/null 2>&1)
 
   assert_eq "main" "$(git -C "$repo" branch --show-current)" "end switches to initial branch"
-  assert_branch_missing "$repo" f-main-333-sam-end-cleanup
-  assert_remote_branch_missing "$repo" f-main-333-sam-end-cleanup
+  assert_branch_missing "$repo" main--sam--333--end-cleanup
+  assert_remote_branch_missing "$repo" main--sam--333--end-cleanup
 
   repo="$(make_repo trash-cleanup)"
   (cd "$repo" && FEATURE_USER=sam "$FEATURE" start 444 trash cleanup >/dev/null 2>&1)
@@ -240,8 +248,108 @@ test_end_and_trash_cleanup() {
   (cd "$repo" && "$FEATURE" trash "$branch" >/dev/null 2>&1)
 
   assert_eq "main" "$(git -C "$repo" branch --show-current)" "trash switches to initial branch"
-  assert_branch_missing "$repo" f-main-444-sam-trash-cleanup
-  assert_remote_branch_missing "$repo" f-main-444-sam-trash-cleanup
+  assert_branch_missing "$repo" main--sam--444--trash-cleanup
+  assert_remote_branch_missing "$repo" main--sam--444--trash-cleanup
+}
+
+test_release_branch_full_workflow() {
+  local repo branch output local_head remote_head base_head origin_base
+
+  repo="$(make_repo release-workflow)"
+  create_initial_branch "$repo" release/1.2.3
+  (cd "$repo" && FEATURE_USER=bob "$FEATURE" start 555 release candidate >/dev/null 2>&1)
+
+  branch="$(git -C "$repo" branch --show-current)"
+  assert_eq "release/1.2.3--bob--555--release-candidate" "$branch" "start preserves slash and period in initial branch"
+
+  output="$(cd "$repo" && "$FEATURE" status)"
+  assert_contains "Feature branch: yes" "$output" "status recognizes release feature branch"
+  assert_contains "Initial branch: release/1.2.3" "$output" "status restores release initial branch"
+  assert_contains "Ticket: #555" "$output" "status restores release ticket"
+
+  printf 'release feature\n' >"$repo/release.txt"
+  git -C "$repo" add release.txt
+  git -C "$repo" commit -m '#555 release work' >/dev/null
+  (cd "$repo" && GIT_SEQUENCE_EDITOR=: "$FEATURE" rebase >/dev/null 2>&1)
+
+  local_head="$(git -C "$repo" rev-parse HEAD)"
+  remote_head="$(git -C "$repo" rev-parse origin/release/1.2.3--bob--555--release-candidate)"
+  assert_eq "$local_head" "$remote_head" "rebase pushes release feature branch"
+
+  (cd "$repo" && GIT_SEQUENCE_EDITOR=: "$FEATURE" merge >/dev/null 2>&1)
+  assert_eq "$branch" "$(git -C "$repo" branch --show-current)" "merge returns to release feature branch"
+
+  base_head="$(git -C "$repo" rev-parse release/1.2.3)"
+  origin_base="$(git -C "$repo" rev-parse origin/release/1.2.3)"
+  assert_eq "$local_head" "$base_head" "merge fast-forwards release initial branch"
+  assert_eq "$base_head" "$origin_base" "merge pushes release initial branch"
+
+  (cd "$repo" && "$FEATURE" end >/dev/null 2>&1)
+  assert_eq "release/1.2.3" "$(git -C "$repo" branch --show-current)" "end returns to release initial branch"
+  assert_branch_missing "$repo" "$branch"
+  assert_remote_branch_missing "$repo" "$branch"
+}
+
+test_accepts_other_git_valid_initial_names() {
+  local repo branch output
+
+  repo="$(make_repo flexible-initial)"
+  create_initial_branch "$repo" release_candidate/2.0+qa
+  (cd "$repo" && FEATURE_USER=sam "$FEATURE" start 666 flexible base >/dev/null 2>&1)
+
+  branch="$(git -C "$repo" branch --show-current)"
+  assert_eq "release_candidate/2.0+qa--sam--666--flexible-base" "$branch" "start accepts Git-valid initial branch characters"
+
+  output="$(cd "$repo" && "$FEATURE" status)"
+  assert_contains "Initial branch: release_candidate/2.0+qa" "$output" "status restores flexible initial branch"
+
+  (cd "$repo" && "$FEATURE" trash "$branch" >/dev/null 2>&1)
+  assert_branch_missing "$repo" "$branch"
+  assert_remote_branch_missing "$repo" "$branch"
+}
+
+test_start_rejects_reserved_and_feature_branches() {
+  local repo status output branch
+
+  repo="$(make_repo reserved-initial)"
+  git -C "$repo" switch -c release--candidate >/dev/null
+
+  set +e
+  output="$(cd "$repo" && FEATURE_USER=sam "$FEATURE" start 700 reserved delimiter 2>&1)"
+  status="$?"
+  set -e
+
+  assert_eq 1 "$status" "start rejects reserved delimiter in initial branch"
+  assert_contains "reserved -- delimiter" "$output" "reserved delimiter failure is clear"
+  assert_eq "release--candidate" "$(git -C "$repo" branch --show-current)" "reserved delimiter failure keeps initial branch"
+
+  repo="$(make_repo nested-feature)"
+  (cd "$repo" && FEATURE_USER=sam "$FEATURE" start 701 first feature >/dev/null 2>&1)
+  branch="$(git -C "$repo" branch --show-current)"
+
+  set +e
+  output="$(cd "$repo" && FEATURE_USER=sam "$FEATURE" start 702 nested feature 2>&1)"
+  status="$?"
+  set -e
+
+  assert_eq 1 "$status" "start rejects new-format feature branch"
+  assert_contains "cannot start a feature branch from another feature branch" "$output" "nested feature failure is clear"
+  assert_eq "$branch" "$(git -C "$repo" branch --show-current)" "nested feature failure keeps current branch"
+}
+
+test_feature_commands_reject_unsupported_formats() {
+  local repo status output
+
+  repo="$(make_repo malformed-feature)"
+  git -C "$repo" switch -c main--sam--ticket--description >/dev/null
+
+  set +e
+  output="$(cd "$repo" && "$FEATURE" end 2>&1)"
+  status="$?"
+  set -e
+
+  assert_eq 1 "$status" "feature command rejects malformed new-format branch"
+  assert_contains "does not look like a feature branch" "$output" "malformed branch failure is clear"
 }
 
 run_test "help and usage" test_help_and_usage
@@ -251,5 +359,9 @@ run_test "commit pushes feature branch" test_commit_pushes_feature_branch
 run_test "rebase dirty policy" test_rebase_blocks_tracked_changes_but_allows_untracked
 run_test "merge pushes initial branch" test_merge_pushes_initial_branch
 run_test "end and trash cleanup" test_end_and_trash_cleanup
+run_test "release branch workflow" test_release_branch_full_workflow
+run_test "other Git-valid initial names" test_accepts_other_git_valid_initial_names
+run_test "start rejects reserved and feature branches" test_start_rejects_reserved_and_feature_branches
+run_test "feature commands reject unsupported formats" test_feature_commands_reject_unsupported_formats
 
 printf 'all tests passed\n'

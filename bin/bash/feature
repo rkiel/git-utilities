@@ -21,10 +21,13 @@ Examples:
   $SCRIPT_NAME rebase
   $SCRIPT_NAME merge
   $SCRIPT_NAME end
-  $SCRIPT_NAME trash f-main-123-bob-add-login
+  $SCRIPT_NAME trash main--bob--123--add-login
 
 Branch format:
-  f-<initial-branch>-<ticket>-<user>-<description>
+  <initial-branch>--<user>--<ticket>--<description>
+
+Initial branches:
+  Any Git-valid branch name is allowed except names containing --.
 
 Environment:
   FEATURE_USER overrides the user field in new feature branch names.
@@ -96,8 +99,18 @@ current_named_branch() {
 require_initial_branch_name() {
   local branch="$1"
 
-  if [[ ! "$branch" =~ ^[A-Za-z0-9]+$ ]]; then
-    printf 'feature: start must be run from a branch containing only letters and numbers, like main or master\n' >&2
+  if is_feature_branch "$branch"; then
+    printf 'feature: cannot start a feature branch from another feature branch\n' >&2
+    exit 1
+  fi
+
+  if [[ "$branch" == *--* ]]; then
+    printf 'feature: initial branch "%s" contains the reserved -- delimiter\n' "$branch" >&2
+    exit 1
+  fi
+
+  if ! git check-ref-format --branch "$branch" >/dev/null 2>&1; then
+    printf 'feature: initial branch "%s" is not a valid Git branch name\n' "$branch" >&2
     exit 1
   fi
 }
@@ -111,24 +124,63 @@ require_feature_user_name() {
   fi
 }
 
-is_feature_branch() {
+parse_feature_branch() {
   local branch="$1"
-  local -a parts
+  local remainder initial user ticket description
 
-  IFS=- read -r -a parts <<<"$branch"
+  [[ "$branch" == *--* ]] || return 1
+  initial="${branch%%--*}"
+  remainder="${branch#*--}"
 
-  [ "${#parts[@]}" -ge 5 ] && [ "${parts[0]}" = "f" ] && [[ "${parts[1]}" =~ ^[A-Za-z0-9]+$ ]] && [[ "${parts[2]}" =~ ^[0-9]+$ ]]
+  [[ "$remainder" == *--* ]] || return 1
+  user="${remainder%%--*}"
+  remainder="${remainder#*--}"
+
+  [[ "$remainder" == *--* ]] || return 1
+  ticket="${remainder%%--*}"
+  description="${remainder#*--}"
+
+  [ -n "$initial" ] || return 1
+  git check-ref-format --branch "$initial" >/dev/null 2>&1 || return 1
+  [[ "$initial" != *--* ]] || return 1
+  [[ "$user" =~ ^[A-Za-z0-9_]+$ ]] || return 1
+  [[ "$ticket" =~ ^[0-9]+$ ]] || return 1
+  [ -n "$description" ] || return 1
+  git check-ref-format --branch "$branch" >/dev/null 2>&1 || return 1
+
+  printf '%s\t%s\t%s\t%s\n' "$initial" "$user" "$ticket" "$description"
+}
+
+is_feature_branch() {
+  parse_feature_branch "$1" >/dev/null
 }
 
 feature_branch_part() {
   local branch="$1"
-  local part_index="$2"
-  local -a parts
+  local requested_part="$2"
+  local parsed initial user ticket description
 
-  IFS=- read -r -a parts <<<"$branch"
+  if parsed="$(parse_feature_branch "$branch")"; then
+    IFS=$'\t' read -r initial user ticket description <<<"$parsed"
 
-  if is_feature_branch "$branch"; then
-    printf '%s\n' "${parts[$part_index]}"
+    case "$requested_part" in
+      initial)
+        printf '%s\n' "$initial"
+        ;;
+      user)
+        printf '%s\n' "$user"
+        ;;
+      ticket)
+        printf '%s\n' "$ticket"
+        ;;
+      description)
+        printf '%s\n' "$description"
+        ;;
+      *)
+        printf 'feature: unknown feature branch field "%s"\n' "$requested_part" >&2
+        exit 1
+        ;;
+    esac
     return 0
   fi
 
@@ -137,15 +189,15 @@ feature_branch_part() {
 }
 
 require_feature_branch() {
-  feature_branch_part "$1" 0 >/dev/null
+  feature_branch_part "$1" initial >/dev/null
 }
 
 initial_branch_for() {
-  feature_branch_part "$1" 1
+  feature_branch_part "$1" initial
 }
 
 ticket_for() {
-  feature_branch_part "$1" 2
+  feature_branch_part "$1" ticket
 }
 
 branch_name_for() {
@@ -153,11 +205,23 @@ branch_name_for() {
   local ticket="$2"
   shift 2
 
-  local user description
+  local user description branch_name
   user="${FEATURE_USER:-$(id -un)}"
   require_feature_user_name "$user"
   description="$(IFS=-; printf '%s' "$*")"
-  printf 'f-%s-%s-%s-%s\n' "$base_branch" "$ticket" "$user" "$description"
+
+  if [ -z "$description" ]; then
+    printf 'feature: description must not be empty\n' >&2
+    exit 1
+  fi
+
+  branch_name="${base_branch}--${user}--${ticket}--${description}"
+  if ! git check-ref-format --branch "$branch_name" >/dev/null 2>&1; then
+    printf 'feature: generated branch name "%s" is not valid\n' "$branch_name" >&2
+    exit 1
+  fi
+
+  printf '%s\n' "$branch_name"
 }
 
 status() {
