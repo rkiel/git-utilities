@@ -140,20 +140,34 @@ test_start_and_info() {
   assert_contains "Ticket: #123" "$output" "info shows ticket"
 }
 
-test_status_passes_through_to_git() {
+test_status_includes_stash_list() {
   local repo expected actual
 
-  repo="$(make_repo status-passthrough)"
+  repo="$(make_repo status-stashes)"
   printf 'initial\nstatus change\n' >"$repo/README.md"
-  printf 'untracked\n' >"$repo/untracked.txt"
 
   expected="$(git -C "$repo" status --porcelain)"
   actual="$(cd "$repo" && "$FEATURE" status --porcelain)"
-  assert_eq "$expected" "$actual" "status preserves porcelain output"
+  assert_eq "$expected" "$actual" "status omits an empty stash section"
+  if [[ "$actual" == *"STASH:"* ]]; then
+    printf 'not ok: status showed STASH heading with no stashes\n' >&2
+    exit 1
+  fi
 
-  expected="$(git -C "$repo" status --short --branch)"
+  git -C "$repo" stash push -m 'saved work' >/dev/null
+  printf 'untracked\n' >"$repo/untracked.txt"
+
+  expected="$(
+    cd "$repo"
+    git status --short --branch
+    echo
+    echo 'STASH:'
+    git stash list
+    echo
+  )"
   actual="$(cd "$repo" && "$FEATURE" status --short --branch)"
-  assert_eq "$expected" "$actual" "status passes short and branch options through"
+  assert_eq "$expected" "$actual" "status shows Git status and populated stash list"
+  assert_contains "stash@{0}: On main: saved work" "$actual" "status lists saved stashes"
 }
 
 test_log_supports_optional_pretty_format() {
@@ -453,7 +467,7 @@ test_feature_commands_reject_unsupported_formats() {
 
 run_test "help and usage" test_help_and_usage
 run_test "start and info" test_start_and_info
-run_test "status passes through to Git" test_status_passes_through_to_git
+run_test "status includes stash list" test_status_includes_stash_list
 run_test "log supports optional pretty format" test_log_supports_optional_pretty_format
 run_test "FEATURE_USER validation" test_start_rejects_bad_feature_user
 run_test "add and unstage" test_add_and_unstage

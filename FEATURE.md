@@ -87,10 +87,11 @@ deletes the remote feature branch, deletes the local feature branch, and prunes
 available, staged changes, unstaged tracked changes, untracked files, remote
 branch presence, and ahead/behind counts.
 
-`feature status [<git-status-arguments...>]` passes all arguments directly to
-`git status` and returns its output and exit status without adding wrapper
-output. With no arguments it displays the normal Git status. Options such as
-`--short --branch` and `--porcelain` behave exactly as they do with Git.
+`feature status [<git-status-arguments...>]` passes all arguments to
+`git status`, then checks `git stash list`. When stashes exist, it prints a
+blank line, a `STASH:` heading, the stash list, and a final blank line. It omits
+the entire stash section when the stash list is empty. Options such as
+`--short --branch` and `--porcelain` apply to the `git status` portion only.
 
 `feature log [<pretty-format>]` displays the current branch history as a graph.
 With no argument, each commit includes a colored abbreviated hash, short date,

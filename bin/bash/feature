@@ -235,7 +235,17 @@ branch_name_for() {
 }
 
 status() {
+  local stash_list
+
   git status "$@"
+  stash_list="$(git stash list)"
+
+  if [ -n "$stash_list" ]; then
+    echo
+    echo 'STASH:'
+    printf '%s\n' "$stash_list"
+    echo
+  fi
 }
 
 log_history() {
