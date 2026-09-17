@@ -33,6 +33,8 @@ supported.
 feature help
 feature status
 feature start <ticket-number> <words...>
+feature add <git-add-arguments...>
+feature unstage <paths...>
 feature commit <message...>
 feature rebase
 feature merge
@@ -45,6 +47,16 @@ prunes stale refs, fetches tags, rebases the initial branch on
 `origin/<initial-branch>` with autostash, creates the feature branch, pushes it
 to `origin`, and sets upstream tracking. It rejects feature branches and any
 other initial branch containing the reserved `--` delimiter.
+
+`feature add <git-add-arguments...>` must be run from a feature branch. It
+passes all arguments directly to `git add`, allowing files, pathspecs, and Git
+options such as `--patch` or `--all`. It stages changes but does not commit or
+push them.
+
+`feature unstage <paths...>` must be run from a feature branch. It runs
+`git restore --staged -- <paths...>` to remove the specified paths from the
+index without discarding their working-tree changes. It does not commit or
+push anything.
 
 `feature commit` must be run from a feature branch. It runs `git add --patch`,
 commits with a message in the form `#<ticket> <message>`, then force-pushes the
@@ -79,6 +91,7 @@ branch presence, and ahead/behind counts.
 - Feature branches use `<initial>--<user>--<ticket>--<description>`.
 - Initial branches may use any Git-valid name except one containing `--`.
 - A feature branch cannot be started from another feature branch.
+- `add` and `unstage` operate only on feature branches and never push.
 - Feature branch pushes use `--force` because local work is the source of truth.
 - Initial branch pushes are normal pushes, never force pushes.
 - `rebase` and `merge` block staged changes and unstaged tracked changes.

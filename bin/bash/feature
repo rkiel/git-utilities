@@ -9,6 +9,8 @@ Usage:
   $SCRIPT_NAME help
   $SCRIPT_NAME status
   $SCRIPT_NAME start <ticket-number> <words...>
+  $SCRIPT_NAME add <git-add-arguments...>
+  $SCRIPT_NAME unstage <paths...>
   $SCRIPT_NAME commit <message...>
   $SCRIPT_NAME rebase
   $SCRIPT_NAME merge
@@ -17,6 +19,8 @@ Usage:
 
 Examples:
   $SCRIPT_NAME start 123 add login
+  $SCRIPT_NAME add new-file.rb
+  $SCRIPT_NAME unstage accidentally-added.txt
   $SCRIPT_NAME commit implement form validation
   $SCRIPT_NAME rebase
   $SCRIPT_NAME merge
@@ -325,6 +329,36 @@ start() {
   git push -u origin "$branch_name"
 }
 
+add() {
+  if [ "$#" -lt 1 ]; then
+    die_usage
+  fi
+
+  local feature_branch
+
+  require_git_work_tree
+
+  feature_branch="$(current_named_branch)"
+  require_feature_branch "$feature_branch"
+
+  git add "$@"
+}
+
+unstage() {
+  if [ "$#" -lt 1 ]; then
+    die_usage
+  fi
+
+  local feature_branch
+
+  require_git_work_tree
+
+  feature_branch="$(current_named_branch)"
+  require_feature_branch "$feature_branch"
+
+  git restore --staged -- "$@"
+}
+
 commit() {
   if [ "$#" -lt 1 ]; then
     die_usage
@@ -475,6 +509,12 @@ case "$command" in
     ;;
   start)
     start "$@"
+    ;;
+  add)
+    add "$@"
+    ;;
+  unstage)
+    unstage "$@"
     ;;
   commit)
     commit "$@"

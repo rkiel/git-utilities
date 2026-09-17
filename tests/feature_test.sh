@@ -157,6 +157,63 @@ test_start_rejects_bad_feature_user() {
   assert_eq "main" "$branches" "bad FEATURE_USER does not create branch"
 }
 
+test_add_and_unstage() {
+  local repo staged output
+
+  repo="$(make_repo add-unstage)"
+  (cd "$repo" && FEATURE_USER=sam "$FEATURE" start 800 stage files >/dev/null 2>&1)
+  printf 'initial\ntracked change\n' >"$repo/README.md"
+  printf 'new file\n' >"$repo/new-file.txt"
+
+  (cd "$repo" && "$FEATURE" add --all)
+  staged="$(git -C "$repo" diff --cached --name-only)"
+  assert_contains "README.md" "$staged" "add passes options through to git add"
+  assert_contains "new-file.txt" "$staged" "add stages untracked files"
+
+  (cd "$repo" && "$FEATURE" unstage new-file.txt)
+  staged="$(git -C "$repo" diff --cached --name-only)"
+  assert_contains "README.md" "$staged" "unstage leaves other staged paths alone"
+  if [[ "$staged" == *"new-file.txt"* ]]; then
+    printf 'not ok: unstage left new-file.txt staged\n' >&2
+    exit 1
+  fi
+  if [ ! -f "$repo/new-file.txt" ]; then
+    printf 'not ok: unstage removed new-file.txt from the working tree\n' >&2
+    exit 1
+  fi
+
+  output="$(cd "$repo" && "$FEATURE" status)"
+  assert_contains "Staged changes: yes" "$output" "status reports remaining staged changes"
+  assert_contains "Untracked files: yes" "$output" "unstaged new file remains untracked"
+
+  (cd "$repo" && "$FEATURE" add new-file.txt)
+  staged="$(git -C "$repo" diff --cached --name-only)"
+  assert_contains "new-file.txt" "$staged" "add accepts a pathspec"
+}
+
+test_add_and_unstage_require_feature_branch() {
+  local repo status output
+
+  repo="$(make_repo add-unstage-guard)"
+
+  set +e
+  output="$(cd "$repo" && "$FEATURE" add README.md 2>&1)"
+  status="$?"
+  set -e
+
+  assert_eq 1 "$status" "add rejects an initial branch"
+  assert_contains "does not look like a feature branch" "$output" "add feature-branch guard is clear"
+
+  set +e
+  output="$(cd "$repo" && "$FEATURE" unstage README.md 2>&1)"
+  status="$?"
+  set -e
+
+  assert_eq 1 "$status" "unstage rejects an initial branch"
+  assert_contains "does not look like a feature branch" "$output" "unstage feature-branch guard is clear"
+  assert_eq "" "$(git -C "$repo" diff --cached --name-only)" "guard failures do not change the index"
+}
+
 test_commit_pushes_feature_branch() {
   local repo branch subject local_head remote_head
 
@@ -355,6 +412,8 @@ test_feature_commands_reject_unsupported_formats() {
 run_test "help and usage" test_help_and_usage
 run_test "start and status" test_start_and_status
 run_test "FEATURE_USER validation" test_start_rejects_bad_feature_user
+run_test "add and unstage" test_add_and_unstage
+run_test "add and unstage require feature branch" test_add_and_unstage_require_feature_branch
 run_test "commit pushes feature branch" test_commit_pushes_feature_branch
 run_test "rebase dirty policy" test_rebase_blocks_tracked_changes_but_allows_untracked
 run_test "merge pushes initial branch" test_merge_pushes_initial_branch
