@@ -86,6 +86,24 @@ branch presence, and ahead/behind counts.
 - `trash` requires the exact feature branch name as confirmation.
 - `end` only deletes a feature branch after it agrees with the initial branch.
 
+## Cross-Platform Compatibility
+
+- `feature` supports Linux and macOS and assumes that Bash and Git are
+  installed.
+- The script must remain compatible with Bash 3.2 or newer so it works with
+  the Bash version included with macOS. Do not use features introduced in Bash
+  4 or later.
+- Git 2.23 is the minimum supported version because the script uses
+  `git switch`. Do not introduce commands or options from newer Git versions
+  without deliberately raising and documenting the minimum version.
+- External commands and command-line options must behave consistently with
+  both GNU utilities on Linux and BSD utilities on macOS. Avoid GNU-only
+  options unless a portable fallback is provided.
+- Keep the `#!/usr/bin/env bash` interpreter line. A user's interactive shell,
+  including zsh on macOS, must not change how the script runs.
+- Compatibility changes must be covered by the regression suite and verified
+  on both Linux and macOS before release.
+
 ## Testing
 
 Run the regression tests after changing `bin/bash/feature`:
@@ -102,7 +120,9 @@ They do not touch real repositories or remotes.
 Any behavior change to `bin/bash/feature` must update `tests/feature_test.sh` in the
 same change. New subcommands need at least one happy-path test and one
 guard/error test. Branch-format or safety-rule changes must update both this
-document and the tests. Before considering a change complete, run:
+document and the tests. Every change must also be reviewed against the
+cross-platform compatibility rules above. Before considering a change
+complete, run:
 
 ```bash
 tests/feature_test.sh
