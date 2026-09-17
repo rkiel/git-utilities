@@ -7,7 +7,8 @@ print_help() {
   cat <<HELP
 Usage:
   $SCRIPT_NAME help
-  $SCRIPT_NAME status
+  $SCRIPT_NAME info
+  $SCRIPT_NAME status [<git-status-arguments...>]
   $SCRIPT_NAME start <ticket-number> <words...>
   $SCRIPT_NAME add <git-add-arguments...>
   $SCRIPT_NAME unstage <paths...>
@@ -19,6 +20,8 @@ Usage:
 
 Examples:
   $SCRIPT_NAME start 123 add login
+  $SCRIPT_NAME info
+  $SCRIPT_NAME status --short --branch
   $SCRIPT_NAME add new-file.rb
   $SCRIPT_NAME unstage accidentally-added.txt
   $SCRIPT_NAME commit implement form validation
@@ -229,6 +232,10 @@ branch_name_for() {
 }
 
 status() {
+  git status "$@"
+}
+
+info() {
   if [ "$#" -ne 0 ]; then
     die_usage
   fi
@@ -506,6 +513,9 @@ case "$command" in
     ;;
   status)
     status "$@"
+    ;;
+  info)
+    info "$@"
     ;;
   start)
     start "$@"

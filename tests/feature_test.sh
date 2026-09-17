@@ -119,7 +119,7 @@ test_help_and_usage() {
   assert_contains "feature start <ticket-number> <words...>" "$output" "invalid command prints help"
 }
 
-test_start_and_status() {
+test_start_and_info() {
   local repo output branch remote_ref
 
   repo="$(make_repo start-status)"
@@ -134,10 +134,26 @@ test_start_and_status() {
     exit 1
   fi
 
-  output="$(cd "$repo" && "$FEATURE" status)"
-  assert_contains "Feature branch: yes" "$output" "status identifies feature branch"
-  assert_contains "Initial branch: main" "$output" "status shows initial branch"
-  assert_contains "Ticket: #123" "$output" "status shows ticket"
+  output="$(cd "$repo" && "$FEATURE" info)"
+  assert_contains "Feature branch: yes" "$output" "info identifies feature branch"
+  assert_contains "Initial branch: main" "$output" "info shows initial branch"
+  assert_contains "Ticket: #123" "$output" "info shows ticket"
+}
+
+test_status_passes_through_to_git() {
+  local repo expected actual
+
+  repo="$(make_repo status-passthrough)"
+  printf 'initial\nstatus change\n' >"$repo/README.md"
+  printf 'untracked\n' >"$repo/untracked.txt"
+
+  expected="$(git -C "$repo" status --porcelain)"
+  actual="$(cd "$repo" && "$FEATURE" status --porcelain)"
+  assert_eq "$expected" "$actual" "status preserves porcelain output"
+
+  expected="$(git -C "$repo" status --short --branch)"
+  actual="$(cd "$repo" && "$FEATURE" status --short --branch)"
+  assert_eq "$expected" "$actual" "status passes short and branch options through"
 }
 
 test_start_rejects_bad_feature_user() {
@@ -182,8 +198,8 @@ test_add_and_unstage() {
     exit 1
   fi
 
-  output="$(cd "$repo" && "$FEATURE" status)"
-  assert_contains "Staged changes: yes" "$output" "status reports remaining staged changes"
+  output="$(cd "$repo" && "$FEATURE" info)"
+  assert_contains "Staged changes: yes" "$output" "info reports remaining staged changes"
   assert_contains "Untracked files: yes" "$output" "unstaged new file remains untracked"
 
   (cd "$repo" && "$FEATURE" add new-file.txt)
@@ -319,10 +335,10 @@ test_release_branch_full_workflow() {
   branch="$(git -C "$repo" branch --show-current)"
   assert_eq "release/1.2.3--bob--555--release-candidate" "$branch" "start preserves slash and period in initial branch"
 
-  output="$(cd "$repo" && "$FEATURE" status)"
-  assert_contains "Feature branch: yes" "$output" "status recognizes release feature branch"
-  assert_contains "Initial branch: release/1.2.3" "$output" "status restores release initial branch"
-  assert_contains "Ticket: #555" "$output" "status restores release ticket"
+  output="$(cd "$repo" && "$FEATURE" info)"
+  assert_contains "Feature branch: yes" "$output" "info recognizes release feature branch"
+  assert_contains "Initial branch: release/1.2.3" "$output" "info restores release initial branch"
+  assert_contains "Ticket: #555" "$output" "info restores release ticket"
 
   printf 'release feature\n' >"$repo/release.txt"
   git -C "$repo" add release.txt
@@ -357,8 +373,8 @@ test_accepts_other_git_valid_initial_names() {
   branch="$(git -C "$repo" branch --show-current)"
   assert_eq "release_candidate/2.0+qa--sam--666--flexible-base" "$branch" "start accepts Git-valid initial branch characters"
 
-  output="$(cd "$repo" && "$FEATURE" status)"
-  assert_contains "Initial branch: release_candidate/2.0+qa" "$output" "status restores flexible initial branch"
+  output="$(cd "$repo" && "$FEATURE" info)"
+  assert_contains "Initial branch: release_candidate/2.0+qa" "$output" "info restores flexible initial branch"
 
   (cd "$repo" && "$FEATURE" trash "$branch" >/dev/null 2>&1)
   assert_branch_missing "$repo" "$branch"
@@ -410,7 +426,8 @@ test_feature_commands_reject_unsupported_formats() {
 }
 
 run_test "help and usage" test_help_and_usage
-run_test "start and status" test_start_and_status
+run_test "start and info" test_start_and_info
+run_test "status passes through to Git" test_status_passes_through_to_git
 run_test "FEATURE_USER validation" test_start_rejects_bad_feature_user
 run_test "add and unstage" test_add_and_unstage
 run_test "add and unstage require feature branch" test_add_and_unstage_require_feature_branch

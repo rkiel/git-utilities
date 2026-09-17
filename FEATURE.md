@@ -31,7 +31,8 @@ supported.
 
 ```bash
 feature help
-feature status
+feature info
+feature status [<git-status-arguments...>]
 feature start <ticket-number> <words...>
 feature add <git-add-arguments...>
 feature unstage <paths...>
@@ -81,9 +82,14 @@ does not check whether work was merged. It switches to the initial branch,
 deletes the remote feature branch, deletes the local feature branch, and prunes
 `origin`.
 
-`feature status` reports the current branch, parsed feature metadata when
+`feature info` reports the current branch, parsed feature metadata when
 available, staged changes, unstaged tracked changes, untracked files, remote
 branch presence, and ahead/behind counts.
+
+`feature status [<git-status-arguments...>]` passes all arguments directly to
+`git status` and returns its output and exit status without adding wrapper
+output. With no arguments it displays the normal Git status. Options such as
+`--short --branch` and `--porcelain` behave exactly as they do with Git.
 
 ## Safety Rules
 
