@@ -48,7 +48,6 @@ module Setup
         f.puts "# added by ~/GitHub/rkiel/git-utilities/install/bin/setup"
         f.puts 'export GIT_UTILITIES_BIN="~/GitHub/rkiel/git-utilities/bin"'
         f.puts 'export PATH=${GIT_UTILITIES_BIN}:$PATH'
-        f.puts 'source ~/GitHub/rkiel/git-utilities/dotfiles/git-completion.bash'
         f.puts 'source ~/GitHub/rkiel/git-utilities/dotfiles/git-prompt.sh'
         f.puts "export FEATURE_USER=#{options.user}" if options.user
         f.puts "export PS1='#{Setup::Prompt.new.generate(options)}'"

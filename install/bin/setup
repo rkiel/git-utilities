@@ -14,7 +14,6 @@ if [ "$2" == "zsh" ] ; then
 #   fi
 #   echo "GIT_UTILITIES_BIN=${REPO}/bin"                       >> $FILE
 #   echo "export PATH=${GIT_UTILITIES_BIN}:$PATH"              >> $FILE
-# #  echo "source ${REPO}/dotfiles/git-completion.zsh"          >> $FILE
 # #  echo "source ${REPO}/dotfiles/git-prompt.sh"              >> $FILE
 #   echo "source ${REPO}/dotfiles/zprofile"                    >> $FILE
 
@@ -33,7 +32,6 @@ else
   fi
   echo "GIT_UTILITIES=${REPO}"                                >> $FILE
   echo 'export PATH=${GIT_UTILITIES}/bin:$PATH'               >> $FILE
-  echo 'source ${GIT_UTILITIES}/dotfiles/git-completion.bash' >> $FILE
   echo 'source ${GIT_UTILITIES}/dotfiles/git-prompt.sh'       >> $FILE
   echo 'source ${GIT_UTILITIES}/dotfiles/bash_profile'        >> $FILE
 
