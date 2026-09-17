@@ -156,6 +156,32 @@ test_status_passes_through_to_git() {
   assert_eq "$expected" "$actual" "status passes short and branch options through"
 }
 
+test_log_supports_optional_pretty_format() {
+  local repo expected actual output status pretty_format
+
+  repo="$(make_repo log-history)"
+  printf 'history\n' >"$repo/history.txt"
+  git -C "$repo" add history.txt
+  git -C "$repo" commit -m 'add history' >/dev/null
+
+  expected="$(git -C "$repo" log --graph --date=short --pretty=format:'%C(yellow)%h %C(white)%ad %C(black)[%C(green)%an%C(black)] %C(blue)%s%C(yellow)%d')"
+  actual="$(cd "$repo" && "$FEATURE" log)"
+  assert_eq "$expected" "$actual" "log uses the documented fixed Git format"
+
+  pretty_format='%h %ad %an %s'
+  expected="$(git -C "$repo" log --graph --date=short --pretty="format:$pretty_format")"
+  actual="$(cd "$repo" && "$FEATURE" log "$pretty_format")"
+  assert_eq "$expected" "$actual" "log accepts a custom pretty format"
+
+  set +e
+  output="$(cd "$repo" && "$FEATURE" log '%h' '%s' 2>&1)"
+  status="$?"
+  set -e
+
+  assert_eq 2 "$status" "log rejects more than one format argument"
+  assert_contains "feature log [<pretty-format>]" "$output" "log argument failure prints help"
+}
+
 test_start_rejects_bad_feature_user() {
   local repo status output branches
 
@@ -428,6 +454,7 @@ test_feature_commands_reject_unsupported_formats() {
 run_test "help and usage" test_help_and_usage
 run_test "start and info" test_start_and_info
 run_test "status passes through to Git" test_status_passes_through_to_git
+run_test "log supports optional pretty format" test_log_supports_optional_pretty_format
 run_test "FEATURE_USER validation" test_start_rejects_bad_feature_user
 run_test "add and unstage" test_add_and_unstage
 run_test "add and unstage require feature branch" test_add_and_unstage_require_feature_branch

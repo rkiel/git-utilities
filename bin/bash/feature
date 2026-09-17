@@ -9,6 +9,7 @@ Usage:
   $SCRIPT_NAME help
   $SCRIPT_NAME info
   $SCRIPT_NAME status [<git-status-arguments...>]
+  $SCRIPT_NAME log [<pretty-format>]
   $SCRIPT_NAME start <ticket-number> <words...>
   $SCRIPT_NAME add <git-add-arguments...>
   $SCRIPT_NAME unstage <paths...>
@@ -22,6 +23,8 @@ Examples:
   $SCRIPT_NAME start 123 add login
   $SCRIPT_NAME info
   $SCRIPT_NAME status --short --branch
+  $SCRIPT_NAME log
+  $SCRIPT_NAME log '%h %ad %an %s'
   $SCRIPT_NAME add new-file.rb
   $SCRIPT_NAME unstage accidentally-added.txt
   $SCRIPT_NAME commit implement form validation
@@ -233,6 +236,23 @@ branch_name_for() {
 
 status() {
   git status "$@"
+}
+
+log_history() {
+  if [ "$#" -gt 1 ]; then
+    die_usage
+  fi
+
+  local pretty_format
+  pretty_format='%C(yellow)%h %C(white)%ad %C(black)[%C(green)%an%C(black)] %C(blue)%s%C(yellow)%d'
+
+  if [ "$#" -eq 1 ]; then
+    pretty_format="$1"
+  fi
+
+  require_git_work_tree
+
+  git log --graph --date=short --pretty="format:$pretty_format"
 }
 
 info() {
@@ -513,6 +533,9 @@ case "$command" in
     ;;
   status)
     status "$@"
+    ;;
+  log)
+    log_history "$@"
     ;;
   info)
     info "$@"

@@ -33,6 +33,7 @@ supported.
 feature help
 feature info
 feature status [<git-status-arguments...>]
+feature log [<pretty-format>]
 feature start <ticket-number> <words...>
 feature add <git-add-arguments...>
 feature unstage <paths...>
@@ -90,6 +91,12 @@ branch presence, and ahead/behind counts.
 `git status` and returns its output and exit status without adding wrapper
 output. With no arguments it displays the normal Git status. Options such as
 `--short --branch` and `--porcelain` behave exactly as they do with Git.
+
+`feature log [<pretty-format>]` displays the current branch history as a graph.
+With no argument, each commit includes a colored abbreviated hash, short date,
+author, subject, and ref decorations. One quoted argument replaces the Git
+pretty-format string while retaining `--graph` and `--date=short`, for example
+`feature log '%h %ad %an %s'`.
 
 ## Safety Rules
 
