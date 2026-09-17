@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require_relative '../lib/xgrep/commander'
+require_relative '../../lib/xgrep/commander'
 
 if File.exist? './.xgrep'
   project_argv = File.read('./.xgrep').split(/\s/).reject { |x| x.strip == "" }

@@ -5,9 +5,8 @@ This is a collection of simple command-line scripts, bash aliases, and bash util
 The command-line scripts include:
 
 - `feature` - make working with feature branches easier
-- [release](RELEASE.md)- make working with release branches and tags easier (DEPRECATED)
-- [xgrep](XGREP.md)- make using `git-grep` easier
-- [xfind](XFIND.md)- make using `find` easier
+- `xgrep` - make using `git-grep` easier
+- `xfind` - make using `find` easier
 
 The command-line scripts are written in Ruby 2.x using just the standard libraries and do not require any gems to be installed.
 For OS X users, these should just work out-of-box.
@@ -36,6 +35,5 @@ cd ~/GitHub/rkiel/git-utilities
 ## Documention
 
 - `feature` - [ [ruby version](docs/ruby/FEATURE.md) ] [ [bash version](docs/bash/FEATURE.md) ]
-- [See release](RELEASE.md) (DEPRECATED)
-- [See xgrep](XGREP.md)
-- [See xfind](XFIND.md)
+- `xgrep` - [ [ruby version](docs/ruby/XGREP.md) ]
+- `xfind` - [ [ruby version](docs/ruby/XFIND.md) ]

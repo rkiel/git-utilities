@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require_relative '../lib/xfind/commander'
+require_relative '../../lib/xfind/commander'
 
 if File.exist? './.xfind'
   project_argv = File.read('./.xfind').split(/\s/).reject { |x| x.strip == "" }

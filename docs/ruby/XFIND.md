@@ -1,5 +1,3 @@
-[<<back](README.md)
-
 ## Xfind utility
 
 This utility makes it easier to use find.
