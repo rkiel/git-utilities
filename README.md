@@ -4,7 +4,7 @@ This is a collection of simple command-line scripts, bash aliases, and bash util
 
 The command-line scripts include:
 
-- [feature](FEATURE.md) - make working with feature branches easier
+- `feature` - make working with feature branches easier
 - [release](RELEASE.md)- make working with release branches and tags easier (DEPRECATED)
 - [xgrep](XGREP.md)- make using `git-grep` easier
 - [xfind](XFIND.md)- make using `find` easier
@@ -35,7 +35,7 @@ cd ~/GitHub/rkiel/git-utilities
 
 ## Documention
 
-- [See feature](FEATURE.md)
+- `feature` - [ [ruby version](docs/ruby/FEATURE.md) ] [ [bash version](docs/bash/FEATURE.md) ]
 - [See release](RELEASE.md) (DEPRECATED)
 - [See xgrep](XGREP.md)
 - [See xfind](XFIND.md)
