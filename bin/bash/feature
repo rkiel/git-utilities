@@ -17,6 +17,13 @@ FEATURE_COMMANDS=(
   trash
   unstage
 )
+GIT_TRACE_COLOR=''
+GIT_TRACE_RESET=''
+
+if [ -t 2 ] && [ -z "${NO_COLOR+x}" ] && [ "${TERM:-}" != 'dumb' ]; then
+  GIT_TRACE_COLOR=$'\033[32m'
+  GIT_TRACE_RESET=$'\033[0m'
+fi
 
 print_help() {
   cat <<HELP
@@ -93,6 +100,18 @@ tab() {
       printf '%s\n' "$subcommand"
     fi
   done
+}
+
+run_git() {
+  local argument
+
+  printf '%s+ git' "$GIT_TRACE_COLOR" >&2
+  for argument in "$@"; do
+    printf ' %q' "$argument" >&2
+  done
+  printf '%s\n' "$GIT_TRACE_RESET" >&2
+
+  command git "$@"
 }
 
 require_git_work_tree() {
@@ -367,14 +386,14 @@ sync_initial_branch() {
   local base_branch="$1"
   local remote_ref="origin/$base_branch"
 
-  git fetch --all --prune --tags
+  run_git fetch --all --prune --tags
 
   if ! git show-ref --verify --quiet "refs/remotes/$remote_ref"; then
     printf 'feature: remote branch "%s" does not exist\n' "$remote_ref" >&2
     exit 1
   fi
 
-  git rebase --autostash "$remote_ref"
+  run_git rebase --autostash "$remote_ref"
 }
 
 start() {
@@ -394,8 +413,8 @@ start() {
   branch_name="$(branch_name_for "$base_branch" "$ticket" "$@")"
   sync_initial_branch "$base_branch"
 
-  git switch -c "$branch_name"
-  git push -u origin "$branch_name"
+  run_git switch -c "$branch_name"
+  run_git push -u origin "$branch_name"
 }
 
 add() {
@@ -410,7 +429,7 @@ add() {
   feature_branch="$(current_named_branch)"
   require_feature_branch "$feature_branch"
 
-  git add "$@"
+  run_git add "$@"
 }
 
 unstage() {
@@ -442,9 +461,9 @@ commit() {
   ticket="$(ticket_for "$feature_branch")"
   message="$*"
 
-  git add --patch
-  git commit -m "#${ticket} ${message}"
-  git push --force origin "$feature_branch"
+  run_git add --patch
+  run_git commit -m "#${ticket} ${message}"
+  run_git push --force origin "$feature_branch"
 }
 
 sync_and_rebase_feature_branch() {
@@ -464,11 +483,11 @@ sync_and_rebase_feature_branch() {
     exit 1
   fi
 
-  git switch "$base_branch"
+  run_git switch "$base_branch"
   sync_initial_branch "$base_branch"
-  git switch "$feature_branch"
-  git -c core.commentChar=';' rebase -i "$base_branch"
-  git push --force origin "$feature_branch"
+  run_git switch "$feature_branch"
+  run_git -c core.commentChar=';' rebase -i "$base_branch"
+  run_git push --force origin "$feature_branch"
 
   printf -v "${result_prefix}_feature_branch" '%s' "$feature_branch"
   printf -v "${result_prefix}_base_branch" '%s' "$base_branch"
@@ -493,20 +512,20 @@ merge() {
   feature_branch="$merge_feature_branch"
   base_branch="$merge_base_branch"
 
-  git switch "$base_branch"
-  git merge --ff-only "$feature_branch"
-  git push origin "$base_branch"
-  git switch "$feature_branch"
+  run_git switch "$base_branch"
+  run_git merge --ff-only "$feature_branch"
+  run_git push origin "$base_branch"
+  run_git switch "$feature_branch"
 }
 
 delete_feature_branch() {
   local base_branch="$1"
   local feature_branch="$2"
 
-  git switch "$base_branch"
-  git push origin --delete "$feature_branch"
+  run_git switch "$base_branch"
+  run_git push origin --delete "$feature_branch"
   git branch -D "$feature_branch"
-  git fetch origin --prune
+  run_git fetch origin --prune
 }
 
 end() {

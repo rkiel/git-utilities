@@ -116,6 +116,18 @@ for your shell or copy its `get_feature_commands` function and completion
 registration into your shell configuration. For later arguments, both shells
 fall back to filesystem path completion.
 
+## Git Command Output
+
+`feature` prints selected Git commands to standard error immediately before
+running them so users can follow branch-changing and work-recording operations.
+The displayed command groups are `git add`, `git commit`, `git fetch`,
+`git merge`, `git pull`, `git push`, `git rebase`, and `git switch`. The script
+does not currently run `git pull`, but it belongs to the display policy if
+introduced later. Internal and supporting commands such as `git branch`,
+`git diff`, `git rev-parse`, and `git show-ref` remain quiet. When standard
+error is connected to a terminal, the entire displayed command is green. Color
+is disabled when output is redirected, `NO_COLOR` is set, or `TERM` is `dumb`.
+
 ## Safety Rules
 
 - Feature branches are considered personal and single-owner.
@@ -171,8 +183,10 @@ regression tests. Keep all command inventories and descriptions alphabetized.
 `feature tab` reports that list to shell completion. New subcommands need at
 least one happy-path test and one guard/error test. Branch-format or safety-rule
 changes must update both this document and the tests. Every change must also be
-reviewed against the cross-platform compatibility rules above. Before
-considering a change complete, run:
+reviewed against the cross-platform compatibility rules above. Calls to Git
+commands named in the Git Command Output section must use `run_git`; other Git
+commands must remain quiet unless that documented list is deliberately changed.
+Before considering a change complete, run:
 
 ```bash
 tests/feature_test.sh

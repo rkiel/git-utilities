@@ -47,6 +47,17 @@ assert_contains() {
   fi
 }
 
+assert_not_contains() {
+  local needle="$1"
+  local haystack="$2"
+  local message="$3"
+
+  if [[ "$haystack" == *"$needle"* ]]; then
+    printf 'not ok: %s\nunexpected: %s\noutput:\n%s\n' "$message" "$needle" "$haystack" >&2
+    exit 1
+  fi
+}
+
 assert_branch_missing() {
   local repo="$1"
   local branch="$2"
@@ -218,6 +229,27 @@ test_start_and_info() {
   assert_contains "Ticket: #123" "$output" "info shows ticket"
 }
 
+test_selected_git_commands_are_displayed() {
+  local repo output
+
+  repo="$(make_repo displayed-git-commands)"
+  output="$(cd "$repo" && FEATURE_USER=sam "$FEATURE" start 124 show commands 2>&1)"
+
+  assert_contains "+ git fetch --all --prune --tags" "$output" "fetch command is displayed"
+  assert_contains "+ git rebase --autostash origin/main" "$output" "rebase command is displayed"
+  assert_contains "+ git switch -c main--sam--124--show-commands" "$output" "switch command is displayed"
+  assert_contains "+ git push -u origin main--sam--124--show-commands" "$output" "push command is displayed"
+  assert_not_contains $'\033[' "$output" "redirected command output does not contain terminal colors"
+  assert_not_contains "+ git branch" "$output" "branch commands remain quiet"
+  assert_not_contains "+ git rev-parse" "$output" "internal rev-parse command remains quiet"
+  assert_not_contains "+ git check-ref-format" "$output" "internal ref validation remains quiet"
+  assert_not_contains "+ git show-ref" "$output" "internal ref inspection remains quiet"
+
+  printf 'staged content\n' >"$repo/staged.txt"
+  output="$(cd "$repo" && "$FEATURE" add 'staged.txt' 2>&1)"
+  assert_contains "+ git add staged.txt" "$output" "add command is displayed"
+}
+
 test_status_includes_stash_list() {
   local repo expected actual
 
@@ -349,12 +381,12 @@ test_add_and_unstage_require_feature_branch() {
 }
 
 test_commit_pushes_feature_branch() {
-  local repo branch subject local_head remote_head
+  local repo branch subject local_head remote_head output
 
   repo="$(make_repo commit-push)"
   (cd "$repo" && FEATURE_USER=sam "$FEATURE" start 901 commit pushes >/dev/null 2>&1)
   printf 'initial\ncommit change\n' >"$repo/README.md"
-  (cd "$repo" && printf 'y\n' | "$FEATURE" commit push after commit >/dev/null 2>&1)
+  output="$(cd "$repo" && printf 'y\n' | "$FEATURE" commit push after commit 2>&1)"
 
   branch="$(git -C "$repo" branch --show-current)"
   subject="$(git -C "$repo" log -1 --format=%s)"
@@ -364,6 +396,9 @@ test_commit_pushes_feature_branch() {
   assert_eq "main--sam--901--commit-pushes" "$branch" "commit remains on feature branch"
   assert_eq "#901 push after commit" "$subject" "commit prefixes ticket"
   assert_eq "$local_head" "$remote_head" "commit force-pushes feature branch"
+  assert_contains "+ git add --patch" "$output" "commit displays patch add command"
+  assert_contains "+ git commit -m" "$output" "commit displays commit command"
+  assert_contains "+ git push --force origin" "$output" "commit displays force push command"
 }
 
 test_rebase_blocks_tracked_changes_but_allows_untracked() {
@@ -400,14 +435,14 @@ test_rebase_blocks_tracked_changes_but_allows_untracked() {
 }
 
 test_merge_pushes_initial_branch() {
-  local repo branch main_head feature_head origin_main
+  local repo branch main_head feature_head origin_main output
 
   repo="$(make_repo merge)"
   (cd "$repo" && FEATURE_USER=sam "$FEATURE" start 222 merge flow >/dev/null 2>&1)
   printf 'feature\n' >"$repo/feature.txt"
   git -C "$repo" add feature.txt
   git -C "$repo" commit -m '#222 feature work' >/dev/null
-  (cd "$repo" && GIT_SEQUENCE_EDITOR=: "$FEATURE" merge >/dev/null 2>&1)
+  output="$(cd "$repo" && GIT_SEQUENCE_EDITOR=: "$FEATURE" merge 2>&1)"
 
   branch="$(git -C "$repo" branch --show-current)"
   main_head="$(git -C "$repo" rev-parse main)"
@@ -417,6 +452,7 @@ test_merge_pushes_initial_branch() {
   assert_eq "main--sam--222--merge-flow" "$branch" "merge returns to feature branch"
   assert_eq "$feature_head" "$main_head" "merge fast-forwards initial branch"
   assert_eq "$main_head" "$origin_main" "merge pushes initial branch"
+  assert_contains "+ git merge --ff-only main--sam--222--merge-flow" "$output" "merge command is displayed"
 }
 
 test_end_and_trash_cleanup() {
@@ -548,6 +584,7 @@ run_test "tab lists and filters commands" test_tab_lists_and_filters_commands
 run_test "bashrc completion uses tab command" test_bashrc_completion_uses_tab_command
 run_test "zshrc completion uses tab command" test_zshrc_completion_uses_tab_command
 run_test "start and info" test_start_and_info
+run_test "selected Git commands are displayed" test_selected_git_commands_are_displayed
 run_test "status includes stash list" test_status_includes_stash_list
 run_test "log supports optional pretty format" test_log_supports_optional_pretty_format
 run_test "FEATURE_USER validation" test_start_rejects_bad_feature_user
