@@ -2,6 +2,21 @@
 set -euo pipefail
 
 SCRIPT_NAME="$(basename "$0")"
+FEATURE_COMMANDS=(
+  add
+  commit
+  end
+  help
+  info
+  log
+  merge
+  rebase
+  start
+  status
+  tab
+  trash
+  unstage
+)
 
 print_help() {
   cat <<HELP
@@ -18,6 +33,7 @@ Usage:
   $SCRIPT_NAME merge
   $SCRIPT_NAME end
   $SCRIPT_NAME trash <feature-branch>
+  $SCRIPT_NAME tab [<prefix>]
 
 Examples:
   $SCRIPT_NAME start 123 add login
@@ -32,6 +48,7 @@ Examples:
   $SCRIPT_NAME merge
   $SCRIPT_NAME end
   $SCRIPT_NAME trash main--bob--123--add-login
+  $SCRIPT_NAME tab st
 
 Branch format:
   <initial-branch>--<user>--<ticket>--<description>
@@ -61,6 +78,21 @@ show_help() {
   fi
 
   print_help
+}
+
+tab() {
+  if [ "$#" -gt 1 ]; then
+    die_usage
+  fi
+
+  local prefix="${1:-}"
+  local subcommand
+
+  for subcommand in "${FEATURE_COMMANDS[@]}"; do
+    if [[ "$subcommand" == "$prefix"* ]]; then
+      printf '%s\n' "$subcommand"
+    fi
+  done
 }
 
 require_git_work_tree() {
@@ -573,6 +605,9 @@ case "$command" in
     ;;
   trash)
     trash "$@"
+    ;;
+  tab)
+    tab "$@"
     ;;
   *)
     die_usage

@@ -42,6 +42,7 @@ feature rebase
 feature merge
 feature end
 feature trash <feature-branch>
+feature tab [<prefix>]
 ```
 
 `feature start` must be run from an initial branch. It fetches all remotes,
@@ -99,6 +100,19 @@ author, subject, and ref decorations. One quoted argument replaces the Git
 pretty-format string while retaining `--graph` and `--date=short`, for example
 `feature log '%h %ad %an %s'`.
 
+`feature tab [<prefix>]` prints the available feature subcommands, one per line,
+for use by shell completion. With no prefix it prints every subcommand; with one
+prefix it prints only commands beginning with that literal, case-sensitive
+text. It does not require a Git repository.
+
+## Shell Completion
+
+The completion setups in `dotfiles/bashrc` and `dotfiles/zshrc` call
+`feature tab` while completing the first argument to `feature`. Source the file
+for your shell or copy its `get_feature_commands` function and completion
+registration into your shell configuration. For later arguments, both shells
+fall back to filesystem path completion.
+
 ## Safety Rules
 
 - Feature branches are considered personal and single-owner.
@@ -112,6 +126,7 @@ pretty-format string while retaining `--graph` and `--date=short`, for example
 - Untracked files are allowed so local scratch files do not block the workflow.
 - `trash` requires the exact feature branch name as confirmation.
 - `end` only deletes a feature branch after it agrees with the initial branch.
+- `tab` only reports subcommand names and does not run Git commands.
 
 ## Cross-Platform Compatibility
 

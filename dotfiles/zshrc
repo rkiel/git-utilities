@@ -44,16 +44,24 @@ alias sgrep='find . -not \( -type d -name .git -prune \) -not \( -type d -name n
 alias cgrep='grep --color=always'
 alias vgrep='grep -v'
 
+autoload -Uz compinit
+compinit
+
 function get_feature_commands()
 {
-  if [ -z $2 ] ; then
-    COMPREPLY=(`feature tab`)
+  if (( CURRENT == 2 )); then
+    local -a commands
+
+    commands=("${(@f)$(feature tab "$PREFIX")}")
+    if (( ${#commands[@]} > 0 )); then
+      compadd -- "${commands[@]}"
+    fi
   else
-    COMPREPLY=(`feature tab $2`)
+    _files
   fi
 }
 
-complete -F get_feature_commands feature
+compdef get_feature_commands feature
 
 LOCALS=~/.zshrc_locals
 if [ -f $LOCALS ]; then

@@ -119,6 +119,72 @@ test_help_and_usage() {
   assert_contains "feature start <ticket-number> <words...>" "$output" "invalid command prints help"
 }
 
+test_tab_lists_and_filters_commands() {
+  local expected actual output status
+
+  expected="$(printf '%s\n' add commit end help info log merge rebase start status tab trash unstage)"
+  actual="$(cd "$TEST_ROOT" && "$FEATURE" tab)"
+  assert_eq "$expected" "$actual" "tab lists every subcommand outside a Git repository"
+
+  actual="$(cd "$TEST_ROOT" && "$FEATURE" tab st)"
+  assert_eq "$(printf '%s\n' start status)" "$actual" "tab filters by literal prefix"
+
+  actual="$(cd "$TEST_ROOT" && "$FEATURE" tab does-not-match)"
+  assert_eq "" "$actual" "tab returns no output when no command matches"
+
+  set +e
+  output="$(cd "$TEST_ROOT" && "$FEATURE" tab s t 2>&1)"
+  status="$?"
+  set -e
+
+  assert_eq 2 "$status" "tab rejects more than one prefix"
+  assert_contains "feature tab [<prefix>]" "$output" "tab argument failure prints help"
+}
+
+test_bashrc_completion_uses_tab_command() {
+  local actual completion_home registration
+
+  completion_home="$TEST_ROOT/completion-home"
+  mkdir -p "$completion_home"
+
+  actual="$(
+    HOME="$completion_home" PATH="$(dirname "$FEATURE"):$PATH" \
+      bash --noprofile --norc -c '
+        source "$1"
+        COMP_WORDS=(feature st)
+        COMP_CWORD=1
+        get_feature_commands
+        printf "%s\n" "${COMPREPLY[@]}"
+      ' _ "$ROOT/dotfiles/bashrc"
+  )"
+
+  assert_eq "$(printf '%s\n' start status)" "$actual" "bashrc completes feature subcommands through feature tab"
+
+  registration="$(
+    HOME="$completion_home" bash --noprofile --norc -c '
+      source "$1"
+      complete -p feature
+    ' _ "$ROOT/dotfiles/bashrc"
+  )"
+  assert_contains "-o bashdefault" "$registration" "bashrc enables Bash fallback completion"
+  assert_contains "-o default" "$registration" "bashrc enables filesystem fallback completion"
+}
+
+test_zshrc_completion_uses_tab_command() {
+  local config completion_home
+
+  config="$(cat "$ROOT/dotfiles/zshrc")"
+  assert_contains 'feature tab "$PREFIX"' "$config" "zshrc completes subcommands through feature tab"
+  assert_contains '_files' "$config" "zshrc enables filesystem fallback completion"
+  assert_contains 'compdef get_feature_commands feature' "$config" "zshrc registers feature completion"
+
+  if command -v zsh >/dev/null 2>&1; then
+    completion_home="$TEST_ROOT/zsh-completion-home"
+    mkdir -p "$completion_home"
+    HOME="$completion_home" zsh -n "$ROOT/dotfiles/zshrc"
+  fi
+}
+
 test_start_and_info() {
   local repo output branch remote_ref
 
@@ -466,6 +532,9 @@ test_feature_commands_reject_unsupported_formats() {
 }
 
 run_test "help and usage" test_help_and_usage
+run_test "tab lists and filters commands" test_tab_lists_and_filters_commands
+run_test "bashrc completion uses tab command" test_bashrc_completion_uses_tab_command
+run_test "zshrc completion uses tab command" test_zshrc_completion_uses_tab_command
 run_test "start and info" test_start_and_info
 run_test "status includes stash list" test_status_includes_stash_list
 run_test "log supports optional pretty format" test_log_supports_optional_pretty_format

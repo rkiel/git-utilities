@@ -32,14 +32,20 @@ alias vgrep='grep -v'
 
 function get_feature_commands()
 {
-  if [ -z $2 ] ; then
-    COMPREPLY=(`feature tab`)
-  else
-    COMPREPLY=(`feature tab $2`)
+  local current command
+
+  COMPREPLY=()
+  if [ "$COMP_CWORD" -ne 1 ]; then
+    return
   fi
+
+  current="${COMP_WORDS[COMP_CWORD]}"
+  while IFS= read -r command; do
+    COMPREPLY[${#COMPREPLY[@]}]="$command"
+  done < <(feature tab "$current")
 }
 
-complete -F get_feature_commands feature
+complete -o bashdefault -o default -F get_feature_commands feature
 
 LOCALS=~/.bashrc_locals
 if [ -f $LOCALS ]; then
