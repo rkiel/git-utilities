@@ -21,29 +21,29 @@ FEATURE_COMMANDS=(
 print_help() {
   cat <<HELP
 Usage:
+  $SCRIPT_NAME add <git-add-arguments...>
+  $SCRIPT_NAME commit <message...>
+  $SCRIPT_NAME end
   $SCRIPT_NAME help
   $SCRIPT_NAME info
-  $SCRIPT_NAME status [<git-status-arguments...>]
   $SCRIPT_NAME log [<pretty-format>]
-  $SCRIPT_NAME start <ticket-number> <words...>
-  $SCRIPT_NAME add <git-add-arguments...>
-  $SCRIPT_NAME unstage <paths...>
-  $SCRIPT_NAME commit <message...>
-  $SCRIPT_NAME rebase
   $SCRIPT_NAME merge
-  $SCRIPT_NAME end
-  $SCRIPT_NAME trash <feature-branch>
+  $SCRIPT_NAME rebase
+  $SCRIPT_NAME start <ticket-number> <words...>
+  $SCRIPT_NAME status [<git-status-arguments...>]
   $SCRIPT_NAME tab [<prefix>]
+  $SCRIPT_NAME trash <feature-branch>
+  $SCRIPT_NAME unstage <paths...>
 
 Examples:
   $SCRIPT_NAME start 123 add login
+  $SCRIPT_NAME add new-file.rb
+  $SCRIPT_NAME unstage accidentally-added.txt
+  $SCRIPT_NAME commit implement form validation
   $SCRIPT_NAME info
   $SCRIPT_NAME status --short --branch
   $SCRIPT_NAME log
   $SCRIPT_NAME log '%h %ad %an %s'
-  $SCRIPT_NAME add new-file.rb
-  $SCRIPT_NAME unstage accidentally-added.txt
-  $SCRIPT_NAME commit implement form validation
   $SCRIPT_NAME rebase
   $SCRIPT_NAME merge
   $SCRIPT_NAME end

@@ -120,11 +120,23 @@ test_help_and_usage() {
 }
 
 test_tab_lists_and_filters_commands() {
-  local expected actual output status
+  local expected actual help_commands output sorted status
 
   expected="$(printf '%s\n' add commit end help info log merge rebase start status tab trash unstage)"
   actual="$(cd "$TEST_ROOT" && "$FEATURE" tab)"
   assert_eq "$expected" "$actual" "tab lists every subcommand outside a Git repository"
+
+  sorted="$(printf '%s\n' "$actual" | LC_ALL=C sort)"
+  assert_eq "$sorted" "$actual" "tab lists subcommands alphabetically"
+
+  help_commands="$(
+    "$FEATURE" help | awk '
+      /^Usage:$/ { in_usage = 1; next }
+      in_usage && /^$/ { exit }
+      in_usage { print $2 }
+    '
+  )"
+  assert_eq "$actual" "$help_commands" "help lists the same alphabetized subcommands as tab"
 
   actual="$(cd "$TEST_ROOT" && "$FEATURE" tab st)"
   assert_eq "$(printf '%s\n' start status)" "$actual" "tab filters by literal prefix"
