@@ -43,20 +43,19 @@ git clone https://github.com/rkiel/git-utilities.git
 
 ### Configure your shell
 
-`FEATURE_USER` is only used in feature branch names to identify and distinguish
+When you create a feature branch, it will include a name that identifies and distinguishes
 your branches from branches created by other members of your team. Choose a
 short name containing only letters, numbers, and underscores.
 
-Run the block for your shell once. The commands use `>>` to append their source
-lines, so running the same block again would add duplicates.
+Your bash/zsh dot files will be updated appropriately.
 
-#### Linux users (Bash)
-
-Copy and paste this block to append the visible setup commands to
-`.bash_profile` and `.bashrc`:
+#### Linux users (bash)
 
 ```bash
-read -r -p 'Feature user: ' FEATURE_USER
+read -r -p 'Enter a user name: ' FEATURE_USER
+```
+
+```bash
 printf '\nsource "$HOME/GitHub/rkiel/git-utilities/dotfiles/bash/profile.sh" "%s"\n' \
   "$FEATURE_USER" >> "$HOME/.bash_profile"
 printf '\nsource "$HOME/GitHub/rkiel/git-utilities/dotfiles/bash/rc.sh"\n' \
@@ -66,11 +65,11 @@ unset FEATURE_USER
 
 #### macOS users (zsh)
 
-Copy and paste this block to append the visible setup commands to `.zprofile`
-and `.zshrc`:
+```zsh
+read -r 'FEATURE_USER?Enter a user name: '
+```
 
 ```zsh
-read -r 'FEATURE_USER?Feature user: '
 printf '\nsource "$HOME/GitHub/rkiel/git-utilities/dotfiles/zsh/profile.sh" "%s"\n' \
   "$FEATURE_USER" >> "$HOME/.zprofile"
 printf '\nsource "$HOME/GitHub/rkiel/git-utilities/dotfiles/zsh/rc.sh"\n' \
