@@ -41,34 +41,44 @@ mkdir -p ~/GitHub/rkiel && cd $_
 git clone https://github.com/rkiel/git-utilities.git
 ```
 
-### Linux users (bash)
+### Configure your shell
 
-Update your `.bash_profile`
+`FEATURE_USER` is only used in feature branch names to identify and distinguish
+your branches from branches created by other members of your team. Choose a
+short name containing only letters, numbers, and underscores.
 
-```
-source ~/GitHub/rkiel/git-utilities/dotfiles/bash/profile.sh bob
-```
+Run the block for your shell once. The commands use `>>` to append their source
+lines, so running the same block again would add duplicates.
 
-Update your `.bashrc`
+#### Linux users (Bash)
 
-```
-source ~/GitHub/rkiel/git-utilities/dotfiles/bash/rc.sh
-```
+Copy and paste this block to append the visible setup commands to
+`.bash_profile` and `.bashrc`:
 
-### macOS users (zsh)
-
-Update your `.zprofile`
-
-```
-source ~/GitHub/rkiel/git-utilities/dotfiles/zsh/profile.sh bob
-```
-
-Update your `.zshrc`
-
-```
-source ~/GitHub/rkiel/git-utilities/dotfiles/zsh/rc.sh
+```bash
+read -r -p 'Feature user: ' FEATURE_USER
+printf '\nsource "$HOME/GitHub/rkiel/git-utilities/dotfiles/bash/profile.sh" "%s"\n' \
+  "$FEATURE_USER" >> "$HOME/.bash_profile"
+printf '\nsource "$HOME/GitHub/rkiel/git-utilities/dotfiles/bash/rc.sh"\n' \
+  >> "$HOME/.bashrc"
+unset FEATURE_USER
 ```
 
+#### macOS users (zsh)
+
+Copy and paste this block to append the visible setup commands to `.zprofile`
+and `.zshrc`:
+
+```zsh
+read -r 'FEATURE_USER?Feature user: '
+printf '\nsource "$HOME/GitHub/rkiel/git-utilities/dotfiles/zsh/profile.sh" "%s"\n' \
+  "$FEATURE_USER" >> "$HOME/.zprofile"
+printf '\nsource "$HOME/GitHub/rkiel/git-utilities/dotfiles/zsh/rc.sh"\n' \
+  >> "$HOME/.zshrc"
+unset FEATURE_USER
+```
+
+Open a new terminal after completing the shell-specific step.
 
 ## Documentation
 
