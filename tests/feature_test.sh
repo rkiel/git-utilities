@@ -164,7 +164,7 @@ test_tab_lists_and_filters_commands() {
   assert_contains "feature tab [<prefix>]" "$output" "tab argument failure prints help"
 }
 
-test_bashrc_completion_uses_tab_command() {
+test_bash_completion_uses_tab_command() {
   local actual completion_home registration
 
   completion_home="$TEST_ROOT/completion-home"
@@ -178,7 +178,7 @@ test_bashrc_completion_uses_tab_command() {
         COMP_CWORD=1
         get_feature_commands
         printf "%s\n" "${COMPREPLY[@]}"
-      ' _ "$ROOT/dotfiles/bashrc"
+      ' _ "$ROOT/dotfiles/bash/rc.sh"
   )"
 
   assert_eq "$(printf '%s\n' start status)" "$actual" "bashrc completes feature subcommands through feature tab"
@@ -187,16 +187,16 @@ test_bashrc_completion_uses_tab_command() {
     HOME="$completion_home" bash --noprofile --norc -c '
       source "$1"
       complete -p feature
-    ' _ "$ROOT/dotfiles/bashrc"
+    ' _ "$ROOT/dotfiles/bash/rc.sh"
   )"
   assert_contains "-o bashdefault" "$registration" "bashrc enables Bash fallback completion"
   assert_contains "-o default" "$registration" "bashrc enables filesystem fallback completion"
 }
 
-test_zshrc_completion_uses_tab_command() {
+test_zsh_completion_uses_tab_command() {
   local config completion_home
 
-  config="$(cat "$ROOT/dotfiles/zshrc")"
+  config="$(cat "$ROOT/dotfiles/zsh/rc.sh")"
   assert_contains 'feature tab "$PREFIX"' "$config" "zshrc completes subcommands through feature tab"
   assert_contains '_files' "$config" "zshrc enables filesystem fallback completion"
   assert_contains 'compdef get_feature_commands feature' "$config" "zshrc registers feature completion"
@@ -204,7 +204,7 @@ test_zshrc_completion_uses_tab_command() {
   if command -v zsh >/dev/null 2>&1; then
     completion_home="$TEST_ROOT/zsh-completion-home"
     mkdir -p "$completion_home"
-    HOME="$completion_home" zsh -n "$ROOT/dotfiles/zshrc"
+    HOME="$completion_home" zsh -n "$ROOT/dotfiles/zsh/rc.sh"
   fi
 }
 
@@ -581,8 +581,8 @@ test_feature_commands_reject_unsupported_formats() {
 
 run_test "help and usage" test_help_and_usage
 run_test "tab lists and filters commands" test_tab_lists_and_filters_commands
-run_test "bashrc completion uses tab command" test_bashrc_completion_uses_tab_command
-run_test "zshrc completion uses tab command" test_zshrc_completion_uses_tab_command
+run_test "Bash completion uses tab command" test_bash_completion_uses_tab_command
+run_test "zsh completion uses tab command" test_zsh_completion_uses_tab_command
 run_test "start and info" test_start_and_info
 run_test "selected Git commands are displayed" test_selected_git_commands_are_displayed
 run_test "status includes stash list" test_status_includes_stash_list
