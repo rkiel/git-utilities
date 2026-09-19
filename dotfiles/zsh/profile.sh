@@ -15,27 +15,10 @@ if ! _git_utilities_profile_repo="$(
   return 1
 fi
 
-_git_utilities_profile_bin="$_git_utilities_profile_repo/bin/bash"
-if [ ! -x "$_git_utilities_profile_bin/feature" ]; then
-  printf 'git-utilities profile: feature is not executable in %s\n' \
-    "$_git_utilities_profile_bin" >&2
+if ! source "$_git_utilities_profile_repo/dotfiles/shared/profile.sh" \
+  "$1" "$_git_utilities_profile_repo"; then
   unset _git_utilities_profile_path _git_utilities_profile_repo
-  unset _git_utilities_profile_bin
   return 1
 fi
 
-FEATURE_USER=$1
-GIT_UTILITIES=$_git_utilities_profile_repo
-
-case "${PATH-}" in
-  "$_git_utilities_profile_bin"|"$_git_utilities_profile_bin":*)
-    ;;
-  *)
-    PATH="$_git_utilities_profile_bin${PATH:+:$PATH}"
-    ;;
-esac
-
-export FEATURE_USER GIT_UTILITIES PATH
-
 unset _git_utilities_profile_path _git_utilities_profile_repo
-unset _git_utilities_profile_bin

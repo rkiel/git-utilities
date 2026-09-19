@@ -165,7 +165,7 @@ test_tab_lists_and_filters_commands() {
 }
 
 test_bash_completion_uses_tab_command() {
-  local actual completion_home registration
+  local actual aliases completion_home registration
 
   completion_home="$TEST_ROOT/completion-home"
   mkdir -p "$completion_home"
@@ -191,6 +191,16 @@ test_bash_completion_uses_tab_command() {
   )"
   assert_contains "-o bashdefault" "$registration" "bashrc enables Bash fallback completion"
   assert_contains "-o default" "$registration" "bashrc enables filesystem fallback completion"
+
+  aliases="$(
+    HOME="$completion_home" bash --noprofile --norc -c '
+      source "$1"
+      alias a
+      alias x
+    ' _ "$ROOT/dotfiles/bash/rc.sh"
+  )"
+  assert_contains "alias a='feature add'" "$aliases" "bashrc loads shared feature alias"
+  assert_contains "alias x='xgrep'" "$aliases" "bashrc loads shared utility alias"
 }
 
 test_zsh_completion_uses_tab_command() {
@@ -200,6 +210,7 @@ test_zsh_completion_uses_tab_command() {
   assert_contains 'feature tab "$PREFIX"' "$config" "zshrc completes subcommands through feature tab"
   assert_contains '_files' "$config" "zshrc enables filesystem fallback completion"
   assert_contains 'compdef get_feature_commands feature' "$config" "zshrc registers feature completion"
+  assert_contains '../shared/aliases.sh' "$config" "zshrc loads shared aliases"
 
   if command -v zsh >/dev/null 2>&1; then
     completion_home="$TEST_ROOT/zsh-completion-home"

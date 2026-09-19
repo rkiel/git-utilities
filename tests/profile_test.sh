@@ -3,10 +3,12 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE_BASH_PROFILE="$ROOT/dotfiles/bash/profile.sh"
+SOURCE_SHARED_PROFILE="$ROOT/dotfiles/shared/profile.sh"
 SOURCE_ZSH_PROFILE="$ROOT/dotfiles/zsh/profile.sh"
 TEST_ROOT="$(mktemp -d /tmp/git-utilities-profile-tests.XXXXXX)"
 FIXTURE="$TEST_ROOT/repository with spaces"
 BASH_PROFILE="$FIXTURE/dotfiles/bash/profile.sh"
+SHARED_PROFILE="$FIXTURE/dotfiles/shared/profile.sh"
 ZSH_PROFILE="$FIXTURE/dotfiles/zsh/profile.sh"
 
 cleanup() {
@@ -29,8 +31,10 @@ assert_eq() {
 make_fixture() {
   local implementation
 
-  mkdir -p "$FIXTURE/dotfiles/bash" "$FIXTURE/dotfiles/zsh"
+  mkdir -p "$FIXTURE/dotfiles/bash" "$FIXTURE/dotfiles/shared" \
+    "$FIXTURE/dotfiles/zsh"
   cp "$SOURCE_BASH_PROFILE" "$BASH_PROFILE"
+  cp "$SOURCE_SHARED_PROFILE" "$SHARED_PROFILE"
   cp "$SOURCE_ZSH_PROFILE" "$ZSH_PROFILE"
 
   for implementation in bash ruby; do
@@ -76,10 +80,11 @@ test_shell() {
 }
 
 make_fixture
+bash -n "$SOURCE_BASH_PROFILE" "$SOURCE_SHARED_PROFILE"
 test_shell bash "$BASH_PROFILE"
 
 if command -v zsh >/dev/null 2>&1; then
-  zsh -n "$SOURCE_ZSH_PROFILE"
+  zsh -n "$SOURCE_SHARED_PROFILE" "$SOURCE_ZSH_PROFILE"
   test_shell zsh "$ZSH_PROFILE"
 else
   printf 'skip: zsh is not installed\n'
