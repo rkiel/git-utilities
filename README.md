@@ -46,6 +46,7 @@ This repository needs to be cloned.  Copy/paste the following to be prompted for
   mkdir -p "$GIT_UTILITIES_ROOT"
   git clone https://github.com/rkiel/git-utilities.git "$GIT_UTILITIES_ROOT/git-utilities"
   GIT_UTILITIES_ROOT="$GIT_UTILITIES_ROOT/git-utilities"
+  ls -l "$GIT_UTILITIES_ROOT"
 }
 ```
 
@@ -60,17 +61,21 @@ Your bash dot files will be updated appropriately.
   read -r -p 'Enter a user name: ' FEATURE_USER
   printf '\nsource "%s/dotfiles/bash/profile.sh" "%s"\n' \
     "$GIT_UTILITIES_ROOT" "$FEATURE_USER" >> "$HOME/.bash_profile"
+  cat "$HOME/.bash_profile"
+  echo "============="
   printf '\nsource "%s/dotfiles/bash/rc.sh"\n' \
     "$GIT_UTILITIES_ROOT" >> "$HOME/.bashrc"
+  cat "$HOME/.bashrc"
 }
 ```
 
-Load the configuration into the current shell.
+Load the configuration into the current shell and verify correctness.
 
 ```bash
 {
   source "$GIT_UTILITIES_ROOT/dotfiles/bash/profile.sh" "$FEATURE_USER"
   source "$GIT_UTILITIES_ROOT/dotfiles/bash/rc.sh"
+  command -v feature
 }
 ```
 
@@ -85,6 +90,7 @@ This repository needs to be cloned.  Copy/paste the following to be prompted for
   mkdir -p "$GIT_UTILITIES_ROOT"
   git clone https://github.com/rkiel/git-utilities.git "$GIT_UTILITIES_ROOT/git-utilities"
   GIT_UTILITIES_ROOT="$GIT_UTILITIES_ROOT/git-utilities"
+  ls -l "$GIT_UTILITIES_ROOT"
 }
 ```
 
@@ -99,17 +105,21 @@ Your zsh dot files will be updated appropriately.
   read -r 'FEATURE_USER?Enter a user name: '
   printf '\nsource "%s/dotfiles/zsh/profile.sh" "%s"\n' \
     "$GIT_UTILITIES_ROOT" "$FEATURE_USER" >> "$HOME/.zprofile"
+  cat "$HOME/.zprofile"
+  echo "============="
   printf '\nsource "%s/dotfiles/zsh/rc.sh"\n' \
     "$GIT_UTILITIES_ROOT" >> "$HOME/.zshrc"
+  cat "$HOME/.zshrc"
 }
 ```
 
-Load the configuration into the current shell.
+Load the configuration into the current shell and verify correctness.
 
 ```zsh
 {
   source "$GIT_UTILITIES_ROOT/dotfiles/zsh/profile.sh" "$FEATURE_USER"
   source "$GIT_UTILITIES_ROOT/dotfiles/zsh/rc.sh"
+  command -v feature
 }
 ```
 
