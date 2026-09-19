@@ -34,13 +34,10 @@ cd ~/GitHub/rkiel/git-utilities
 
 ## Installation - new Bash version
 
-When you create a feature branch, it will include a name that identifies and distinguishes
-your branches from branches created by other members of your team. Choose a
-short name containing only letters, numbers, and underscores.
-
-Your bash/zsh dot files will be updated appropriately.
 
 #### Linux users (bash)
+
+This repository needs to be cloned.  Copy/paste the following to be prompted for the location to clone into.
 
 ```bash
 {
@@ -51,6 +48,12 @@ Your bash/zsh dot files will be updated appropriately.
   GIT_UTILITIES_ROOT="$GIT_UTILITIES_ROOT/git-utilities"
 }
 ```
+
+When you create a feature branch, it will include a name that identifies and distinguishes
+your branches from branches created by other members of your team. Choose a
+short name containing only letters, numbers, and underscores.
+
+Your bash dot files will be updated appropriately.
 
 ```bash
 {
@@ -65,6 +68,8 @@ Your bash/zsh dot files will be updated appropriately.
 
 #### macOS users (zsh)
 
+This repository needs to be cloned.  Copy/paste the following to be prompted for the location to clone into.
+
 ```zsh
 {
   read -r 'GIT_UTILITIES_ROOT?Clone into which directory? [$HOME/GitHub/rkiel] '
@@ -74,6 +79,12 @@ Your bash/zsh dot files will be updated appropriately.
   GIT_UTILITIES_ROOT="$GIT_UTILITIES_ROOT/git-utilities"
 }
 ```
+
+When you create a feature branch, it will include a name that identifies and distinguishes
+your branches from branches created by other members of your team. Choose a
+short name containing only letters, numbers, and underscores.
+
+Your zsh dot files will be updated appropriately.
 
 ```zsh
 {
