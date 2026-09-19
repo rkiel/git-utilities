@@ -62,7 +62,15 @@ Your bash dot files will be updated appropriately.
     "$GIT_UTILITIES_ROOT" "$FEATURE_USER" >> "$HOME/.bash_profile"
   printf '\nsource "%s/dotfiles/bash/rc.sh"\n' \
     "$GIT_UTILITIES_ROOT" >> "$HOME/.bashrc"
-  unset FEATURE_USER GIT_UTILITIES_ROOT
+}
+```
+
+Load the configuration into the current shell.
+
+```bash
+{
+  source "$GIT_UTILITIES_ROOT/dotfiles/bash/profile.sh" "$FEATURE_USER"
+  source "$GIT_UTILITIES_ROOT/dotfiles/bash/rc.sh"
 }
 ```
 
@@ -93,11 +101,17 @@ Your zsh dot files will be updated appropriately.
     "$GIT_UTILITIES_ROOT" "$FEATURE_USER" >> "$HOME/.zprofile"
   printf '\nsource "%s/dotfiles/zsh/rc.sh"\n' \
     "$GIT_UTILITIES_ROOT" >> "$HOME/.zshrc"
-  unset FEATURE_USER GIT_UTILITIES_ROOT
 }
 ```
 
-Open a new terminal after completing the shell-specific step.
+Load the configuration into the current shell.
+
+```zsh
+{
+  source "$GIT_UTILITIES_ROOT/dotfiles/zsh/profile.sh" "$FEATURE_USER"
+  source "$GIT_UTILITIES_ROOT/dotfiles/zsh/rc.sh"
+}
+```
 
 ## Documentation
 
