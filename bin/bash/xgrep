@@ -1,0 +1,350 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_NAME="$(basename "$0")"
+DEBUG=false
+GIT_OPTIONS=()
+INCLUDE_PATHS=()
+EXCLUDE_PATHS=()
+TERMS=()
+AND_TERMS=()
+OR_TERMS=()
+NOT_TERMS=()
+PATHS=()
+GIT_ARGUMENTS=()
+
+print_help() {
+  cat <<HELP
+Usage:
+  $SCRIPT_NAME [options] <term>...
+
+Boolean terms:
+  Terms are required by default and are combined with AND.
+  and  Add following terms to the required group.
+  or   Add following terms to a single OR group.
+  not  Add following terms to a single excluded OR group.
+
+Options:
+  -d, --debug                 Print the git grep command without running it.
+      --no-debug              Disable debug mode, including one set by .xgrep.
+  -f, --file                  Show files without a match (git grep -L).
+  -h, --help                  Show this help message.
+  -i, --invert                Select non-matching lines (git grep -v).
+  -p, --include-path PATHS    Include comma-separated pathspecs.
+  -P, --exclude-path PATHS    Exclude comma-separated pathspecs.
+  -t, --include-type TYPES    Include comma-separated file extensions.
+  -T, --exclude-type TYPES    Exclude comma-separated file extensions.
+
+Examples:
+  $SCRIPT_NAME alpha beta
+  $SCRIPT_NAME or alpha beta
+  $SCRIPT_NAME alpha or beta gamma not generated vendor
+  $SCRIPT_NAME -p src,lib -t rb,sh alpha
+  $SCRIPT_NAME -T min.js not generated
+
+Project defaults:
+  If .xgrep exists in the current directory, its whitespace-separated options
+  and terms are prepended to the command line.
+HELP
+}
+
+die() {
+  printf '%s: %s\n' "$SCRIPT_NAME" "$1" >&2
+  exit 2
+}
+
+require_option_value() {
+  local option="$1"
+  local remaining="$2"
+
+  if [ "$remaining" -lt 2 ]; then
+    die "$option requires a value"
+  fi
+}
+
+append_csv_values() {
+  local kind="$1"
+  local input="$2"
+  local value
+  local -a values=()
+
+  IFS=',' read -r -a values <<<"$input"
+  for value in "${values[@]}"; do
+    [ -n "$value" ] || continue
+
+    case "$kind" in
+      include-path)
+        INCLUDE_PATHS+=("$value")
+        ;;
+      exclude-path)
+        EXCLUDE_PATHS+=(":!$value")
+        ;;
+      include-type)
+        INCLUDE_PATHS+=(":*.$value")
+        ;;
+      exclude-type)
+        EXCLUDE_PATHS+=(":!*.$value")
+        ;;
+    esac
+  done
+}
+
+load_project_arguments() {
+  local token
+
+  PROJECT_ARGUMENTS=()
+  if [ -f ./.xgrep ]; then
+    while IFS= read -r token; do
+      [ -n "$token" ] && PROJECT_ARGUMENTS+=("$token")
+    done < <(tr -s '[:space:]' '\n' < ./.xgrep)
+  fi
+
+  PROJECT_ARGUMENTS+=("$@")
+}
+
+parse_arguments() {
+  local argument
+
+  while [ "$#" -gt 0 ]; do
+    argument="$1"
+
+    case "$argument" in
+      -d|--debug)
+        DEBUG=true
+        shift
+        ;;
+      --no-debug)
+        DEBUG=false
+        shift
+        ;;
+      -f|--file)
+        GIT_OPTIONS+=(-L)
+        shift
+        ;;
+      -h|--help)
+        print_help
+        exit 0
+        ;;
+      -i|--invert)
+        GIT_OPTIONS+=(-v)
+        shift
+        ;;
+      -p|--include-path)
+        require_option_value "$argument" "$#"
+        append_csv_values include-path "$2"
+        shift 2
+        ;;
+      --include-path=*)
+        append_csv_values include-path "${argument#*=}"
+        shift
+        ;;
+      -P|--exclude-path)
+        require_option_value "$argument" "$#"
+        append_csv_values exclude-path "$2"
+        shift 2
+        ;;
+      --exclude-path=*)
+        append_csv_values exclude-path "${argument#*=}"
+        shift
+        ;;
+      -t|--include-type)
+        require_option_value "$argument" "$#"
+        append_csv_values include-type "$2"
+        shift 2
+        ;;
+      --include-type=*)
+        append_csv_values include-type "${argument#*=}"
+        shift
+        ;;
+      -T|--exclude-type)
+        require_option_value "$argument" "$#"
+        append_csv_values exclude-type "$2"
+        shift 2
+        ;;
+      --exclude-type=*)
+        append_csv_values exclude-type "${argument#*=}"
+        shift
+        ;;
+      --)
+        shift
+        while [ "$#" -gt 0 ]; do
+          TERMS+=("$1")
+          shift
+        done
+        ;;
+      -*)
+        die "unknown option: $argument"
+        ;;
+      *)
+        TERMS+=("$argument")
+        shift
+        ;;
+    esac
+  done
+}
+
+append_term() {
+  local group="$1"
+  local term="$2"
+
+  case "$group" in
+    and)
+      AND_TERMS+=("$term")
+      ;;
+    or)
+      OR_TERMS+=("$term")
+      ;;
+    not)
+      NOT_TERMS+=("$term")
+      ;;
+  esac
+}
+
+classify_terms() {
+  local current_group=and
+  local stripped term
+
+  for term in "${TERMS[@]}"; do
+    case "$term" in
+      and|or|not)
+        current_group="$term"
+        continue
+        ;;
+    esac
+
+    stripped="$term"
+    if [[ "$stripped" == -* ]]; then
+      while [[ "$stripped" == -* ]]; do
+        stripped="${stripped#-}"
+      done
+
+      case "$stripped" in
+        [aA][nN][dD]|[oO][rR]|[nN][oO][tT])
+          term="$stripped"
+          ;;
+      esac
+    fi
+
+    append_term "$current_group" "$term"
+  done
+
+  if [ "$((${#AND_TERMS[@]} + ${#OR_TERMS[@]} + ${#NOT_TERMS[@]}))" -eq 0 ]; then
+    die 'at least one search term is required'
+  fi
+}
+
+build_paths() {
+  local i j value
+
+  if [ "${#EXCLUDE_PATHS[@]}" -gt 0 ] && [ "${#INCLUDE_PATHS[@]}" -eq 0 ]; then
+    PATHS=(. "${EXCLUDE_PATHS[@]}")
+  else
+    PATHS=("${INCLUDE_PATHS[@]}" "${EXCLUDE_PATHS[@]}")
+  fi
+
+  if [ "${#PATHS[@]}" -eq 0 ]; then
+    PATHS=(.)
+  fi
+
+  for ((i = 1; i < ${#PATHS[@]}; i++)); do
+    value="${PATHS[i]}"
+    j="$i"
+    while [ "$j" -gt 0 ] && [[ "${PATHS[j - 1]}" > "$value" ]]; do
+      PATHS[j]="${PATHS[j - 1]}"
+      j=$((j - 1))
+    done
+    PATHS[j]="$value"
+  done
+}
+
+append_expression_term() {
+  local pattern="$1"
+
+  if [ "$EXPRESSION_COUNT" -gt 0 ]; then
+    GIT_ARGUMENTS+=(--and)
+  fi
+  GIT_ARGUMENTS+=(-e "$pattern")
+  EXPRESSION_COUNT=$((EXPRESSION_COUNT + 1))
+}
+
+build_git_arguments() {
+  local index pattern
+
+  GIT_ARGUMENTS=(-E "${GIT_OPTIONS[@]}")
+  EXPRESSION_COUNT=0
+
+  for pattern in "${AND_TERMS[@]}"; do
+    append_expression_term "$pattern"
+  done
+
+  if [ "${#OR_TERMS[@]}" -gt 0 ]; then
+    if [ "$EXPRESSION_COUNT" -gt 0 ]; then
+      GIT_ARGUMENTS+=(--and)
+    fi
+    GIT_ARGUMENTS+=("(")
+    for ((index = 0; index < ${#OR_TERMS[@]}; index++)); do
+      if [ "$index" -gt 0 ]; then
+        GIT_ARGUMENTS+=(--or)
+      fi
+      GIT_ARGUMENTS+=(-e "${OR_TERMS[index]}")
+    done
+    GIT_ARGUMENTS+=(")")
+    EXPRESSION_COUNT=$((EXPRESSION_COUNT + 1))
+  fi
+
+  if [ "${#NOT_TERMS[@]}" -gt 0 ]; then
+    if [ "$EXPRESSION_COUNT" -gt 0 ]; then
+      GIT_ARGUMENTS+=(--and)
+    fi
+    GIT_ARGUMENTS+=(--not "(")
+    for ((index = 0; index < ${#NOT_TERMS[@]}; index++)); do
+      if [ "$index" -gt 0 ]; then
+        GIT_ARGUMENTS+=(--or)
+      fi
+      GIT_ARGUMENTS+=(-e "${NOT_TERMS[index]}")
+    done
+    GIT_ARGUMENTS+=(")")
+  fi
+
+  GIT_ARGUMENTS+=(-- "${PATHS[@]}")
+}
+
+print_git_command() {
+  local argument
+
+  printf 'git grep'
+  for argument in "${GIT_ARGUMENTS[@]}"; do
+    printf ' %q' "$argument"
+  done
+  printf '\n'
+}
+
+run_git_grep() {
+  local status
+
+  printf '\n'
+
+  if $DEBUG; then
+    print_git_command
+    return 0
+  fi
+
+  if command git grep "${GIT_ARGUMENTS[@]}"; then
+    status=0
+  else
+    status=$?
+  fi
+
+  return "$status"
+}
+
+main() {
+  load_project_arguments "$@"
+  parse_arguments "${PROJECT_ARGUMENTS[@]}"
+  classify_terms
+  build_paths
+  build_git_arguments
+  run_git_grep
+}
+
+main "$@"
