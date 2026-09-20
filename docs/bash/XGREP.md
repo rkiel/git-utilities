@@ -34,6 +34,8 @@ Terms begin in the required group, so this searches for lines containing both
 xgrep alpha beta
 ```
 
+This uses the following search logic:
+
 ```text
 alpha AND beta
 ```
@@ -45,6 +47,8 @@ The operators switch the group used for all following terms. This searches for
 xgrep alpha or beta gamma not generated vendor
 ```
 
+This uses the following search logic:
+
 ```text
 alpha AND (beta OR gamma) AND NOT (generated OR vendor)
 ```
@@ -55,6 +59,8 @@ Start with `or` for a pure OR search:
 xgrep or alpha beta
 ```
 
+This uses the following search logic:
+
 ```text
 alpha OR beta
 ```
@@ -64,6 +70,8 @@ Use `and` to switch back to the required group:
 ```bash
 xgrep alpha or beta gamma and delta
 ```
+
+This uses the following search logic:
 
 ```text
 alpha AND (beta OR gamma) AND delta
@@ -88,16 +96,47 @@ git grep -E -e alpha --and \( -e beta --or -e gamma \) --and --not \( -e generat
 
 ### Paths and types
 
-Path and type arguments accept comma-separated values:
+Lowercase options include paths or file types. Their uppercase counterparts
+exclude them:
+
+```text
+-p, --include-path
+-P, --exclude-path
+-t, --include-type
+-T, --exclude-type
+```
+
+Options can be repeated to include or exclude multiple values.
+
+Search for `foo` in JavaScript files while ignoring JavaScript test files whose
+names end in `.spec.js`:
 
 ```bash
-xgrep -p src,lib -t rb,sh alpha
-xgrep -P vendor,tmp -T min.js,lock alpha
+xgrep foo -t js -T spec.js
+```
+
+Search for `foo` only in the `src` and `lib` directories:
+
+```bash
+xgrep foo -p src -p lib
+```
+
+Search everywhere except the `spec` directory:
+
+```bash
+xgrep foo -P spec
 ```
 
 When exclusions are used without an inclusion, `xgrep` searches from `.` and
 applies the exclusions. All patterns and pathspecs are passed to Git as distinct
 arguments and are not evaluated by the shell.
+
+For compatibility with the Ruby version, values may also be comma-separated:
+
+```bash
+xgrep -p src,lib -t rb,sh alpha
+xgrep -P vendor,tmp -T min.js,lock alpha
+```
 
 ### Project defaults
 
@@ -106,8 +145,10 @@ and terms are prepended to the command line. It is useful for project-specific
 type or path filters:
 
 ```text
--T min.js,lock
--P vendor,tmp
+-T min.js
+-T lock
+-P vendor
+-P tmp
 ```
 
 Command-line `--no-debug` can disable debug mode enabled by `.xgrep`.
