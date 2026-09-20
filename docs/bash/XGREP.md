@@ -168,7 +168,8 @@ xgrep -P vendor,tmp -T min.js,lock alpha
 
 If `.xgrep` exists in the current directory, its whitespace-separated options
 and terms are prepended to the command line. It is useful for project-specific
-type or path filters:
+type or path filters. The file is intended to be committed to source control so
+everyone working on the project shares the same defaults:
 
 ```text
 -T min.js
@@ -176,8 +177,6 @@ type or path filters:
 -P vendor
 -P tmp
 ```
-
-Command-line `--no-debug` can disable debug mode enabled by `.xgrep`.
 
 ### Maintenance
 
