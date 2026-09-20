@@ -53,15 +53,6 @@ die() {
   exit 2
 }
 
-require_option_value() {
-  local option="$1"
-  local remaining="$2"
-
-  if [ "$remaining" -lt 2 ]; then
-    die "$option requires a value"
-  fi
-}
-
 append_csv_values() {
   local kind="$1"
   local input="$2"
@@ -103,7 +94,7 @@ load_project_arguments() {
 }
 
 parse_arguments() {
-  local argument
+  local argument kind option value
 
   while [ "$#" -gt 0 ]; do
     argument="$1"
@@ -129,41 +120,29 @@ parse_arguments() {
         GIT_OPTIONS+=(-v)
         shift
         ;;
-      -p|--include-path)
-        require_option_value "$argument" "$#"
-        append_csv_values include-path "$2"
-        shift 2
-        ;;
-      --include-path=*)
-        append_csv_values include-path "${argument#*=}"
-        shift
-        ;;
-      -P|--exclude-path)
-        require_option_value "$argument" "$#"
-        append_csv_values exclude-path "$2"
-        shift 2
-        ;;
-      --exclude-path=*)
-        append_csv_values exclude-path "${argument#*=}"
-        shift
-        ;;
-      -t|--include-type)
-        require_option_value "$argument" "$#"
-        append_csv_values include-type "$2"
-        shift 2
-        ;;
-      --include-type=*)
-        append_csv_values include-type "${argument#*=}"
-        shift
-        ;;
-      -T|--exclude-type)
-        require_option_value "$argument" "$#"
-        append_csv_values exclude-type "$2"
-        shift 2
-        ;;
-      --exclude-type=*)
-        append_csv_values exclude-type "${argument#*=}"
-        shift
+      -p|--include-path|--include-path=*|\
+      -P|--exclude-path|--exclude-path=*|\
+      -t|--include-type|--include-type=*|\
+      -T|--exclude-type|--exclude-type=*)
+        option="${argument%%=*}"
+        if [[ "$argument" == *=* ]]; then
+          value="${argument#*=}"
+          shift
+        else
+          if [ "$#" -lt 2 ]; then
+            die "$option requires a value"
+          fi
+          value="$2"
+          shift 2
+        fi
+
+        case "$option" in
+          -p|--include-path) kind=include-path ;;
+          -P|--exclude-path) kind=exclude-path ;;
+          -t|--include-type) kind=include-type ;;
+          -T|--exclude-type) kind=exclude-type ;;
+        esac
+        append_csv_values "$kind" "$value"
         ;;
       --)
         shift
@@ -257,54 +236,57 @@ build_paths() {
   done
 }
 
-append_expression_term() {
-  local pattern="$1"
-
+append_and() {
   if [ "$EXPRESSION_COUNT" -gt 0 ]; then
     GIT_ARGUMENTS+=(--and)
   fi
+}
+
+append_pattern() {
+  local pattern="$1"
+
+  append_and
   GIT_ARGUMENTS+=(-e "$pattern")
   EXPRESSION_COUNT=$((EXPRESSION_COUNT + 1))
 }
 
+append_or_group() {
+  local negate="$1"
+  local first=true pattern
+  shift
+
+  [ "$#" -gt 0 ] || return 0
+
+  append_and
+  if $negate; then
+    GIT_ARGUMENTS+=(--not)
+  fi
+  GIT_ARGUMENTS+=("(")
+
+  for pattern in "$@"; do
+    if $first; then
+      first=false
+    else
+      GIT_ARGUMENTS+=(--or)
+    fi
+    GIT_ARGUMENTS+=(-e "$pattern")
+  done
+
+  GIT_ARGUMENTS+=(")")
+  EXPRESSION_COUNT=$((EXPRESSION_COUNT + 1))
+}
+
 build_git_arguments() {
-  local index pattern
+  local pattern
 
   GIT_ARGUMENTS=(-E "${GIT_OPTIONS[@]}")
   EXPRESSION_COUNT=0
 
   for pattern in "${AND_TERMS[@]}"; do
-    append_expression_term "$pattern"
+    append_pattern "$pattern"
   done
-
-  if [ "${#OR_TERMS[@]}" -gt 0 ]; then
-    if [ "$EXPRESSION_COUNT" -gt 0 ]; then
-      GIT_ARGUMENTS+=(--and)
-    fi
-    GIT_ARGUMENTS+=("(")
-    for ((index = 0; index < ${#OR_TERMS[@]}; index++)); do
-      if [ "$index" -gt 0 ]; then
-        GIT_ARGUMENTS+=(--or)
-      fi
-      GIT_ARGUMENTS+=(-e "${OR_TERMS[index]}")
-    done
-    GIT_ARGUMENTS+=(")")
-    EXPRESSION_COUNT=$((EXPRESSION_COUNT + 1))
-  fi
-
-  if [ "${#NOT_TERMS[@]}" -gt 0 ]; then
-    if [ "$EXPRESSION_COUNT" -gt 0 ]; then
-      GIT_ARGUMENTS+=(--and)
-    fi
-    GIT_ARGUMENTS+=(--not "(")
-    for ((index = 0; index < ${#NOT_TERMS[@]}; index++)); do
-      if [ "$index" -gt 0 ]; then
-        GIT_ARGUMENTS+=(--or)
-      fi
-      GIT_ARGUMENTS+=(-e "${NOT_TERMS[index]}")
-    done
-    GIT_ARGUMENTS+=(")")
-  fi
+  append_or_group false "${OR_TERMS[@]}"
+  append_or_group true "${NOT_TERMS[@]}"
 
   GIT_ARGUMENTS+=(-- "${PATHS[@]}")
 }
@@ -320,22 +302,13 @@ print_git_command() {
 }
 
 run_git_grep() {
-  local status
-
   printf '\n'
 
   if $DEBUG; then
     print_git_command
-    return 0
-  fi
-
-  if command git grep "${GIT_ARGUMENTS[@]}"; then
-    status=0
   else
-    status=$?
+    command git grep "${GIT_ARGUMENTS[@]}"
   fi
-
-  return "$status"
 }
 
 main() {
