@@ -34,11 +34,19 @@ Terms begin in the required group, so this searches for lines containing both
 xgrep alpha beta
 ```
 
+```text
+alpha AND beta
+```
+
 The operators switch the group used for all following terms. This searches for
 `alpha`, either `beta` or `gamma`, and neither `generated` nor `vendor`:
 
 ```bash
 xgrep alpha or beta gamma not generated vendor
+```
+
+```text
+alpha AND (beta OR gamma) AND NOT (generated OR vendor)
 ```
 
 Start with `or` for a pure OR search:
@@ -47,10 +55,18 @@ Start with `or` for a pure OR search:
 xgrep or alpha beta
 ```
 
+```text
+alpha OR beta
+```
+
 Use `and` to switch back to the required group:
 
 ```bash
 xgrep alpha or beta gamma and delta
+```
+
+```text
+alpha AND (beta OR gamma) AND delta
 ```
 
 To search for the literal words `and`, `or`, or `not`, prefix the word with one
@@ -58,6 +74,16 @@ or more dashes and place it after `--`:
 
 ```bash
 xgrep -- --and
+```
+
+### Debug output
+
+Use `-d` to inspect the underlying `git grep` command without running it:
+
+```console
+$ xgrep -d alpha or beta gamma not generated vendor
+
+git grep -E -e alpha --and \( -e beta --or -e gamma \) --and --not \( -e generated --or -e vendor \) -- .
 ```
 
 ### Paths and types
