@@ -84,6 +84,32 @@ or more dashes and place it after `--`:
 xgrep -- --and
 ```
 
+#### A real-world workflow
+
+Start by searching for one term, or a few required terms. The first search often
+casts a wide net and produces too much output:
+
+```bash
+xgrep payment error
+```
+
+Review the results, press Up Arrow to recall the command, and add `not` followed
+by a term that identifies unwanted results:
+
+```bash
+xgrep payment error not deprecated
+```
+
+Repeat as needed. Additional terms after `not` join the same excluded OR group,
+so this removes lines containing either `deprecated` or `generated`:
+
+```bash
+xgrep payment error not deprecated generated
+```
+
+This iterative approach makes it easy to begin with a broad search and refine it
+until the remaining output is useful.
+
 ### Debug output
 
 Use `-d` to inspect the underlying `git grep` command without running it:
