@@ -8,19 +8,30 @@ EXCLUDE_TYPES=()
 INCLUDE_PATHS=()
 EXCLUDE_PATHS=(.git node_modules)
 TERMS=()
+AND_TERMS=()
+OR_TERMS=()
+NOT_TERMS=()
+HIGHLIGHT_TERMS=()
 FIND_ARGUMENTS=()
+SEARCH_TERM_COUNT=0
 
 print_help() {
   cat <<HELP
 Usage:
   $SCRIPT_NAME [options] [<term>...]
 
+Boolean terms:
+  Terms are required by default and are combined with AND.
+  and  Add following terms to the required group.
+  or   Add following terms to a single OR group.
+  not  Add following terms to a single excluded OR group.
+
 Options:
   -d, --debug                 Print the command without running it.
       --no-debug              Disable debug mode set by .xfind.
   -h, --help                  Show this help message.
-  -n, -t, --include-type TYPE Include a file extension.
-  -N, -T, --exclude-type TYPE Exclude a file extension.
+  -t, --include-type TYPE     Include a file extension.
+  -T, --exclude-type TYPE     Exclude a file extension.
   -p, --include-path PATH     Include files beneath a directory.
   -P, --exclude-path PATH     Exclude files beneath a directory.
 
@@ -28,6 +39,7 @@ Examples:
   $SCRIPT_NAME
   $SCRIPT_NAME foo
   $SCRIPT_NAME foo bar
+  $SCRIPT_NAME foo or bar baz not generated vendor
   $SCRIPT_NAME foo -t js -T spec.js
   $SCRIPT_NAME foo -p src -p lib
   $SCRIPT_NAME foo -P spec
@@ -74,8 +86,28 @@ read_option_value() {
   fi
 }
 
+append_filter_value() {
+  local kind="$1"
+  local value="$2"
+
+  case "$kind" in
+    include-path)
+      INCLUDE_PATHS+=("$value")
+      ;;
+    exclude-path)
+      EXCLUDE_PATHS+=("$value")
+      ;;
+    include-type)
+      INCLUDE_TYPES+=("$value")
+      ;;
+    exclude-type)
+      EXCLUDE_TYPES+=("$value")
+      ;;
+  esac
+}
+
 parse_arguments() {
-  local argument option
+  local argument kind option
 
   while [ "$#" -gt 0 ]; do
     argument="$1"
@@ -94,24 +126,18 @@ parse_arguments() {
         print_help
         exit 0
         ;;
-      -n|-t|--include-type|--include-type=*)
+      -p|--include-path|--include-path=*|\
+      -P|--exclude-path|--exclude-path=*|\
+      -t|--include-type|--include-type=*|\
+      -T|--exclude-type|--exclude-type=*)
         read_option_value "$option" "$argument" "$#" "${2-}"
-        INCLUDE_TYPES+=("$OPTION_VALUE")
-        shift "$OPTION_SHIFT"
-        ;;
-      -N|-T|--exclude-type|--exclude-type=*)
-        read_option_value "$option" "$argument" "$#" "${2-}"
-        EXCLUDE_TYPES+=("$OPTION_VALUE")
-        shift "$OPTION_SHIFT"
-        ;;
-      -p|--include-path|--include-path=*)
-        read_option_value "$option" "$argument" "$#" "${2-}"
-        INCLUDE_PATHS+=("$OPTION_VALUE")
-        shift "$OPTION_SHIFT"
-        ;;
-      -P|--exclude-path|--exclude-path=*)
-        read_option_value "$option" "$argument" "$#" "${2-}"
-        EXCLUDE_PATHS+=("$OPTION_VALUE")
+        case "$option" in
+          -p|--include-path) kind=include-path ;;
+          -P|--exclude-path) kind=exclude-path ;;
+          -t|--include-type) kind=include-type ;;
+          -T|--exclude-type) kind=exclude-type ;;
+        esac
+        append_filter_value "$kind" "$OPTION_VALUE"
         shift "$OPTION_SHIFT"
         ;;
       --)
@@ -130,6 +156,65 @@ parse_arguments() {
         ;;
     esac
   done
+}
+
+append_term() {
+  local group="$1"
+  local term="$2"
+
+  case "$group" in
+    and)
+      AND_TERMS+=("$term")
+      ;;
+    or)
+      OR_TERMS+=("$term")
+      ;;
+    not)
+      NOT_TERMS+=("$term")
+      ;;
+  esac
+}
+
+classify_terms() {
+  local current_group=and
+  local stripped term
+
+  for term in "${TERMS[@]}"; do
+    case "$term" in
+      and|or|not)
+        current_group="$term"
+        continue
+        ;;
+    esac
+
+    stripped="$term"
+    if [[ "$stripped" == -* ]]; then
+      while [[ "$stripped" == -* ]]; do
+        stripped="${stripped#-}"
+      done
+
+      case "$stripped" in
+        [aA][nN][dD]|[oO][rR]|[nN][oO][tT])
+          term="$stripped"
+          ;;
+      esac
+    fi
+
+    append_term "$current_group" "$term"
+  done
+
+  SEARCH_TERM_COUNT="$((${#AND_TERMS[@]} + ${#OR_TERMS[@]} + ${#NOT_TERMS[@]}))"
+  if [ "${#TERMS[@]}" -gt 0 ] && [ "$SEARCH_TERM_COUNT" -eq 0 ]; then
+    die 'at least one search term is required'
+  fi
+
+  HIGHLIGHT_TERMS=("${AND_TERMS[@]}" "${OR_TERMS[@]}")
+}
+
+is_simple_search() {
+  [ "${#AND_TERMS[@]}" -eq 1 ] &&
+    [ "${#OR_TERMS[@]}" -eq 0 ] &&
+    [ "${#NOT_TERMS[@]}" -eq 0 ]
 }
 
 append_include_group() {
@@ -192,6 +277,21 @@ print_argument() {
   printf ' %q' "$1"
 }
 
+print_grep_group() {
+  local invert="$1"
+  local color="$2"
+  local term
+  shift 2
+
+  printf ' | grep'
+  $invert && printf ' -v'
+  $color && printf ' --color=auto'
+  for term in "$@"; do
+    printf ' -e'
+    print_argument "$term"
+  done
+}
+
 print_debug_command() {
   local argument index
 
@@ -201,33 +301,33 @@ print_debug_command() {
   done
   printf ' | sort'
 
-  if [ "${#TERMS[@]}" -eq 1 ]; then
+  if is_simple_search; then
     printf ' | xargs grep --color=auto -H --'
-    print_argument "${TERMS[0]}"
-  elif [ "${#TERMS[@]}" -gt 1 ]; then
-    printf ' | while IFS= read -r file; do grep --'
-    print_argument "${TERMS[0]}"
-    printf ' < "$file"'
-    for ((index = 1; index < ${#TERMS[@]}; index++)); do
-      printf ' | grep --'
-      print_argument "${TERMS[index]}"
-    done
+    print_argument "${AND_TERMS[0]}"
+  elif [ "$SEARCH_TERM_COUNT" -gt 0 ]; then
+    printf ' | while IFS= read -r file; do '
+    if [ "${#AND_TERMS[@]}" -gt 0 ]; then
+      printf 'grep --'
+      print_argument "${AND_TERMS[0]}"
+      printf ' < "$file"'
+      for ((index = 1; index < ${#AND_TERMS[@]}; index++)); do
+        printf ' | grep --'
+        print_argument "${AND_TERMS[index]}"
+      done
+    else
+      printf 'cat < "$file"'
+    fi
+    [ "${#OR_TERMS[@]}" -eq 0 ] || print_grep_group false false "${OR_TERMS[@]}"
+    [ "${#NOT_TERMS[@]}" -eq 0 ] || print_grep_group true false "${NOT_TERMS[@]}"
     printf ' | while IFS= read -r line; do printf "%%s:%%s\\n" "$file" "$line"; done; done'
-    printf ' | grep --color=auto'
-    for argument in "${TERMS[@]}"; do
-      printf ' -e'
-      print_argument "$argument"
-    done
+    [ "${#HIGHLIGHT_TERMS[@]}" -eq 0 ] ||
+      print_grep_group false true "${HIGHLIGHT_TERMS[@]}"
   fi
   printf '\n'
 }
 
 grep_batch() {
-  if [ "${#TERMS[@]}" -eq 1 ]; then
-    command grep --color=auto -H -- "${TERMS[0]}" "${FILE_BATCH[@]}"
-  else
-    command grep -H -- "${TERMS[0]}" "${FILE_BATCH[@]}"
-  fi
+  command grep --color=auto -H -- "${AND_TERMS[0]}" "${FILE_BATCH[@]}"
 }
 
 grep_sorted_files() {
@@ -260,15 +360,59 @@ grep_sorted_files() {
   $matched
 }
 
-filter_file() {
+filter_and_terms() {
   local file="$1"
   local index="$2"
 
   if [ "$index" -eq 0 ]; then
-    command grep -- "${TERMS[0]}" < "$file"
+    command grep -- "${AND_TERMS[0]}" < "$file"
   else
-    filter_file "$file" "$((index - 1))" |
-      command grep -- "${TERMS[index]}"
+    filter_and_terms "$file" "$((index - 1))" |
+      command grep -- "${AND_TERMS[index]}"
+  fi
+}
+
+grep_group() {
+  local invert="$1"
+  local term
+  local -a arguments=(grep)
+  shift
+
+  $invert && arguments+=(-v)
+  for term in "$@"; do
+    arguments+=(-e "$term")
+  done
+
+  command "${arguments[@]}"
+}
+
+filter_and_stage() {
+  local file="$1"
+
+  if [ "${#AND_TERMS[@]}" -gt 0 ]; then
+    filter_and_terms "$file" "$((${#AND_TERMS[@]} - 1))"
+  else
+    command cat < "$file"
+  fi
+}
+
+filter_or_stage() {
+  local file="$1"
+
+  if [ "${#OR_TERMS[@]}" -gt 0 ]; then
+    filter_and_stage "$file" | grep_group false "${OR_TERMS[@]}"
+  else
+    filter_and_stage "$file"
+  fi
+}
+
+filter_file() {
+  local file="$1"
+
+  if [ "${#NOT_TERMS[@]}" -gt 0 ]; then
+    filter_or_stage "$file" | grep_group true "${NOT_TERMS[@]}"
+  else
+    filter_or_stage "$file"
   fi
 }
 
@@ -286,7 +430,7 @@ grep_multiple_files() {
   local matched=false
 
   while IFS= read -r file; do
-    if filter_file "$file" "$((${#TERMS[@]} - 1))" | prefix_lines "$file"; then
+    if filter_file "$file" | prefix_lines "$file"; then
       matched=true
     else
       status=$?
@@ -301,7 +445,7 @@ highlight_results() {
   local term
   local -a arguments=(grep --color=auto)
 
-  for term in "${TERMS[@]}"; do
+  for term in "${HIGHLIGHT_TERMS[@]}"; do
     arguments+=(-e "$term")
   done
 
@@ -313,18 +457,21 @@ run_find() {
 
   if $DEBUG; then
     print_debug_command
-  elif [ "${#TERMS[@]}" -eq 0 ]; then
+  elif [ "$SEARCH_TERM_COUNT" -eq 0 ]; then
     command find "${FIND_ARGUMENTS[@]}" | command sort
-  elif [ "${#TERMS[@]}" -eq 1 ]; then
+  elif is_simple_search; then
     grep_sorted_files
-  else
+  elif [ "${#HIGHLIGHT_TERMS[@]}" -gt 0 ]; then
     grep_multiple_files | highlight_results
+  else
+    grep_multiple_files
   fi
 }
 
 main() {
   load_project_arguments "$@"
   parse_arguments "${PROJECT_ARGUMENTS[@]}"
+  classify_terms
   build_find_arguments
   run_find
 }

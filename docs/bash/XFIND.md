@@ -8,12 +8,18 @@ or more terms it searches their contents.
 Usage:
   xfind [options] [<term>...]
 
+Boolean terms:
+  Terms are required by default and are combined with AND.
+  and  Add following terms to the required group.
+  or   Add following terms to a single OR group.
+  not  Add following terms to a single excluded OR group.
+
 Options:
   -d, --debug                 Print the command without running it.
       --no-debug              Disable debug mode set by .xfind.
   -h, --help                  Show the help message.
-  -n, -t, --include-type TYPE Include a file extension.
-  -N, -T, --exclude-type TYPE Exclude a file extension.
+  -t, --include-type TYPE     Include a file extension.
+  -T, --exclude-type TYPE     Exclude a file extension.
   -p, --include-path PATH     Include files beneath a directory.
   -P, --exclude-path PATH     Exclude files beneath a directory.
 ```
@@ -40,27 +46,54 @@ xfind foo bar
 Search terms are matched only against file contents. A term appearing in a file
 or directory name does not satisfy the search.
 
-Unlike `xgrep`, `xfind` does not provide `or` and `not` Boolean groups. Each term
-is passed through another `grep` and therefore further narrows the output. After
-filtering, a final `grep` colors every search term in the resulting lines.
+### Boolean searches
+
+Terms begin in the required group. The operators switch the group used for all
+following terms. This searches for `alpha`, either `beta` or `gamma`, and
+neither `generated` nor `vendor`:
+
+```bash
+xfind alpha or beta gamma not generated vendor
+```
+
+This uses the following search logic:
+
+```text
+alpha AND (beta OR gamma) AND NOT (generated OR vendor)
+```
+
+Start with `or` for a pure OR search:
+
+```bash
+xfind or alpha beta
+```
+
+Use `and` to switch back to the required group:
+
+```bash
+xfind alpha or beta gamma and delta
+```
+
+To search for the literal words `and`, `or`, or `not`, prefix the word with one
+or more dashes and place it after `--`:
+
+```bash
+xfind -- --and
+```
+
+Every part of the Boolean expression applies to one line. After filtering, a
+final `grep` colors every positive search term in the resulting lines.
 
 ### File types
 
-Lowercase options include file types and uppercase options exclude them. The
-`-t` and `-T` options are convenience aliases for the original `-n` and `-N`
-options. Specify extensions without a leading dot.
+Lowercase `-t` includes file types and uppercase `-T` excludes them. Specify
+extensions without a leading dot.
 
 Search JavaScript files for `foo` while excluding JavaScript test files ending
 in `.spec.js`:
 
 ```bash
 xfind foo -t js -T spec.js
-```
-
-The equivalent command using the original option names is:
-
-```bash
-xfind foo -n js -N spec.js
 ```
 
 Options can be repeated. Include both Ruby and shell files:
@@ -116,6 +149,7 @@ find . -type f \( -name \*.js \) \! -name \*.spec.js \! -path \*/.git/\* \! -pat
 
 ### Maintenance
 
-Behavior changes must update `tests/xfind_test.sh` in the same change. Keep the
-script compatible with Bash 3.2 and with the standard `find`, `grep`, and `sort`
+Behavior changes must update `tests/xfind_test.sh` in the same change. Boolean
+changes must preserve its parity checks against `xgrep`. Keep the script
+compatible with Bash 3.2 and with the standard `find`, `grep`, and `sort`
 commands available on supported Linux and macOS systems.

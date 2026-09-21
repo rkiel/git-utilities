@@ -12,6 +12,7 @@ OR_TERMS=()
 NOT_TERMS=()
 PATHS=()
 GIT_ARGUMENTS=()
+SEARCH_TERM_COUNT=0
 
 print_help() {
   cat <<HELP
@@ -53,7 +54,37 @@ die() {
   exit 2
 }
 
-append_csv_values() {
+load_project_arguments() {
+  local token
+
+  PROJECT_ARGUMENTS=()
+  if [ -f ./.xgrep ]; then
+    while IFS= read -r token; do
+      [ -n "$token" ] && PROJECT_ARGUMENTS+=("$token")
+    done < <(tr -s '[:space:]' '\n' < ./.xgrep)
+  fi
+
+  PROJECT_ARGUMENTS+=("$@")
+}
+
+read_option_value() {
+  local option="$1"
+  local argument="$2"
+  local remaining="$3"
+
+  if [[ "$argument" == *=* ]]; then
+    OPTION_VALUE="${argument#*=}"
+    OPTION_SHIFT=1
+  else
+    if [ "$remaining" -lt 2 ]; then
+      die "$option requires a value"
+    fi
+    OPTION_VALUE="$4"
+    OPTION_SHIFT=2
+  fi
+}
+
+append_filter_value() {
   local kind="$1"
   local input="$2"
   local value
@@ -80,24 +111,12 @@ append_csv_values() {
   done
 }
 
-load_project_arguments() {
-  local token
-
-  PROJECT_ARGUMENTS=()
-  if [ -f ./.xgrep ]; then
-    while IFS= read -r token; do
-      [ -n "$token" ] && PROJECT_ARGUMENTS+=("$token")
-    done < <(tr -s '[:space:]' '\n' < ./.xgrep)
-  fi
-
-  PROJECT_ARGUMENTS+=("$@")
-}
-
 parse_arguments() {
-  local argument kind option value
+  local argument kind option
 
   while [ "$#" -gt 0 ]; do
     argument="$1"
+    option="${argument%%=*}"
 
     case "$argument" in
       -d|--debug)
@@ -124,25 +143,15 @@ parse_arguments() {
       -P|--exclude-path|--exclude-path=*|\
       -t|--include-type|--include-type=*|\
       -T|--exclude-type|--exclude-type=*)
-        option="${argument%%=*}"
-        if [[ "$argument" == *=* ]]; then
-          value="${argument#*=}"
-          shift
-        else
-          if [ "$#" -lt 2 ]; then
-            die "$option requires a value"
-          fi
-          value="$2"
-          shift 2
-        fi
-
+        read_option_value "$option" "$argument" "$#" "${2-}"
         case "$option" in
           -p|--include-path) kind=include-path ;;
           -P|--exclude-path) kind=exclude-path ;;
           -t|--include-type) kind=include-type ;;
           -T|--exclude-type) kind=exclude-type ;;
         esac
-        append_csv_values "$kind" "$value"
+        append_filter_value "$kind" "$OPTION_VALUE"
+        shift "$OPTION_SHIFT"
         ;;
       --)
         shift
@@ -207,7 +216,8 @@ classify_terms() {
     append_term "$current_group" "$term"
   done
 
-  if [ "$((${#AND_TERMS[@]} + ${#OR_TERMS[@]} + ${#NOT_TERMS[@]}))" -eq 0 ]; then
+  SEARCH_TERM_COUNT="$((${#AND_TERMS[@]} + ${#OR_TERMS[@]} + ${#NOT_TERMS[@]}))"
+  if [ "$SEARCH_TERM_COUNT" -eq 0 ]; then
     die 'at least one search term is required'
   fi
 }
