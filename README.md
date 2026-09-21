@@ -41,11 +41,14 @@ This repository needs to be cloned.  Copy/paste the following to be prompted for
 
 ```bash
 {
-  read -r -p "Clone into which directory? [$HOME/GitHub/rkiel] " GIT_UTILITIES_ROOT
-  GIT_UTILITIES_ROOT=${GIT_UTILITIES_ROOT:-"$HOME/GitHub/rkiel"}
-  mkdir -p "$GIT_UTILITIES_ROOT"
-  git clone https://github.com/rkiel/git-utilities.git "$GIT_UTILITIES_ROOT/git-utilities"
-  GIT_UTILITIES_ROOT="$GIT_UTILITIES_ROOT/git-utilities"
+  read -r -p "Clone into which directory? [$HOME/GitHub/rkiel] " GITHUB_REPOS_DIR
+  GITHUB_REPOS_DIR=${GITHUB_REPOS_DIR:-"$HOME/GitHub/rkiel"}
+
+  mkdir -p "$GITHUB_REPOS_DIR"
+
+  GIT_UTILITIES_ROOT="$GITHUB_REPOS_DIR/git-utilities"
+  git clone https://github.com/rkiel/git-utilities.git "$GIT_UTILITIES_ROOT"
+
   ls -l "$GIT_UTILITIES_ROOT"
 }
 ```
@@ -54,22 +57,37 @@ When you create a feature branch, it will include a name that identifies and dis
 your branches from branches created by other members of your team. Choose a
 short name containing only letters, numbers, and underscores.
 
-Your bash dot files will be updated appropriately.
+Update your `.bash_profile` to load the git-utilities `profile.sh` script that will:
+
+* export environment variable `FEATURE_USER` with that short name
+* add `$GIT_UTILITIES_ROOT/bin/bash` to your `$PATH`
 
 ```bash
 {
   read -r -p 'Enter a user name: ' FEATURE_USER
+
   printf '\nsource "%s/dotfiles/bash/profile.sh" "%s"\n' \
     "$GIT_UTILITIES_ROOT" "$FEATURE_USER" >> "$HOME/.bash_profile"
+
   cat "$HOME/.bash_profile"
-  echo "============="
+}
+```
+
+Update your `.bashrc` to load the git-utilities `rc.sh` script that will:
+
+* define some aliases
+* add support for shell tab completion
+
+```bash
+{
   printf '\nsource "%s/dotfiles/bash/rc.sh"\n' \
     "$GIT_UTILITIES_ROOT" >> "$HOME/.bashrc"
+
   cat "$HOME/.bashrc"
 }
 ```
 
-Load the configuration into the current shell and verify correctness.
+Load the `profile.sh` and `rc.sh` into your current shell and verify correctness.
 
 ```bash
 {
@@ -87,11 +105,14 @@ This repository needs to be cloned.  Copy/paste the following to be prompted for
 
 ```zsh
 {
-  read -r 'GIT_UTILITIES_ROOT?Clone into which directory? [$HOME/GitHub/rkiel] '
-  GIT_UTILITIES_ROOT=${GIT_UTILITIES_ROOT:-"$HOME/GitHub/rkiel"}
-  mkdir -p "$GIT_UTILITIES_ROOT"
-  git clone https://github.com/rkiel/git-utilities.git "$GIT_UTILITIES_ROOT/git-utilities"
-  GIT_UTILITIES_ROOT="$GIT_UTILITIES_ROOT/git-utilities"
+  read -r "GITHUB_REPOS_DIR?Clone into which directory? [$HOME/GitHub/rkiel] "
+  GITHUB_REPOS_DIR=${GITHUB_REPOS_DIR:-"$HOME/GitHub/rkiel"}
+
+  mkdir -p "$GITHUB_REPOS_DIR"
+
+  GIT_UTILITIES_ROOT="$GITHUB_REPOS_DIR/git-utilities"
+  git clone https://github.com/rkiel/git-utilities.git "$GIT_UTILITIES_ROOT"
+
   ls -l "$GIT_UTILITIES_ROOT"
 }
 ```
@@ -100,22 +121,37 @@ When you create a feature branch, it will include a name that identifies and dis
 your branches from branches created by other members of your team. Choose a
 short name containing only letters, numbers, and underscores.
 
-Your zsh dot files will be updated appropriately.
+Update your `.zprofile` to load the git-utilities `profile.sh` script that will:
+
+* export environment variable `FEATURE_USER` with that short name
+* add `$GIT_UTILITIES_ROOT/bin/bash` to your `$PATH`
 
 ```zsh
 {
   read -r 'FEATURE_USER?Enter a user name: '
+
   printf '\nsource "%s/dotfiles/zsh/profile.sh" "%s"\n' \
     "$GIT_UTILITIES_ROOT" "$FEATURE_USER" >> "$HOME/.zprofile"
+
   cat "$HOME/.zprofile"
-  echo "============="
+}
+```
+
+Update your `.zshrc` to load the git-utilities `rc.sh` script that will:
+
+* define some aliases
+* add support for shell tab completion
+
+```zsh
+{
   printf '\nsource "%s/dotfiles/zsh/rc.sh"\n' \
     "$GIT_UTILITIES_ROOT" >> "$HOME/.zshrc"
+
   cat "$HOME/.zshrc"
 }
 ```
 
-Load the configuration into the current shell and verify correctness.
+Load the `profile.sh` and `rc.sh` into your current shell and verify correctness.
 
 ```zsh
 {
