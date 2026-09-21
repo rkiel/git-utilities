@@ -76,6 +76,7 @@ Load the configuration into the current shell and verify correctness.
   source "$GIT_UTILITIES_ROOT/dotfiles/bash/profile.sh" "$FEATURE_USER"
   source "$GIT_UTILITIES_ROOT/dotfiles/bash/rc.sh"
   command -v feature
+  command -v xfind
   command -v xgrep
 }
 ```
@@ -121,6 +122,7 @@ Load the configuration into the current shell and verify correctness.
   source "$GIT_UTILITIES_ROOT/dotfiles/zsh/profile.sh" "$FEATURE_USER"
   source "$GIT_UTILITIES_ROOT/dotfiles/zsh/rc.sh"
   command -v feature
+  command -v xfind
   command -v xgrep
 }
 ```
@@ -129,4 +131,4 @@ Load the configuration into the current shell and verify correctness.
 
 - `feature` - [ [classic Ruby version](docs/ruby/FEATURE.md) ] [ [new Bash version](docs/bash/FEATURE.md) ]
 - `xgrep` - [ [classic Ruby version](docs/ruby/XGREP.md) ] [ [new Bash version](docs/bash/XGREP.md) ]
-- `xfind` - [ [classic Ruby version](docs/ruby/XFIND.md) ]
+- `xfind` - [ [classic Ruby version](docs/ruby/XFIND.md) ] [ [new Bash version](docs/bash/XFIND.md) ]

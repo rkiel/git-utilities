@@ -1,0 +1,332 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_NAME="$(basename "$0")"
+DEBUG=false
+INCLUDE_TYPES=()
+EXCLUDE_TYPES=()
+INCLUDE_PATHS=()
+EXCLUDE_PATHS=(.git node_modules)
+TERMS=()
+FIND_ARGUMENTS=()
+
+print_help() {
+  cat <<HELP
+Usage:
+  $SCRIPT_NAME [options] [<term>...]
+
+Options:
+  -d, --debug                 Print the command without running it.
+      --no-debug              Disable debug mode set by .xfind.
+  -h, --help                  Show this help message.
+  -n, -t, --include-type TYPE Include a file extension.
+  -N, -T, --exclude-type TYPE Exclude a file extension.
+  -p, --include-path PATH     Include files beneath a directory.
+  -P, --exclude-path PATH     Exclude files beneath a directory.
+
+Examples:
+  $SCRIPT_NAME
+  $SCRIPT_NAME foo
+  $SCRIPT_NAME foo bar
+  $SCRIPT_NAME foo -t js -T spec.js
+  $SCRIPT_NAME foo -p src -p lib
+  $SCRIPT_NAME foo -P spec
+
+Defaults:
+  The .git and node_modules directories are excluded.
+  If .xfind exists in the current directory, its whitespace-separated options
+  and terms are prepended to the command line.
+HELP
+}
+
+die() {
+  printf '%s: %s\n' "$SCRIPT_NAME" "$1" >&2
+  exit 2
+}
+
+load_project_arguments() {
+  local token
+
+  PROJECT_ARGUMENTS=()
+  if [ -f ./.xfind ]; then
+    while IFS= read -r token; do
+      [ -n "$token" ] && PROJECT_ARGUMENTS+=("$token")
+    done < <(tr -s '[:space:]' '\n' < ./.xfind)
+  fi
+
+  PROJECT_ARGUMENTS+=("$@")
+}
+
+read_option_value() {
+  local option="$1"
+  local argument="$2"
+  local remaining="$3"
+
+  if [[ "$argument" == *=* ]]; then
+    OPTION_VALUE="${argument#*=}"
+    OPTION_SHIFT=1
+  else
+    if [ "$remaining" -lt 2 ]; then
+      die "$option requires a value"
+    fi
+    OPTION_VALUE="$4"
+    OPTION_SHIFT=2
+  fi
+}
+
+parse_arguments() {
+  local argument option
+
+  while [ "$#" -gt 0 ]; do
+    argument="$1"
+    option="${argument%%=*}"
+
+    case "$argument" in
+      -d|--debug)
+        DEBUG=true
+        shift
+        ;;
+      --no-debug)
+        DEBUG=false
+        shift
+        ;;
+      -h|--help)
+        print_help
+        exit 0
+        ;;
+      -n|-t|--include-type|--include-type=*)
+        read_option_value "$option" "$argument" "$#" "${2-}"
+        INCLUDE_TYPES+=("$OPTION_VALUE")
+        shift "$OPTION_SHIFT"
+        ;;
+      -N|-T|--exclude-type|--exclude-type=*)
+        read_option_value "$option" "$argument" "$#" "${2-}"
+        EXCLUDE_TYPES+=("$OPTION_VALUE")
+        shift "$OPTION_SHIFT"
+        ;;
+      -p|--include-path|--include-path=*)
+        read_option_value "$option" "$argument" "$#" "${2-}"
+        INCLUDE_PATHS+=("$OPTION_VALUE")
+        shift "$OPTION_SHIFT"
+        ;;
+      -P|--exclude-path|--exclude-path=*)
+        read_option_value "$option" "$argument" "$#" "${2-}"
+        EXCLUDE_PATHS+=("$OPTION_VALUE")
+        shift "$OPTION_SHIFT"
+        ;;
+      --)
+        shift
+        while [ "$#" -gt 0 ]; do
+          TERMS+=("$1")
+          shift
+        done
+        ;;
+      -*)
+        die "unknown option: $argument"
+        ;;
+      *)
+        TERMS+=("$argument")
+        shift
+        ;;
+    esac
+  done
+}
+
+append_include_group() {
+  local predicate="$1"
+  local prefix="$2"
+  shift 2
+
+  local first=true value
+
+  [ "$#" -gt 0 ] || return 0
+
+  FIND_ARGUMENTS+=("(")
+  for value in "$@"; do
+    if $first; then
+      first=false
+    else
+      FIND_ARGUMENTS+=(-o)
+    fi
+    FIND_ARGUMENTS+=("$predicate" "${prefix}${value}")
+  done
+  FIND_ARGUMENTS+=(")")
+}
+
+append_exclusions() {
+  local predicate="$1"
+  local prefix="$2"
+  shift 2
+
+  local value
+
+  for value in "$@"; do
+    FIND_ARGUMENTS+=(! "$predicate" "${prefix}${value}")
+  done
+}
+
+build_find_arguments() {
+  local path
+
+  FIND_ARGUMENTS=(. -type f)
+
+  append_include_group -name '*.' "${INCLUDE_TYPES[@]}"
+  append_exclusions -name '*.' "${EXCLUDE_TYPES[@]}"
+
+  if [ "${#INCLUDE_PATHS[@]}" -gt 0 ]; then
+    FIND_ARGUMENTS+=("(")
+    for path in "${INCLUDE_PATHS[@]}"; do
+      if [ "${FIND_ARGUMENTS[${#FIND_ARGUMENTS[@]} - 1]}" != "(" ]; then
+        FIND_ARGUMENTS+=(-o)
+      fi
+      FIND_ARGUMENTS+=(-path "*/$path/*")
+    done
+    FIND_ARGUMENTS+=(")")
+  fi
+
+  append_exclusions -path '*/' "${EXCLUDE_PATHS[@]/%//\*}"
+  FIND_ARGUMENTS+=(-print)
+}
+
+print_argument() {
+  printf ' %q' "$1"
+}
+
+print_debug_command() {
+  local argument index
+
+  printf 'find'
+  for argument in "${FIND_ARGUMENTS[@]}"; do
+    print_argument "$argument"
+  done
+  printf ' | sort'
+
+  if [ "${#TERMS[@]}" -eq 1 ]; then
+    printf ' | xargs grep --color=auto -H --'
+    print_argument "${TERMS[0]}"
+  elif [ "${#TERMS[@]}" -gt 1 ]; then
+    printf ' | while IFS= read -r file; do grep --'
+    print_argument "${TERMS[0]}"
+    printf ' < "$file"'
+    for ((index = 1; index < ${#TERMS[@]}; index++)); do
+      printf ' | grep --'
+      print_argument "${TERMS[index]}"
+    done
+    printf ' | while IFS= read -r line; do printf "%%s:%%s\\n" "$file" "$line"; done; done'
+    printf ' | grep --color=auto'
+    for argument in "${TERMS[@]}"; do
+      printf ' -e'
+      print_argument "$argument"
+    done
+  fi
+  printf '\n'
+}
+
+grep_batch() {
+  if [ "${#TERMS[@]}" -eq 1 ]; then
+    command grep --color=auto -H -- "${TERMS[0]}" "${FILE_BATCH[@]}"
+  else
+    command grep -H -- "${TERMS[0]}" "${FILE_BATCH[@]}"
+  fi
+}
+
+grep_sorted_files() {
+  local file status
+  local matched=false
+  local -a FILE_BATCH=()
+
+  while IFS= read -r file; do
+    FILE_BATCH+=("$file")
+    if [ "${#FILE_BATCH[@]}" -eq 100 ]; then
+      if grep_batch; then
+        matched=true
+      else
+        status=$?
+        [ "$status" -eq 1 ] || return "$status"
+      fi
+      FILE_BATCH=()
+    fi
+  done < <(command find "${FIND_ARGUMENTS[@]}" | command sort)
+
+  if [ "${#FILE_BATCH[@]}" -gt 0 ]; then
+    if grep_batch; then
+      matched=true
+    else
+      status=$?
+      [ "$status" -eq 1 ] || return "$status"
+    fi
+  fi
+
+  $matched
+}
+
+filter_file() {
+  local file="$1"
+  local index="$2"
+
+  if [ "$index" -eq 0 ]; then
+    command grep -- "${TERMS[0]}" < "$file"
+  else
+    filter_file "$file" "$((index - 1))" |
+      command grep -- "${TERMS[index]}"
+  fi
+}
+
+prefix_lines() {
+  local file="$1"
+  local line
+
+  while IFS= read -r line || [ -n "$line" ]; do
+    printf '%s:%s\n' "$file" "$line"
+  done
+}
+
+grep_multiple_files() {
+  local file status
+  local matched=false
+
+  while IFS= read -r file; do
+    if filter_file "$file" "$((${#TERMS[@]} - 1))" | prefix_lines "$file"; then
+      matched=true
+    else
+      status=$?
+      [ "$status" -eq 1 ] || return "$status"
+    fi
+  done < <(command find "${FIND_ARGUMENTS[@]}" | command sort)
+
+  $matched
+}
+
+highlight_results() {
+  local term
+  local -a arguments=(grep --color=auto)
+
+  for term in "${TERMS[@]}"; do
+    arguments+=(-e "$term")
+  done
+
+  command "${arguments[@]}"
+}
+
+run_find() {
+  printf '\n'
+
+  if $DEBUG; then
+    print_debug_command
+  elif [ "${#TERMS[@]}" -eq 0 ]; then
+    command find "${FIND_ARGUMENTS[@]}" | command sort
+  elif [ "${#TERMS[@]}" -eq 1 ]; then
+    grep_sorted_files
+  else
+    grep_multiple_files | highlight_results
+  fi
+}
+
+main() {
+  load_project_arguments "$@"
+  parse_arguments "${PROJECT_ARGUMENTS[@]}"
+  build_find_arguments
+  run_find
+}
+
+main "$@"
