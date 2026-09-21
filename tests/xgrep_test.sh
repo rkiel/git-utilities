@@ -95,6 +95,7 @@ test_help_and_errors() {
 
   output="$($XGREP --help)"
   assert_contains 'Terms are required by default' "$output" "help explains default AND behavior"
+  assert_contains 'Search terms use extended regular expressions' "$output" "help documents pattern syntax"
   assert_contains 'Project defaults:' "$output" "help documents .xgrep"
   assert_contains 'A nonempty NO_COLOR disables colored output' "$output" "help documents NO_COLOR"
 

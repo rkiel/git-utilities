@@ -101,6 +101,7 @@ test_help_and_errors() {
 
   output="$($XFIND --help)"
   assert_contains 'Terms are required by default and are combined with AND' "$output" "help explains Boolean defaults"
+  assert_contains 'Search terms use extended regular expressions' "$output" "help documents pattern syntax"
   assert_contains 'A nonempty NO_COLOR disables colored output' "$output" "help documents NO_COLOR"
   assert_contains '-t, --include-type TYPE' "$output" "help documents included types"
   assert_contains '-T, --exclude-type TYPE' "$output" "help documents excluded types"
@@ -171,6 +172,8 @@ assert_search_parity() {
 
 test_xgrep_parity() {
   assert_search_parity "required terms match xgrep" --include-type=js foo bar
+  assert_search_parity "extended regular expressions match xgrep" \
+    -t js foo 'application|nested'
   assert_search_parity "pure OR matches xgrep" -t js or application nested
   assert_search_parity "combined Boolean groups match xgrep" \
     -t js foo or application nested not test
@@ -246,28 +249,28 @@ test_debug_and_project_defaults() {
   assert_contains 'find . -type f' "$output" "debug displays find command"
   assert_contains '-name \*.js' "$output" "debug displays included type"
   assert_contains '\! -name \*.spec.js' "$output" "debug displays excluded type"
-  assert_contains '| xargs grep --color=auto -H -- foo' "$output" "debug displays grep command"
+  assert_contains '| xargs grep -E --color=auto -H -- foo' "$output" "debug displays grep command"
 
   output="$(cd "$FIXTURE" && TERM=xterm NO_COLOR=1 "$XFIND" -d foo)"
-  assert_contains '| xargs grep --color=never -H -- foo' "$output" "NO_COLOR disables grep colors"
+  assert_contains '| xargs grep -E --color=never -H -- foo' "$output" "NO_COLOR disables grep colors"
 
   output="$(cd "$FIXTURE" && TERM=xterm NO_COLOR='' "$XFIND" -d foo)"
-  assert_contains '| xargs grep --color=auto -H -- foo' "$output" "empty NO_COLOR leaves grep colors enabled"
+  assert_contains '| xargs grep -E --color=auto -H -- foo' "$output" "empty NO_COLOR leaves grep colors enabled"
 
   output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XFIND" -d foo bar application)"
-  assert_contains 'grep -- foo < "$file" | grep -- bar | grep -- application' \
+  assert_contains 'grep -E -- foo < "$file" | grep -E -- bar | grep -E -- application' \
     "$output" "multiple terms filter file content before adding its name"
   assert_contains 'printf "%s:%s\n" "$file" "$line"' \
     "$output" "debug adds the filename after content filtering"
-  assert_contains '| grep --color=auto -e foo -e bar -e application' \
+  assert_contains '| grep -E --color=auto -e foo -e bar -e application' \
     "$output" "the final grep colors every search term"
 
   output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XFIND" -d foo or bar application not filename nested)"
-  assert_contains 'grep -- foo < "$file" | grep -e bar -e application | grep -v -e filename -e nested' \
+  assert_contains 'grep -E -- foo < "$file" | grep -E -e bar -e application | grep -E -v -e filename -e nested' \
     "$output" "debug displays AND, OR, and NOT filtering stages"
-  assert_contains '| grep --color=auto -e foo -e bar -e application' \
+  assert_contains '| grep -E --color=auto -e foo -e bar -e application' \
     "$output" "debug highlights positive Boolean terms"
-  assert_not_contains '| grep --color=auto -e foo -e bar -e application -e filename' \
+  assert_not_contains '| grep -E --color=auto -e foo -e bar -e application -e filename' \
     "$output" "debug does not highlight excluded terms"
 
   printf '%s\n' '-t js' '-T spec.js' >"$FIXTURE/.xfind"

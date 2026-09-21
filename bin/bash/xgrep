@@ -30,6 +30,9 @@ Boolean terms:
   or   Add following terms to a single OR group.
   not  Add following terms to a single excluded OR group.
 
+Patterns:
+  Search terms use extended regular expressions.
+
 Options:
   -d, --debug                 Print the git grep command without running it.
       --no-debug              Disable debug mode, including one set by .xgrep.

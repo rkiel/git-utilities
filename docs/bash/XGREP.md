@@ -25,6 +25,14 @@ Options:
   -T, --exclude-type TYPES    Exclude comma-separated file extensions.
 ```
 
+Every search term is an extended regular expression. Quote terms containing
+shell characters:
+
+```bash
+xgrep 'error|warning'
+xgrep 'item-[0-9]+'
+```
+
 Set `NO_COLOR` to a nonempty value to disable colored output. Colors are also
 disabled when `TERM` is `dumb`:
 

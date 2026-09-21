@@ -50,6 +50,14 @@ xfind foo bar
 Search terms are matched only against file contents. A term appearing in a file
 or directory name does not satisfy the search.
 
+Like `xgrep`, every search term is an extended regular expression. Quote terms
+containing shell characters:
+
+```bash
+xfind 'error|warning'
+xfind 'item-[0-9]+'
+```
+
 ### Boolean searches
 
 Terms begin in the required group. The operators switch the group used for all
@@ -148,7 +156,7 @@ Use `-d` to inspect the generated command without running it:
 
 ```console
 $ xfind -d foo -t js -T spec.js
-find . -type f \( -name \*.js \) \! -name \*.spec.js \! -path \*/.git/\* \! -path \*/node_modules/\* -print | sort | xargs grep --color=auto -H -- foo
+find . -type f \( -name \*.js \) \! -name \*.spec.js \! -path \*/.git/\* \! -path \*/node_modules/\* -print | sort | xargs grep -E --color=auto -H -- foo
 ```
 
 ### Maintenance

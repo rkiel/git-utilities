@@ -7,6 +7,7 @@ XFIND_FILENAME_COLOR=''
 XFIND_SEPARATOR_COLOR=''
 XFIND_COLOR_RESET=''
 XFIND_GREP_COLOR_MODE=auto
+GREP_OPTIONS=(-E)
 INCLUDE_TYPES=()
 EXCLUDE_TYPES=()
 INCLUDE_PATHS=()
@@ -37,6 +38,9 @@ Boolean terms:
   and  Add following terms to the required group.
   or   Add following terms to a single OR group.
   not  Add following terms to a single excluded OR group.
+
+Patterns:
+  Search terms use extended regular expressions.
 
 Options:
   -d, --debug                 Print the command without running it.
@@ -298,7 +302,7 @@ print_grep_group() {
   local term
   shift 2
 
-  printf ' | grep'
+  printf ' | grep -E'
   $invert && printf ' -v'
   $color && printf ' --color=%s' "$XFIND_GREP_COLOR_MODE"
   for term in "$@"; do
@@ -317,16 +321,16 @@ print_debug_command() {
   printf ' | sort'
 
   if is_simple_search; then
-    printf ' | xargs grep --color=%s -H --' "$XFIND_GREP_COLOR_MODE"
+    printf ' | xargs grep -E --color=%s -H --' "$XFIND_GREP_COLOR_MODE"
     print_argument "${AND_TERMS[0]}"
   elif [ "$SEARCH_TERM_COUNT" -gt 0 ]; then
     printf ' | while IFS= read -r file; do '
     if [ "${#AND_TERMS[@]}" -gt 0 ]; then
-      printf 'grep --'
+      printf 'grep -E --'
       print_argument "${AND_TERMS[0]}"
       printf ' < "$file"'
       for ((index = 1; index < ${#AND_TERMS[@]}; index++)); do
-        printf ' | grep --'
+        printf ' | grep -E --'
         print_argument "${AND_TERMS[index]}"
       done
     else
@@ -342,7 +346,7 @@ print_debug_command() {
 }
 
 grep_batch() {
-  command grep --color="$XFIND_GREP_COLOR_MODE" -H -- \
+  command grep "${GREP_OPTIONS[@]}" --color="$XFIND_GREP_COLOR_MODE" -H -- \
     "${AND_TERMS[0]}" "${FILE_BATCH[@]}"
 }
 
@@ -381,17 +385,17 @@ filter_and_terms() {
   local index="$2"
 
   if [ "$index" -eq 0 ]; then
-    command grep -- "${AND_TERMS[0]}" < "$file"
+    command grep "${GREP_OPTIONS[@]}" -- "${AND_TERMS[0]}" < "$file"
   else
     filter_and_terms "$file" "$((index - 1))" |
-      command grep -- "${AND_TERMS[index]}"
+      command grep "${GREP_OPTIONS[@]}" -- "${AND_TERMS[index]}"
   fi
 }
 
 grep_group() {
   local invert="$1"
   local term
-  local -a arguments=(grep)
+  local -a arguments=(grep "${GREP_OPTIONS[@]}")
   shift
 
   $invert && arguments+=(-v)
@@ -461,7 +465,7 @@ grep_multiple_files() {
 
 highlight_results() {
   local term
-  local -a arguments=(grep --color="$XFIND_GREP_COLOR_MODE")
+  local -a arguments=(grep "${GREP_OPTIONS[@]}" --color="$XFIND_GREP_COLOR_MODE")
 
   for term in "${HIGHLIGHT_TERMS[@]}"; do
     arguments+=(-e "$term")
