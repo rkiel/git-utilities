@@ -101,6 +101,7 @@ test_help_and_errors() {
 
   output="$($XFIND --help)"
   assert_contains 'Terms are required by default and are combined with AND' "$output" "help explains Boolean defaults"
+  assert_contains 'A nonempty NO_COLOR disables colored output' "$output" "help documents NO_COLOR"
   assert_contains '-t, --include-type TYPE' "$output" "help documents included types"
   assert_contains '-T, --exclude-type TYPE' "$output" "help documents excluded types"
   assert_not_contains '-n,' "$output" "help omits removed include alias"
@@ -192,6 +193,7 @@ test_content_search() {
   local output status
 
   output="$(cd "$FIXTURE" && "$XFIND" foo bar)"
+  assert_not_contains $'\033[' "$output" "redirected output omits ANSI color codes"
   assert_contains './src/app.js:foo bar application' "$output" "multiple terms keep matching JavaScript line"
   assert_contains './lib/tool.rb:foo bar ruby' "$output" "multiple terms keep matching Ruby line"
   assert_contains './src/space name\file.txt:foo bar unusual filename' "$output" "unusual filenames remain intact"
@@ -239,14 +241,20 @@ test_boolean_groups() {
 test_debug_and_project_defaults() {
   local output
 
-  output="$(cd "$FIXTURE" && "$XFIND" -d foo -t js -T spec.js)"
+  output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XFIND" -d foo -t js -T spec.js)"
   assert_starts_with $'\n' "$output" "xfind prints a blank line before its output"
   assert_contains 'find . -type f' "$output" "debug displays find command"
   assert_contains '-name \*.js' "$output" "debug displays included type"
   assert_contains '\! -name \*.spec.js' "$output" "debug displays excluded type"
   assert_contains '| xargs grep --color=auto -H -- foo' "$output" "debug displays grep command"
 
-  output="$(cd "$FIXTURE" && "$XFIND" -d foo bar application)"
+  output="$(cd "$FIXTURE" && TERM=xterm NO_COLOR=1 "$XFIND" -d foo)"
+  assert_contains '| xargs grep --color=never -H -- foo' "$output" "NO_COLOR disables grep colors"
+
+  output="$(cd "$FIXTURE" && TERM=xterm NO_COLOR='' "$XFIND" -d foo)"
+  assert_contains '| xargs grep --color=auto -H -- foo' "$output" "empty NO_COLOR leaves grep colors enabled"
+
+  output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XFIND" -d foo bar application)"
   assert_contains 'grep -- foo < "$file" | grep -- bar | grep -- application' \
     "$output" "multiple terms filter file content before adding its name"
   assert_contains 'printf "%s:%s\n" "$file" "$line"' \
@@ -254,7 +262,7 @@ test_debug_and_project_defaults() {
   assert_contains '| grep --color=auto -e foo -e bar -e application' \
     "$output" "the final grep colors every search term"
 
-  output="$(cd "$FIXTURE" && "$XFIND" -d foo or bar application not filename nested)"
+  output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XFIND" -d foo or bar application not filename nested)"
   assert_contains 'grep -- foo < "$file" | grep -e bar -e application | grep -v -e filename -e nested' \
     "$output" "debug displays AND, OR, and NOT filtering stages"
   assert_contains '| grep --color=auto -e foo -e bar -e application' \

@@ -96,6 +96,7 @@ test_help_and_errors() {
   output="$($XGREP --help)"
   assert_contains 'Terms are required by default' "$output" "help explains default AND behavior"
   assert_contains 'Project defaults:' "$output" "help documents .xgrep"
+  assert_contains 'A nonempty NO_COLOR disables colored output' "$output" "help documents NO_COLOR"
 
   set +e
   output="$(cd "$REPO" && "$XGREP" 2>&1)"
@@ -177,10 +178,16 @@ test_git_grep_modes() {
 test_debug_and_project_defaults() {
   local output
 
-  output="$(cd "$REPO" && "$XGREP" -d 'alpha beta' not 'blocked value')"
+  output="$(cd "$REPO" && unset NO_COLOR && TERM=xterm "$XGREP" -d 'alpha beta' not 'blocked value')"
   assert_starts_with $'\n' "$output" "xgrep prints a blank line before git grep output"
   assert_contains 'git grep -E -e alpha\ beta --and --not' "$output" "debug prints shell-safe command"
   assert_contains '-e blocked\ value' "$output" "debug quotes the excluded pattern"
+
+  output="$(cd "$REPO" && TERM=xterm NO_COLOR=1 "$XGREP" -d alpha)"
+  assert_contains 'git grep -E --no-color -e alpha' "$output" "NO_COLOR disables Git colors"
+
+  output="$(cd "$REPO" && TERM=xterm NO_COLOR='' "$XGREP" -d alpha)"
+  assert_not_contains '--no-color' "$output" "empty NO_COLOR leaves Git colors enabled"
 
   printf '%s\n' '-t txt' >"$REPO/.xgrep"
   output="$(cd "$REPO" && "$XGREP" alpha)"

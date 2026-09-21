@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_NAME="$(basename "$0")"
 DEBUG=false
+GIT_COLOR_OPTIONS=()
 GIT_OPTIONS=()
 INCLUDE_PATHS=()
 EXCLUDE_PATHS=()
@@ -13,6 +14,10 @@ NOT_TERMS=()
 PATHS=()
 GIT_ARGUMENTS=()
 SEARCH_TERM_COUNT=0
+
+if [ -n "${NO_COLOR:-}" ] || [ "${TERM:-}" = 'dumb' ]; then
+  GIT_COLOR_OPTIONS=(--no-color)
+fi
 
 print_help() {
   cat <<HELP
@@ -46,6 +51,9 @@ Examples:
 Project defaults:
   If .xgrep exists in the current directory, its whitespace-separated options
   and terms are prepended to the command line.
+
+Environment:
+  A nonempty NO_COLOR disables colored output.
 HELP
 }
 
@@ -289,7 +297,7 @@ append_or_group() {
 build_git_arguments() {
   local pattern
 
-  GIT_ARGUMENTS=(-E "${GIT_OPTIONS[@]}")
+  GIT_ARGUMENTS=(-E "${GIT_COLOR_OPTIONS[@]}" "${GIT_OPTIONS[@]}")
   EXPRESSION_COUNT=0
 
   for pattern in "${AND_TERMS[@]}"; do

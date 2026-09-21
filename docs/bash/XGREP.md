@@ -25,6 +25,13 @@ Options:
   -T, --exclude-type TYPES    Exclude comma-separated file extensions.
 ```
 
+Set `NO_COLOR` to a nonempty value to disable colored output. Colors are also
+disabled when `TERM` is `dumb`:
+
+```bash
+NO_COLOR=1 xgrep alpha beta
+```
+
 ### Boolean searches
 
 Terms begin in the required group, so this searches for lines containing both
