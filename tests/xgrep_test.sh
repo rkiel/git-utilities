@@ -82,6 +82,7 @@ make_repo() {
   printf 'alpha gamma safe\n' >"$REPO/src/gamma.txt"
   printf 'alpha beta blocked\n' >"$REPO/src/blocked.txt"
   printf 'delta only\n' >"$REPO/src/delta.txt"
+  printf 'ALPHA uppercase\n' >"$REPO/src/uppercase.txt"
   printf 'alpha beta docs\n' >"$REPO/docs/guide.md"
   printf 'alpha gamma ruby\n' >"$REPO/scripts/tool.rb"
   printf 'salt and pepper\n' >"$REPO/docs/words.md"
@@ -96,6 +97,8 @@ test_help_and_errors() {
   output="$($XGREP --help)"
   assert_contains 'Terms are required by default' "$output" "help explains default AND behavior"
   assert_contains 'Search terms use extended regular expressions' "$output" "help documents pattern syntax"
+  assert_contains '-i, --ignore-case' "$output" "help documents case-insensitive searching"
+  assert_not_contains '--invert' "$output" "help omits removed invert option"
   assert_contains 'Project defaults:' "$output" "help documents .xgrep"
   assert_contains 'A nonempty NO_COLOR disables colored output' "$output" "help documents NO_COLOR"
 
@@ -112,6 +115,13 @@ test_help_and_errors() {
   set -e
   assert_eq 2 "$status" "unknown option exits 2"
   assert_contains 'unknown option: --unknown' "$output" "unknown option explains failure"
+
+  set +e
+  output="$(cd "$REPO" && "$XGREP" --invert alpha 2>&1)"
+  status="$?"
+  set -e
+  assert_eq 2 "$status" "removed invert option exits 2"
+  assert_contains 'unknown option: --invert' "$output" "removed invert option explains failure"
 }
 
 test_boolean_groups() {
@@ -157,12 +167,14 @@ test_path_and_type_filters() {
   assert_not_contains 'src/alpha.txt' "$output" "exclude path removes selected path"
 }
 
-test_git_grep_modes() {
+test_search_modes() {
   local output status
 
+  output="$(cd "$REPO" && "$XGREP" alpha)"
+  assert_not_contains 'src/uppercase.txt' "$output" "searches are case-sensitive by default"
+
   output="$(cd "$REPO" && "$XGREP" -i alpha)"
-  assert_contains 'src/delta.txt' "$output" "invert selects non-matching line"
-  assert_not_contains 'src/alpha.txt' "$output" "invert removes matching lines"
+  assert_contains 'src/uppercase.txt:ALPHA uppercase' "$output" "ignore-case matches uppercase text"
 
   output="$(cd "$REPO" && "$XGREP" -f alpha)"
   assert_contains 'src/delta.txt' "$output" "file mode lists files without a match"
@@ -190,6 +202,9 @@ test_debug_and_project_defaults() {
   output="$(cd "$REPO" && TERM=xterm NO_COLOR='' "$XGREP" -d alpha)"
   assert_not_contains '--no-color' "$output" "empty NO_COLOR leaves Git colors enabled"
 
+  output="$(cd "$REPO" && unset NO_COLOR && TERM=xterm "$XGREP" -d -i alpha)"
+  assert_contains 'git grep -E -i -e alpha' "$output" "debug displays ignore-case option"
+
   printf '%s\n' '-t txt' >"$REPO/.xgrep"
   output="$(cd "$REPO" && "$XGREP" alpha)"
   assert_contains 'src/alpha.txt' "$output" ".xgrep applies project type filter"
@@ -205,7 +220,7 @@ make_repo
 run_test "help and errors" test_help_and_errors
 run_test "Boolean groups" test_boolean_groups
 run_test "path and type filters" test_path_and_type_filters
-run_test "git grep modes" test_git_grep_modes
+run_test "search modes" test_search_modes
 run_test "debug and project defaults" test_debug_and_project_defaults
 
 printf 'all xgrep tests passed\n'

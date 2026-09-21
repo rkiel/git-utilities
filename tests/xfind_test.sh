@@ -83,6 +83,7 @@ make_fixture() {
   printf 'foo only nested\n' >"$FIXTURE/src/nested/other.js"
   printf 'foo bar unusual filename\n' >"$FIXTURE/src/space name\\file.txt"
   printf 'foo on first line\nbar on second line\n' >"$FIXTURE/src/split-lines.txt"
+  printf 'FOO BAR uppercase\n' >"$FIXTURE/src/uppercase.js"
   printf 'foo bar ruby\n' >"$FIXTURE/lib/tool.rb"
   printf 'foo specification\n' >"$FIXTURE/spec/helper.rb"
   printf 'nothing relevant and literal\n' >"$FIXTURE/README.md"
@@ -103,6 +104,8 @@ test_help_and_errors() {
   assert_contains 'Terms are required by default and are combined with AND' "$output" "help explains Boolean defaults"
   assert_contains 'Search terms use extended regular expressions' "$output" "help documents pattern syntax"
   assert_contains 'A nonempty NO_COLOR disables colored output' "$output" "help documents NO_COLOR"
+  assert_contains '-i, --ignore-case' "$output" "help documents case-insensitive searching"
+  assert_not_contains '--invert' "$output" "help omits an invert option"
   assert_contains '-t, --include-type TYPE' "$output" "help documents included types"
   assert_contains '-T, --exclude-type TYPE' "$output" "help documents excluded types"
   assert_not_contains '-n,' "$output" "help omits removed include alias"
@@ -136,7 +139,7 @@ test_default_file_listing() {
   output="$(cd "$FIXTURE" && "$XFIND")"
   expected="$(
     printf '\n'
-    printf '%s\n' ./README.md ./lib/tool.rb ./spec/helper.rb ./src/app.js ./src/app.spec.js ./src/bar-name.txt ./src/nested/other.js './src/space name\file.txt' ./src/split-lines.txt
+    printf '%s\n' ./README.md ./lib/tool.rb ./spec/helper.rb ./src/app.js ./src/app.spec.js ./src/bar-name.txt ./src/nested/other.js './src/space name\file.txt' ./src/split-lines.txt ./src/uppercase.js
   )"
   assert_eq "$expected" "$output" "xfind lists files in sorted order"
 
@@ -177,6 +180,7 @@ test_xgrep_parity() {
   assert_search_parity "pure OR matches xgrep" -t js or application nested
   assert_search_parity "combined Boolean groups match xgrep" \
     -t js foo or application nested not test
+  assert_search_parity "case-insensitive searches match xgrep" -i -t js foo bar
 }
 
 test_path_options() {
@@ -203,8 +207,12 @@ test_content_search() {
   assert_not_contains 'bar-name.txt' "$output" "a filename cannot satisfy a search term"
   assert_not_contains 'other.js' "$output" "second term narrows prior results"
   assert_not_contains 'split-lines.txt' "$output" "required terms must occur on the same line"
+  assert_not_contains 'uppercase.js' "$output" "searches are case-sensitive by default"
   assert_not_contains '.git/config' "$output" "content search honors default exclusions"
   assert_not_contains 'node_modules' "$output" "content search excludes dependencies"
+
+  output="$(cd "$FIXTURE" && "$XFIND" -i foo bar)"
+  assert_contains './src/uppercase.js:FOO BAR uppercase' "$output" "ignore-case applies to every required term"
 
   set +e
   output="$(cd "$FIXTURE" && "$XFIND" missing-term 2>&1)"
@@ -264,6 +272,12 @@ test_debug_and_project_defaults() {
     "$output" "debug adds the filename after content filtering"
   assert_contains '| grep -E --color=auto -e foo -e bar -e application' \
     "$output" "the final grep colors every search term"
+
+  output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XFIND" -d -i foo bar)"
+  assert_contains 'grep -E -i -- foo < "$file" | grep -E -i -- bar' \
+    "$output" "debug applies ignore-case to every filtering stage"
+  assert_contains '| grep -E -i --color=auto -e foo -e bar' \
+    "$output" "debug applies ignore-case to final highlighting"
 
   output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XFIND" -d foo or bar application not filename nested)"
   assert_contains 'grep -E -- foo < "$file" | grep -E -e bar -e application | grep -E -v -e filename -e nested' \

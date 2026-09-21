@@ -46,6 +46,7 @@ Options:
   -d, --debug                 Print the command without running it.
       --no-debug              Disable debug mode set by .xfind.
   -h, --help                  Show this help message.
+  -i, --ignore-case           Ignore case distinctions.
   -t, --include-type TYPE     Include a file extension.
   -T, --exclude-type TYPE     Exclude a file extension.
   -p, --include-path PATH     Include files beneath a directory.
@@ -144,6 +145,10 @@ parse_arguments() {
       -h|--help)
         print_help
         exit 0
+        ;;
+      -i|--ignore-case)
+        GREP_OPTIONS+=(-i)
+        shift
         ;;
       -p|--include-path|--include-path=*|\
       -P|--exclude-path|--exclude-path=*|\
@@ -296,13 +301,23 @@ print_argument() {
   printf ' %q' "$1"
 }
 
+print_grep_command() {
+  local option
+
+  printf 'grep'
+  for option in "${GREP_OPTIONS[@]}"; do
+    print_argument "$option"
+  done
+}
+
 print_grep_group() {
   local invert="$1"
   local color="$2"
   local term
   shift 2
 
-  printf ' | grep -E'
+  printf ' | '
+  print_grep_command
   $invert && printf ' -v'
   $color && printf ' --color=%s' "$XFIND_GREP_COLOR_MODE"
   for term in "$@"; do
@@ -321,16 +336,21 @@ print_debug_command() {
   printf ' | sort'
 
   if is_simple_search; then
-    printf ' | xargs grep -E --color=%s -H --' "$XFIND_GREP_COLOR_MODE"
+    printf ' | xargs '
+    print_grep_command
+    printf ' --color=%s -H --' "$XFIND_GREP_COLOR_MODE"
     print_argument "${AND_TERMS[0]}"
   elif [ "$SEARCH_TERM_COUNT" -gt 0 ]; then
     printf ' | while IFS= read -r file; do '
     if [ "${#AND_TERMS[@]}" -gt 0 ]; then
-      printf 'grep -E --'
+      print_grep_command
+      printf ' --'
       print_argument "${AND_TERMS[0]}"
       printf ' < "$file"'
       for ((index = 1; index < ${#AND_TERMS[@]}; index++)); do
-        printf ' | grep -E --'
+        printf ' | '
+        print_grep_command
+        printf ' --'
         print_argument "${AND_TERMS[index]}"
       done
     else

@@ -38,7 +38,7 @@ Options:
       --no-debug              Disable debug mode, including one set by .xgrep.
   -f, --file                  Show files without a match (git grep -L).
   -h, --help                  Show this help message.
-  -i, --invert                Select non-matching lines (git grep -v).
+  -i, --ignore-case           Ignore case distinctions.
   -p, --include-path PATHS    Include comma-separated pathspecs.
   -P, --exclude-path PATHS    Exclude comma-separated pathspecs.
   -t, --include-type TYPES    Include comma-separated file extensions.
@@ -146,8 +146,8 @@ parse_arguments() {
         print_help
         exit 0
         ;;
-      -i|--invert)
-        GIT_OPTIONS+=(-v)
+      -i|--ignore-case)
+        GIT_OPTIONS+=(-i)
         shift
         ;;
       -p|--include-path|--include-path=*|\

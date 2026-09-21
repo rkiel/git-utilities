@@ -18,7 +18,7 @@ Options:
       --no-debug              Disable debug mode, including one set by .xgrep.
   -f, --file                  Show files without a match (git grep -L).
   -h, --help                  Show the help message.
-  -i, --invert                Select non-matching lines (git grep -v).
+  -i, --ignore-case           Ignore case distinctions.
   -p, --include-path PATHS    Include comma-separated pathspecs.
   -P, --exclude-path PATHS    Exclude comma-separated pathspecs.
   -t, --include-type TYPES    Include comma-separated file extensions.
@@ -32,6 +32,16 @@ shell characters:
 xgrep 'error|warning'
 xgrep 'item-[0-9]+'
 ```
+
+Searches are case-sensitive by default. Use `-i` or `--ignore-case` to match
+regardless of letter case:
+
+```bash
+xgrep -i error
+```
+
+Use the Boolean `not` operator to exclude matching terms. The Bash
+implementation does not provide a separate inverted-search option.
 
 Set `NO_COLOR` to a nonempty value to disable colored output. Colors are also
 disabled when `TERM` is `dumb`:

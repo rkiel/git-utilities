@@ -18,6 +18,7 @@ Options:
   -d, --debug                 Print the command without running it.
       --no-debug              Disable debug mode set by .xfind.
   -h, --help                  Show the help message.
+  -i, --ignore-case           Ignore case distinctions.
   -t, --include-type TYPE     Include a file extension.
   -T, --exclude-type TYPE     Exclude a file extension.
   -p, --include-path PATH     Include files beneath a directory.
@@ -57,6 +58,16 @@ containing shell characters:
 xfind 'error|warning'
 xfind 'item-[0-9]+'
 ```
+
+Searches are case-sensitive by default. Use `-i` or `--ignore-case` to match
+regardless of letter case:
+
+```bash
+xfind -i error
+```
+
+Use the Boolean `not` operator to exclude matching terms. There is no separate
+inverted-search option.
 
 ### Boolean searches
 
