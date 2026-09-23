@@ -351,7 +351,7 @@ print_debug_command() {
     fi
     print_argument "${AND_TERMS[0]}"
   else
-    printf ' | while IFS= read -r file; do '
+    printf ' | while IFS= read -r file; do file="${file#./}"; '
     $FILES_WITH_MATCHES && printf 'if '
     if [ "${#AND_TERMS[@]}" -gt 0 ]; then
       print_grep_command
@@ -399,6 +399,7 @@ grep_sorted_files() {
   local -a FILE_BATCH=()
 
   while IFS= read -r file; do
+    file="${file#./}"
     FILE_BATCH+=("$file")
     if [ "${#FILE_BATCH[@]}" -eq 100 ]; then
       if grep_batch; then
@@ -495,6 +496,7 @@ grep_multiple_files() {
   local matched=false
 
   while IFS= read -r file; do
+    file="${file#./}"
     if filter_file "$file" | prefix_lines "$file"; then
       matched=true
     else
@@ -511,6 +513,7 @@ list_matching_files() {
   local matched=false
 
   while IFS= read -r file; do
+    file="${file#./}"
     if filter_file "$file" >/dev/null; then
       printf '%s\n' "$file"
       matched=true

@@ -19,10 +19,10 @@ Options:
   -h, --help                  Show the help message.
   -i, --ignore-case           Ignore case distinctions.
   -l, --files-with-matches    Show only names of files containing matches.
-  -p, --include-path PATHS    Include comma-separated pathspecs.
-  -P, --exclude-path PATHS    Exclude comma-separated pathspecs.
-  -t, --include-type TYPES    Include comma-separated file extensions.
-  -T, --exclude-type TYPES    Exclude comma-separated file extensions.
+  -p, --include-path PATH     Include a pathspec.
+  -P, --exclude-path PATH     Exclude a pathspec.
+  -t, --include-type TYPE     Include a file extension.
+  -T, --exclude-type TYPE     Exclude a file extension.
 ```
 
 Every search term is an extended regular expression. Quote terms containing
@@ -188,13 +188,6 @@ xgrep foo -P spec
 When exclusions are used without an inclusion, `xgrep` searches from `.` and
 applies the exclusions. All patterns and pathspecs are passed to Git as distinct
 arguments and are not evaluated by the shell.
-
-For compatibility with the Ruby version, values may also be comma-separated:
-
-```bash
-xgrep -p src,lib -t rb,sh alpha
-xgrep -P vendor,tmp -T min.js,lock alpha
-```
 
 ### Project defaults
 

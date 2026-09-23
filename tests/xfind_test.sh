@@ -161,14 +161,14 @@ test_type_options() {
   local output
 
   output="$(cd "$FIXTURE" && "$XFIND" -t js -T spec.js foo)"
-  assert_contains './src/app.js' "$output" "include type keeps JavaScript file"
-  assert_contains './src/nested/other.js' "$output" "include type searches nested files"
+  assert_contains 'src/app.js' "$output" "include type keeps JavaScript file"
+  assert_contains 'src/nested/other.js' "$output" "include type searches nested files"
   assert_not_contains 'app.spec.js' "$output" "exclude type removes JavaScript tests"
   assert_not_contains 'tool.rb' "$output" "include type removes other extensions"
 
   output="$(cd "$FIXTURE" && "$XFIND" -t js -t rb foo)"
-  assert_contains './src/app.js' "$output" "repeated type includes JavaScript"
-  assert_contains './lib/tool.rb' "$output" "repeated type includes Ruby"
+  assert_contains 'src/app.js' "$output" "repeated type includes JavaScript"
+  assert_contains 'lib/tool.rb' "$output" "repeated type includes Ruby"
 }
 
 assert_search_parity() {
@@ -176,7 +176,7 @@ assert_search_parity() {
   local xfind_output xgrep_output
   shift
 
-  xfind_output="$(cd "$FIXTURE" && "$XFIND" "$@" | sed 's|^\./||')"
+  xfind_output="$(cd "$FIXTURE" && "$XFIND" "$@")"
   xgrep_output="$(cd "$FIXTURE" && "$XGREP" "$@")"
   assert_eq "$xgrep_output" "$xfind_output" "$message"
 }
@@ -196,13 +196,13 @@ test_path_options() {
   local output
 
   output="$(cd "$FIXTURE" && "$XFIND" -p src -p lib foo)"
-  assert_contains './src/app.js' "$output" "repeated path includes src"
-  assert_contains './lib/tool.rb' "$output" "repeated path includes lib"
-  assert_not_contains './spec/helper.rb' "$output" "include path removes other directories"
+  assert_contains 'src/app.js' "$output" "repeated path includes src"
+  assert_contains 'lib/tool.rb' "$output" "repeated path includes lib"
+  assert_not_contains 'spec/helper.rb' "$output" "include path removes other directories"
 
   output="$(cd "$FIXTURE" && "$XFIND" -P spec foo)"
-  assert_contains './src/app.js' "$output" "exclude path keeps other directories"
-  assert_not_contains './spec/helper.rb' "$output" "exclude path removes spec"
+  assert_contains 'src/app.js' "$output" "exclude path keeps other directories"
+  assert_not_contains 'spec/helper.rb' "$output" "exclude path removes spec"
 }
 
 test_content_search() {
@@ -210,9 +210,10 @@ test_content_search() {
 
   output="$(cd "$FIXTURE" && "$XFIND" foo bar)"
   assert_not_contains $'\033[' "$output" "redirected output omits ANSI color codes"
-  assert_contains './src/app.js:foo bar application' "$output" "multiple terms keep matching JavaScript line"
-  assert_contains './lib/tool.rb:foo bar ruby' "$output" "multiple terms keep matching Ruby line"
-  assert_contains './src/space name\file.txt:foo bar unusual filename' "$output" "unusual filenames remain intact"
+  assert_not_contains './src/' "$output" "output omits the leading dot directory"
+  assert_contains 'src/app.js:foo bar application' "$output" "multiple terms keep matching JavaScript line"
+  assert_contains 'lib/tool.rb:foo bar ruby' "$output" "multiple terms keep matching Ruby line"
+  assert_contains 'src/space name\file.txt:foo bar unusual filename' "$output" "unusual filenames remain intact"
   assert_not_contains 'bar-name.txt' "$output" "a filename cannot satisfy a search term"
   assert_not_contains 'other.js' "$output" "second term narrows prior results"
   assert_not_contains 'split-lines.txt' "$output" "required terms must occur on the same line"
@@ -221,18 +222,18 @@ test_content_search() {
   assert_not_contains 'node_modules' "$output" "content search excludes dependencies"
 
   output="$(cd "$FIXTURE" && "$XFIND" -i foo bar)"
-  assert_contains './src/uppercase.js:FOO BAR uppercase' "$output" "ignore-case applies to every required term"
+  assert_contains 'src/uppercase.js:FOO BAR uppercase' "$output" "ignore-case applies to every required term"
 
   output="$(cd "$FIXTURE" && "$XFIND" -l foo bar)"
-  assert_contains './src/app.js' "$output" "filename mode lists files with matching lines"
-  assert_not_contains './src/app.js:' "$output" "filename mode omits matching content"
-  count="$(printf '%s\n' "$output" | command grep -Fxc './src/repeated.js')"
+  assert_contains 'src/app.js' "$output" "filename mode lists files with matching lines"
+  assert_not_contains 'src/app.js:' "$output" "filename mode omits matching content"
+  count="$(printf '%s\n' "$output" | command grep -Fxc 'src/repeated.js')"
   assert_eq 1 "$count" "filename mode prints each matching file once"
 
   output="$(cd "$FIXTURE" && "$XFIND" -l foo or application specification not test)"
-  assert_contains './src/app.js' "$output" "filename mode supports combined Boolean groups"
-  assert_contains './spec/helper.rb' "$output" "filename mode includes OR alternatives"
-  assert_not_contains './src/app.spec.js' "$output" "filename mode applies NOT exclusions"
+  assert_contains 'src/app.js' "$output" "filename mode supports combined Boolean groups"
+  assert_contains 'spec/helper.rb' "$output" "filename mode includes OR alternatives"
+  assert_not_contains 'src/app.spec.js' "$output" "filename mode applies NOT exclusions"
 
   set +e
   output="$(cd "$FIXTURE" && "$XFIND" missing-term 2>&1)"
@@ -246,27 +247,27 @@ test_boolean_groups() {
   local output
 
   output="$(cd "$FIXTURE" && "$XFIND" foo and bar)"
-  assert_contains './src/app.js' "$output" "and switches back to the required group"
+  assert_contains 'src/app.js' "$output" "and switches back to the required group"
   assert_not_contains 'bar-name.txt' "$output" "required terms still apply to content only"
   assert_not_contains 'split-lines.txt' "$output" "required terms remain line based"
 
   output="$(cd "$FIXTURE" && "$XFIND" or application ruby)"
-  assert_contains './src/app.js' "$output" "pure OR includes its first alternative"
-  assert_contains './lib/tool.rb' "$output" "pure OR includes its second alternative"
-  assert_not_contains './spec/helper.rb' "$output" "pure OR excludes unrelated lines"
+  assert_contains 'src/app.js' "$output" "pure OR includes its first alternative"
+  assert_contains 'lib/tool.rb' "$output" "pure OR includes its second alternative"
+  assert_not_contains 'spec/helper.rb' "$output" "pure OR excludes unrelated lines"
 
   output="$(cd "$FIXTURE" && "$XFIND" foo or application specification not test)"
-  assert_contains './src/app.js' "$output" "combined expression includes an OR alternative"
-  assert_contains './spec/helper.rb' "$output" "combined expression includes another OR alternative"
+  assert_contains 'src/app.js' "$output" "combined expression includes an OR alternative"
+  assert_contains 'spec/helper.rb' "$output" "combined expression includes another OR alternative"
   assert_not_contains 'app.spec.js' "$output" "NOT excludes matching lines"
-  assert_not_contains './lib/tool.rb' "$output" "OR remains required when AND terms exist"
+  assert_not_contains 'lib/tool.rb' "$output" "OR remains required when AND terms exist"
 
   output="$(cd "$FIXTURE" && "$XFIND" not relevant)"
-  assert_contains './src/app.js' "$output" "NOT-only search keeps nonmatching lines"
-  assert_not_contains './README.md' "$output" "NOT-only search removes matching lines"
+  assert_contains 'src/app.js' "$output" "NOT-only search keeps nonmatching lines"
+  assert_not_contains 'README.md' "$output" "NOT-only search removes matching lines"
 
   output="$(cd "$FIXTURE" && "$XFIND" -- --and)"
-  assert_contains './README.md:nothing relevant and literal' "$output" "prefixed operator searches for its literal word"
+  assert_contains 'README.md:nothing relevant and literal' "$output" "prefixed operator searches for its literal word"
 }
 
 test_debug_and_project_defaults() {
@@ -303,7 +304,7 @@ test_debug_and_project_defaults() {
   assert_contains '| xargs grep -E -l -- foo' "$output" "debug displays simple filename mode"
 
   output="$(cd "$FIXTURE" && "$XFIND" -d -l foo or application specification not test)"
-  assert_contains 'do if grep -E -- foo < "$file"' \
+  assert_contains 'file="${file#./}"; if grep -E -- foo < "$file"' \
     "$output" "debug evaluates Boolean filename matches per file"
   assert_contains '> /dev/null; then printf' \
     "$output" "debug suppresses matching content in filename mode"
@@ -320,7 +321,7 @@ test_debug_and_project_defaults() {
 
   printf '%s\n' '-t js' '-T spec.js' >"$FIXTURE/.xfind"
   output="$(cd "$FIXTURE" && "$XFIND" foo)"
-  assert_contains './src/app.js' "$output" ".xfind applies included type"
+  assert_contains 'src/app.js' "$output" ".xfind applies included type"
   assert_not_contains 'app.spec.js' "$output" ".xfind applies excluded type"
   assert_not_contains 'tool.rb' "$output" ".xfind defaults remove other types"
 }

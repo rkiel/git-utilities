@@ -39,17 +39,17 @@ Options:
   -h, --help                  Show this help message.
   -i, --ignore-case           Ignore case distinctions.
   -l, --files-with-matches    Show only names of files containing matches.
-  -p, --include-path PATHS    Include comma-separated pathspecs.
-  -P, --exclude-path PATHS    Exclude comma-separated pathspecs.
-  -t, --include-type TYPES    Include comma-separated file extensions.
-  -T, --exclude-type TYPES    Exclude comma-separated file extensions.
+  -p, --include-path PATH     Include a pathspec.
+  -P, --exclude-path PATH     Exclude a pathspec.
+  -t, --include-type TYPE     Include a file extension.
+  -T, --exclude-type TYPE     Exclude a file extension.
 
 Examples:
   $SCRIPT_NAME alpha beta
   $SCRIPT_NAME -l alpha beta
   $SCRIPT_NAME or alpha beta
   $SCRIPT_NAME alpha or beta gamma not generated vendor
-  $SCRIPT_NAME -p src,lib -t rb,sh alpha
+  $SCRIPT_NAME -p src -p lib -t rb -t sh alpha
   $SCRIPT_NAME -T min.js not generated
 
 Project defaults:
@@ -98,29 +98,22 @@ read_option_value() {
 
 append_filter_value() {
   local kind="$1"
-  local input="$2"
-  local value
-  local -a values=()
+  local value="$2"
 
-  IFS=',' read -r -a values <<<"$input"
-  for value in "${values[@]}"; do
-    [ -n "$value" ] || continue
-
-    case "$kind" in
-      include-path)
-        INCLUDE_PATHS+=("$value")
-        ;;
-      exclude-path)
-        EXCLUDE_PATHS+=(":!$value")
-        ;;
-      include-type)
-        INCLUDE_PATHS+=(":*.$value")
-        ;;
-      exclude-type)
-        EXCLUDE_PATHS+=(":!*.$value")
-        ;;
-    esac
-  done
+  case "$kind" in
+    include-path)
+      INCLUDE_PATHS+=("$value")
+      ;;
+    exclude-path)
+      EXCLUDE_PATHS+=(":!$value")
+      ;;
+    include-type)
+      INCLUDE_PATHS+=(":*.$value")
+      ;;
+    exclude-type)
+      EXCLUDE_PATHS+=(":!*.$value")
+      ;;
+  esac
 }
 
 parse_arguments() {

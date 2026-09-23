@@ -73,7 +73,7 @@ run_test() {
 }
 
 make_repo() {
-  mkdir -p "$REPO/docs" "$REPO/scripts" "$REPO/src"
+  mkdir -p "$REPO/docs" "$REPO/scripts" "$REPO/src" "$REPO/src,docs"
   git init -b main "$REPO" >/dev/null
   git -C "$REPO" config user.email test@example.com
   git -C "$REPO" config user.name Test
@@ -86,6 +86,7 @@ make_repo() {
   printf 'alpha beta docs\n' >"$REPO/docs/guide.md"
   printf 'alpha gamma ruby\n' >"$REPO/scripts/tool.rb"
   printf 'salt and pepper\n' >"$REPO/docs/words.md"
+  printf 'alpha comma path\n' >"$REPO/src,docs/comma.txt"
 
   git -C "$REPO" add .
   git -C "$REPO" commit -m initial >/dev/null
@@ -100,6 +101,8 @@ test_help_and_errors() {
   assert_contains '-i, --ignore-case' "$output" "help documents case-insensitive searching"
   assert_contains '-l, --files-with-matches' "$output" "help documents filename output"
   assert_not_contains '-f, --file' "$output" "help omits removed file option"
+  assert_contains '-p, --include-path PATH' "$output" "help documents one path per option"
+  assert_contains '-t, --include-type TYPE' "$output" "help documents one type per option"
   assert_not_contains '--invert' "$output" "help omits removed invert option"
   assert_contains 'Project defaults:' "$output" "help documents .xgrep"
   assert_contains 'A nonempty NO_COLOR disables colored output' "$output" "help documents NO_COLOR"
@@ -170,6 +173,15 @@ test_path_and_type_filters() {
   output="$(cd "$REPO" && "$XGREP" -p src alpha)"
   assert_contains 'src/alpha.txt' "$output" "include path searches selected path"
   assert_not_contains 'docs/guide.md' "$output" "include path excludes other paths"
+
+  output="$(cd "$REPO" && "$XGREP" -p src -p docs alpha)"
+  assert_contains 'src/alpha.txt' "$output" "repeated paths include the first path"
+  assert_contains 'docs/guide.md' "$output" "repeated paths include the second path"
+
+  output="$(cd "$REPO" && "$XGREP" -p src,docs alpha)"
+  assert_contains 'src,docs/comma.txt' "$output" "a comma remains part of one path"
+  assert_not_contains 'src/alpha.txt' "$output" "comma paths are not split into multiple values"
+  assert_not_contains 'docs/guide.md' "$output" "comma paths do not include a second value"
 
   output="$(cd "$REPO" && "$XGREP" -P src alpha)"
   assert_contains 'docs/guide.md' "$output" "exclude path keeps other paths"
