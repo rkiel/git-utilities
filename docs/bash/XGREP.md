@@ -60,8 +60,12 @@ preview it, and open it in an editor:
 xgrep --fzf error warning
 ```
 
+The preview displays the first 200 lines. When `bat` or `batcat` is available,
+it adds line numbers and syntax highlighting. Otherwise, `xgrep` falls back to
+`head`. Setting `NO_COLOR` or using `TERM=dumb` also selects the plain preview.
+
 The editor is selected from `VISUAL`, then `EDITOR`, and defaults to `vi`.
-`fzf` must be available on `PATH`.
+`fzf` must be available on `PATH`; `bat` is optional.
 
 Set `NO_COLOR` to a nonempty value to disable colored output. Colors are also
 disabled when `TERM` is `dumb`:

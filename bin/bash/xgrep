@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_NAME="$(basename "$0")"
 DEBUG=false
 FILES_WITH_MATCHES=false
+FZF_PREVIEW_COMMAND='head -n 200 {}'
 GIT_COLOR_OPTIONS=()
 GIT_OPTIONS=()
 INCLUDE_PATHS=()
@@ -62,6 +63,7 @@ Project defaults:
 
 Environment:
   A nonempty NO_COLOR disables colored output.
+  bat or batcat adds syntax highlighting to the fzf preview when available.
   VISUAL or EDITOR selects the editor used by --fzf; the default is vi.
 HELP
 }
@@ -184,6 +186,18 @@ parse_arguments() {
         ;;
     esac
   done
+}
+
+build_fzf_preview_command() {
+  $USE_FZF || return 0
+
+  if [ -n "${NO_COLOR:-}" ] || [ "${TERM:-}" = 'dumb' ]; then
+    return 0
+  elif command -v bat >/dev/null 2>&1; then
+    FZF_PREVIEW_COMMAND='bat --color=always --style=numbers --line-range=:200 -- {}'
+  elif command -v batcat >/dev/null 2>&1; then
+    FZF_PREVIEW_COMMAND='batcat --color=always --style=numbers --line-range=:200 -- {}'
+  fi
 }
 
 append_term() {
@@ -333,7 +347,7 @@ print_git_command() {
 
 print_fzf_command() {
   printf ' | fzf --exit-0 --preview'
-  printf ' %q' 'head -n 200 {}'
+  printf ' %q' "$FZF_PREVIEW_COMMAND"
   printf ' --bind'
   printf ' %q' 'enter:become(${VISUAL:-${EDITOR:-vi}} {})'
   printf '\n'
@@ -341,7 +355,7 @@ print_fzf_command() {
 
 run_fzf() {
   command fzf --exit-0 \
-    --preview 'head -n 200 {}' \
+    --preview "$FZF_PREVIEW_COMMAND" \
     --bind 'enter:become(${VISUAL:-${EDITOR:-vi}} {})'
 }
 
@@ -363,6 +377,7 @@ run_git_grep() {
 main() {
   load_project_arguments "$@"
   parse_arguments "${PROJECT_ARGUMENTS[@]}"
+  build_fzf_preview_command
   classify_terms
   build_paths
   build_git_arguments

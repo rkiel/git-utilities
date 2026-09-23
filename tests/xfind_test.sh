@@ -80,7 +80,9 @@ make_fixture() {
     '#!/usr/bin/env bash' \
     'printf "%s\n" "$@" >"$FZF_ARGS_FILE"' \
     'command cat >"$FZF_INPUT_FILE"' >"$FAKE_BIN/fzf"
+  printf '%s\n' '#!/usr/bin/env bash' 'exit 0' >"$FAKE_BIN/bat"
   chmod +x "$FAKE_BIN/fzf"
+  chmod +x "$FAKE_BIN/bat"
 
   mkdir -p "$FIXTURE/lib" "$FIXTURE/node_modules/pkg"
   mkdir -p "$FIXTURE/spec" "$FIXTURE/src" "$FIXTURE/src/nested"
@@ -116,6 +118,7 @@ test_help_and_errors() {
   assert_contains '-i, --ignore-case' "$output" "help documents case-insensitive searching"
   assert_contains '-l, --files-with-matches' "$output" "help documents filename output"
   assert_contains '--fzf' "$output" "help documents interactive file selection"
+  assert_contains 'bat or batcat' "$output" "help documents optional syntax highlighting"
   assert_not_contains '-f, --file' "$output" "help omits removed file option"
   assert_not_contains '--invert' "$output" "help omits an invert option"
   assert_contains '-t, --include-type TYPE' "$output" "help documents included types"
@@ -287,6 +290,8 @@ test_fzf_mode() {
   output="$(
     cd "$FIXTURE" &&
       PATH="$FAKE_BIN:$PATH" \
+      NO_COLOR= \
+      TERM=xterm \
       FZF_ARGS_FILE="$args_file" \
       FZF_INPUT_FILE="$input_file" \
       "$XFIND" --fzf foo bar
@@ -303,16 +308,21 @@ test_fzf_mode() {
 
   fzf_arguments="$(<"$args_file")"
   assert_contains '--exit-0' "$fzf_arguments" "fzf exits when there are no candidates"
-  assert_contains 'head -n 200 {}' "$fzf_arguments" "fzf previews the selected file"
+  assert_contains 'bat --color=always --style=numbers --line-range=:200 -- {}' \
+    "$fzf_arguments" "fzf uses bat for syntax-highlighted previews"
   assert_contains 'enter:become(${VISUAL:-${EDITOR:-vi}} {})' "$fzf_arguments" \
     "fzf opens the selected file with the configured editor"
 
-  output="$(cd "$FIXTURE" && "$XFIND" -d --fzf foo)"
+  output="$(cd "$FIXTURE" && PATH="$FAKE_BIN:$PATH" NO_COLOR= TERM=xterm "$XFIND" -d --fzf foo)"
   assert_contains '| xargs grep -E -l -- foo' "$output" \
     "debug shows implied filename mode"
   assert_contains '| fzf --exit-0 --preview' "$output" "debug shows the fzf pipeline"
-  assert_contains 'head\ -n\ 200\ \{\}' "$output" "debug shows the preview command"
+  assert_contains 'bat\ --color=always' "$output" "debug shows the syntax-highlighted preview"
   assert_contains 'enter:become' "$output" "debug shows the editor binding"
+
+  output="$(cd "$FIXTURE" && PATH="$FAKE_BIN:$PATH" NO_COLOR=1 "$XFIND" -d --fzf foo)"
+  assert_contains 'head\ -n\ 200\ \{\}' "$output" "NO_COLOR selects the plain preview"
+  assert_not_contains 'bat\ --color=always' "$output" "NO_COLOR disables preview highlighting"
 }
 
 test_debug_and_project_defaults() {
