@@ -36,9 +36,9 @@ Patterns:
 Options:
   -d, --debug                 Print the git grep command without running it.
       --no-debug              Disable debug mode, including one set by .xgrep.
-  -f, --file                  Show files without a match (git grep -L).
   -h, --help                  Show this help message.
   -i, --ignore-case           Ignore case distinctions.
+  -l, --files-with-matches    Show only names of files containing matches.
   -p, --include-path PATHS    Include comma-separated pathspecs.
   -P, --exclude-path PATHS    Exclude comma-separated pathspecs.
   -t, --include-type TYPES    Include comma-separated file extensions.
@@ -46,6 +46,7 @@ Options:
 
 Examples:
   $SCRIPT_NAME alpha beta
+  $SCRIPT_NAME -l alpha beta
   $SCRIPT_NAME or alpha beta
   $SCRIPT_NAME alpha or beta gamma not generated vendor
   $SCRIPT_NAME -p src,lib -t rb,sh alpha
@@ -138,16 +139,16 @@ parse_arguments() {
         DEBUG=false
         shift
         ;;
-      -f|--file)
-        GIT_OPTIONS+=(-L)
-        shift
-        ;;
       -h|--help)
         print_help
         exit 0
         ;;
       -i|--ignore-case)
         GIT_OPTIONS+=(-i)
+        shift
+        ;;
+      -l|--files-with-matches)
+        GIT_OPTIONS+=(-l)
         shift
         ;;
       -p|--include-path|--include-path=*|\

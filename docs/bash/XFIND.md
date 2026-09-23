@@ -19,6 +19,7 @@ Options:
       --no-debug              Disable debug mode set by .xfind.
   -h, --help                  Show the help message.
   -i, --ignore-case           Ignore case distinctions.
+  -l, --files-with-matches    Show only names of files containing matches.
   -t, --include-type TYPE     Include a file extension.
   -T, --exclude-type TYPE     Exclude a file extension.
   -p, --include-path PATH     Include files beneath a directory.
@@ -68,6 +69,13 @@ xfind -i error
 
 Use the Boolean `not` operator to exclude matching terms. There is no separate
 inverted-search option.
+
+Use `-l` or `--files-with-matches` to print each matching filename once without
+showing the matching lines:
+
+```bash
+xfind -l error warning
+```
 
 ### Boolean searches
 

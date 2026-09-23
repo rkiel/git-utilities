@@ -16,9 +16,9 @@ Boolean terms:
 Options:
   -d, --debug                 Print the git grep command without running it.
       --no-debug              Disable debug mode, including one set by .xgrep.
-  -f, --file                  Show files without a match (git grep -L).
   -h, --help                  Show the help message.
   -i, --ignore-case           Ignore case distinctions.
+  -l, --files-with-matches    Show only names of files containing matches.
   -p, --include-path PATHS    Include comma-separated pathspecs.
   -P, --exclude-path PATHS    Exclude comma-separated pathspecs.
   -t, --include-type TYPES    Include comma-separated file extensions.
@@ -42,6 +42,13 @@ xgrep -i error
 
 Use the Boolean `not` operator to exclude matching terms. The Bash
 implementation does not provide a separate inverted-search option.
+
+Use `-l` or `--files-with-matches` to print each matching filename once without
+showing the matching lines:
+
+```bash
+xgrep -l error warning
+```
 
 Set `NO_COLOR` to a nonempty value to disable colored output. Colors are also
 disabled when `TERM` is `dumb`:

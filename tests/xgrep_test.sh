@@ -98,6 +98,8 @@ test_help_and_errors() {
   assert_contains 'Terms are required by default' "$output" "help explains default AND behavior"
   assert_contains 'Search terms use extended regular expressions' "$output" "help documents pattern syntax"
   assert_contains '-i, --ignore-case' "$output" "help documents case-insensitive searching"
+  assert_contains '-l, --files-with-matches' "$output" "help documents filename output"
+  assert_not_contains '-f, --file' "$output" "help omits removed file option"
   assert_not_contains '--invert' "$output" "help omits removed invert option"
   assert_contains 'Project defaults:' "$output" "help documents .xgrep"
   assert_contains 'A nonempty NO_COLOR disables colored output' "$output" "help documents NO_COLOR"
@@ -122,6 +124,13 @@ test_help_and_errors() {
   set -e
   assert_eq 2 "$status" "removed invert option exits 2"
   assert_contains 'unknown option: --invert' "$output" "removed invert option explains failure"
+
+  set +e
+  output="$(cd "$REPO" && "$XGREP" -f alpha 2>&1)"
+  status="$?"
+  set -e
+  assert_eq 2 "$status" "removed file option exits 2"
+  assert_contains 'unknown option: -f' "$output" "removed file option explains failure"
 }
 
 test_boolean_groups() {
@@ -176,9 +185,11 @@ test_search_modes() {
   output="$(cd "$REPO" && "$XGREP" -i alpha)"
   assert_contains 'src/uppercase.txt:ALPHA uppercase' "$output" "ignore-case matches uppercase text"
 
-  output="$(cd "$REPO" && "$XGREP" -f alpha)"
-  assert_contains 'src/delta.txt' "$output" "file mode lists files without a match"
-  assert_not_contains 'src/alpha.txt' "$output" "file mode omits files with a match"
+  output="$(cd "$REPO" && "$XGREP" -l alpha beta)"
+  assert_contains 'src/alpha.txt' "$output" "filename mode lists files with matching lines"
+  assert_contains 'src/blocked.txt' "$output" "filename mode includes every matching file"
+  assert_not_contains 'src/gamma.txt' "$output" "filename mode applies the complete expression"
+  assert_not_contains 'src/alpha.txt:' "$output" "filename mode omits matching content"
 
   set +e
   output="$(cd "$REPO" && "$XGREP" absent-term 2>&1)"

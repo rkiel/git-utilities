@@ -83,6 +83,7 @@ make_fixture() {
   printf 'foo only nested\n' >"$FIXTURE/src/nested/other.js"
   printf 'foo bar unusual filename\n' >"$FIXTURE/src/space name\\file.txt"
   printf 'foo on first line\nbar on second line\n' >"$FIXTURE/src/split-lines.txt"
+  printf 'foo bar first\nfoo bar second\n' >"$FIXTURE/src/repeated.js"
   printf 'FOO BAR uppercase\n' >"$FIXTURE/src/uppercase.js"
   printf 'foo bar ruby\n' >"$FIXTURE/lib/tool.rb"
   printf 'foo specification\n' >"$FIXTURE/spec/helper.rb"
@@ -105,6 +106,8 @@ test_help_and_errors() {
   assert_contains 'Search terms use extended regular expressions' "$output" "help documents pattern syntax"
   assert_contains 'A nonempty NO_COLOR disables colored output' "$output" "help documents NO_COLOR"
   assert_contains '-i, --ignore-case' "$output" "help documents case-insensitive searching"
+  assert_contains '-l, --files-with-matches' "$output" "help documents filename output"
+  assert_not_contains '-f, --file' "$output" "help omits removed file option"
   assert_not_contains '--invert' "$output" "help omits an invert option"
   assert_contains '-t, --include-type TYPE' "$output" "help documents included types"
   assert_contains '-T, --exclude-type TYPE' "$output" "help documents excluded types"
@@ -138,6 +141,13 @@ test_help_and_errors() {
   set -e
   assert_eq 2 "$status" "removed -n alias exits 2"
   assert_contains 'unknown option: -n' "$output" "removed -n alias explains failure"
+
+  set +e
+  output="$(cd "$FIXTURE" && "$XFIND" -f foo 2>&1)"
+  status="$?"
+  set -e
+  assert_eq 2 "$status" "removed file option exits 2"
+  assert_contains 'unknown option: -f' "$output" "removed file option explains failure"
 
   set +e
   output="$(cd "$FIXTURE" && "$XFIND" or 2>&1)"
@@ -179,6 +189,7 @@ test_xgrep_parity() {
   assert_search_parity "combined Boolean groups match xgrep" \
     -t js foo or application nested not test
   assert_search_parity "case-insensitive searches match xgrep" -i -t js foo bar
+  assert_search_parity "filename searches match xgrep" -l -t js foo bar
 }
 
 test_path_options() {
@@ -195,7 +206,7 @@ test_path_options() {
 }
 
 test_content_search() {
-  local output status
+  local count output status
 
   output="$(cd "$FIXTURE" && "$XFIND" foo bar)"
   assert_not_contains $'\033[' "$output" "redirected output omits ANSI color codes"
@@ -211,6 +222,17 @@ test_content_search() {
 
   output="$(cd "$FIXTURE" && "$XFIND" -i foo bar)"
   assert_contains './src/uppercase.js:FOO BAR uppercase' "$output" "ignore-case applies to every required term"
+
+  output="$(cd "$FIXTURE" && "$XFIND" -l foo bar)"
+  assert_contains './src/app.js' "$output" "filename mode lists files with matching lines"
+  assert_not_contains './src/app.js:' "$output" "filename mode omits matching content"
+  count="$(printf '%s\n' "$output" | command grep -Fxc './src/repeated.js')"
+  assert_eq 1 "$count" "filename mode prints each matching file once"
+
+  output="$(cd "$FIXTURE" && "$XFIND" -l foo or application specification not test)"
+  assert_contains './src/app.js' "$output" "filename mode supports combined Boolean groups"
+  assert_contains './spec/helper.rb' "$output" "filename mode includes OR alternatives"
+  assert_not_contains './src/app.spec.js' "$output" "filename mode applies NOT exclusions"
 
   set +e
   output="$(cd "$FIXTURE" && "$XFIND" missing-term 2>&1)"
@@ -276,6 +298,17 @@ test_debug_and_project_defaults() {
     "$output" "debug applies ignore-case to every filtering stage"
   assert_contains '| grep -E -i --color=auto -e foo -e bar' \
     "$output" "debug applies ignore-case to final highlighting"
+
+  output="$(cd "$FIXTURE" && "$XFIND" -d -l foo)"
+  assert_contains '| xargs grep -E -l -- foo' "$output" "debug displays simple filename mode"
+
+  output="$(cd "$FIXTURE" && "$XFIND" -d -l foo or application specification not test)"
+  assert_contains 'do if grep -E -- foo < "$file"' \
+    "$output" "debug evaluates Boolean filename matches per file"
+  assert_contains '> /dev/null; then printf' \
+    "$output" "debug suppresses matching content in filename mode"
+  assert_contains '"$file"; fi; done' \
+    "$output" "debug prints each matching filename once"
 
   output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XFIND" -d foo or bar application not filename nested)"
   assert_contains 'grep -E -- foo < "$file" | grep -E -e bar -e application | grep -E -v -e filename -e nested' \

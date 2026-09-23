@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_NAME="$(basename "$0")"
 DEBUG=false
+FILES_WITH_MATCHES=false
 XFIND_FILENAME_COLOR=''
 XFIND_SEPARATOR_COLOR=''
 XFIND_COLOR_RESET=''
@@ -47,6 +48,7 @@ Options:
       --no-debug              Disable debug mode set by .xfind.
   -h, --help                  Show this help message.
   -i, --ignore-case           Ignore case distinctions.
+  -l, --files-with-matches    Show only names of files containing matches.
   -t, --include-type TYPE     Include a file extension.
   -T, --exclude-type TYPE     Exclude a file extension.
   -p, --include-path PATH     Include files beneath a directory.
@@ -54,6 +56,7 @@ Options:
 
 Examples:
   $SCRIPT_NAME foo
+  $SCRIPT_NAME -l foo
   $SCRIPT_NAME foo bar
   $SCRIPT_NAME foo or bar baz not generated vendor
   $SCRIPT_NAME foo -t js -T spec.js
@@ -147,6 +150,10 @@ parse_arguments() {
         ;;
       -i|--ignore-case)
         GREP_OPTIONS+=(-i)
+        shift
+        ;;
+      -l|--files-with-matches)
+        FILES_WITH_MATCHES=true
         shift
         ;;
       -p|--include-path|--include-path=*|\
@@ -337,10 +344,15 @@ print_debug_command() {
   if is_simple_search; then
     printf ' | xargs '
     print_grep_command
-    printf ' --color=%s -H --' "$XFIND_GREP_COLOR_MODE"
+    if $FILES_WITH_MATCHES; then
+      printf ' -l --'
+    else
+      printf ' --color=%s -H --' "$XFIND_GREP_COLOR_MODE"
+    fi
     print_argument "${AND_TERMS[0]}"
   else
     printf ' | while IFS= read -r file; do '
+    $FILES_WITH_MATCHES && printf 'if '
     if [ "${#AND_TERMS[@]}" -gt 0 ]; then
       print_grep_command
       printf ' --'
@@ -357,16 +369,28 @@ print_debug_command() {
     fi
     [ "${#OR_TERMS[@]}" -eq 0 ] || print_grep_group false false "${OR_TERMS[@]}"
     [ "${#NOT_TERMS[@]}" -eq 0 ] || print_grep_group true false "${NOT_TERMS[@]}"
-    printf ' | while IFS= read -r line; do printf "%%s:%%s\\n" "$file" "$line"; done; done'
-    [ "${#HIGHLIGHT_TERMS[@]}" -eq 0 ] ||
-      print_grep_group false true "${HIGHLIGHT_TERMS[@]}"
+    if $FILES_WITH_MATCHES; then
+      printf ' > /dev/null; then printf "%%s\\n" "$file"; fi; done'
+    else
+      printf ' | while IFS= read -r line; do printf "%%s:%%s\\n" "$file" "$line"; done; done'
+      [ "${#HIGHLIGHT_TERMS[@]}" -eq 0 ] ||
+        print_grep_group false true "${HIGHLIGHT_TERMS[@]}"
+    fi
   fi
   printf '\n'
 }
 
 grep_batch() {
-  command grep "${GREP_OPTIONS[@]}" --color="$XFIND_GREP_COLOR_MODE" -H -- \
-    "${AND_TERMS[0]}" "${FILE_BATCH[@]}"
+  local -a arguments=(grep "${GREP_OPTIONS[@]}")
+
+  if $FILES_WITH_MATCHES; then
+    arguments+=(-l)
+  else
+    arguments+=(--color="$XFIND_GREP_COLOR_MODE" -H)
+  fi
+  arguments+=(-- "${AND_TERMS[0]}" "${FILE_BATCH[@]}")
+
+  command "${arguments[@]}"
 }
 
 grep_sorted_files() {
@@ -482,6 +506,23 @@ grep_multiple_files() {
   $matched
 }
 
+list_matching_files() {
+  local file status
+  local matched=false
+
+  while IFS= read -r file; do
+    if filter_file "$file" >/dev/null; then
+      printf '%s\n' "$file"
+      matched=true
+    else
+      status=$?
+      [ "$status" -eq 1 ] || return "$status"
+    fi
+  done < <(command find "${FIND_ARGUMENTS[@]}" | command sort)
+
+  $matched
+}
+
 highlight_results() {
   local term
   local -a arguments=(grep "${GREP_OPTIONS[@]}" --color="$XFIND_GREP_COLOR_MODE")
@@ -500,6 +541,8 @@ run_find() {
     print_debug_command
   elif is_simple_search; then
     grep_sorted_files
+  elif $FILES_WITH_MATCHES; then
+    list_matching_files
   elif [ "${#HIGHLIGHT_TERMS[@]}" -gt 0 ]; then
     grep_multiple_files | highlight_results
   else
