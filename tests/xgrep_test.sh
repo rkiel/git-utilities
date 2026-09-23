@@ -8,6 +8,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 XGREP="$ROOT/bin/bash/xgrep"
 TEST_ROOT="$(mktemp -d /tmp/xgrep-tests.XXXXXX)"
 REPO="$TEST_ROOT/repo"
+FAKE_BIN="$TEST_ROOT/bin"
 
 cleanup() {
   rm -rf "$TEST_ROOT"
@@ -73,7 +74,13 @@ run_test() {
 }
 
 make_repo() {
-  mkdir -p "$REPO/docs" "$REPO/scripts" "$REPO/src" "$REPO/src,docs"
+  mkdir -p "$FAKE_BIN" "$REPO/docs" "$REPO/scripts" "$REPO/src" "$REPO/src,docs"
+  printf '%s\n' \
+    '#!/usr/bin/env bash' \
+    'printf "%s\n" "$@" >"$FZF_ARGS_FILE"' \
+    'command cat >"$FZF_INPUT_FILE"' >"$FAKE_BIN/fzf"
+  chmod +x "$FAKE_BIN/fzf"
+
   git init -b main "$REPO" >/dev/null
   git -C "$REPO" config user.email test@example.com
   git -C "$REPO" config user.name Test
@@ -100,6 +107,7 @@ test_help_and_errors() {
   assert_contains 'Search terms use extended regular expressions' "$output" "help documents pattern syntax"
   assert_contains '-i, --ignore-case' "$output" "help documents case-insensitive searching"
   assert_contains '-l, --files-with-matches' "$output" "help documents filename output"
+  assert_contains '--fzf' "$output" "help documents interactive file selection"
   assert_not_contains '-f, --file' "$output" "help omits removed file option"
   assert_contains '-p, --include-path PATH' "$output" "help documents one path per option"
   assert_contains '-t, --include-type TYPE' "$output" "help documents one type per option"
@@ -211,6 +219,41 @@ test_search_modes() {
   assert_eq '' "$output" "no matches produce no output"
 }
 
+test_fzf_mode() {
+  local args_file="$TEST_ROOT/xgrep-fzf-args"
+  local input_file="$TEST_ROOT/xgrep-fzf-input"
+  local fzf_arguments fzf_input output
+
+  output="$(
+    cd "$REPO" &&
+      PATH="$FAKE_BIN:$PATH" \
+      FZF_ARGS_FILE="$args_file" \
+      FZF_INPUT_FILE="$input_file" \
+      "$XGREP" --fzf alpha beta
+  )"
+  assert_eq '' "$output" "fzf owns interactive output"
+
+  fzf_input="$(<"$input_file")"
+  assert_contains 'src/alpha.txt' "$fzf_input" "fzf receives matching filenames"
+  assert_contains 'src/blocked.txt' "$fzf_input" "fzf receives every matching filename"
+  assert_not_contains 'src/gamma.txt' "$fzf_input" "fzf receives only complete expression matches"
+  assert_not_contains 'src/alpha.txt:' "$fzf_input" "fzf receives filenames without content"
+  assert_not_contains $'\033[' "$fzf_input" "fzf receives filenames without color codes"
+
+  fzf_arguments="$(<"$args_file")"
+  assert_contains '--exit-0' "$fzf_arguments" "fzf exits when there are no candidates"
+  assert_contains 'head -n 200 {}' "$fzf_arguments" "fzf previews the selected file"
+  assert_contains 'enter:become(${VISUAL:-${EDITOR:-vi}} {})' "$fzf_arguments" \
+    "fzf opens the selected file with the configured editor"
+
+  output="$(cd "$REPO" && "$XGREP" -d --fzf alpha)"
+  assert_contains 'git grep -E --no-color -l -e alpha' "$output" \
+    "debug shows color-free filename mode"
+  assert_contains '| fzf --exit-0 --preview' "$output" "debug shows the fzf pipeline"
+  assert_contains 'head\ -n\ 200\ \{\}' "$output" "debug shows the preview command"
+  assert_contains 'enter:become' "$output" "debug shows the editor binding"
+}
+
 test_debug_and_project_defaults() {
   local output
 
@@ -244,6 +287,7 @@ run_test "help and errors" test_help_and_errors
 run_test "Boolean groups" test_boolean_groups
 run_test "path and type filters" test_path_and_type_filters
 run_test "search modes" test_search_modes
+run_test "fzf mode" test_fzf_mode
 run_test "debug and project defaults" test_debug_and_project_defaults
 
 printf 'all xgrep tests passed\n'

@@ -16,6 +16,7 @@ Boolean terms:
 Options:
   -d, --debug                 Print the git grep command without running it.
       --no-debug              Disable debug mode, including one set by .xgrep.
+      --fzf                   Select a matching file with fzf and open it.
   -h, --help                  Show the help message.
   -i, --ignore-case           Ignore case distinctions.
   -l, --files-with-matches    Show only names of files containing matches.
@@ -49,6 +50,18 @@ showing the matching lines:
 ```bash
 xgrep -l error warning
 ```
+
+### Interactive selection
+
+Use `--fzf` to search in filename mode, select a matching file interactively,
+preview it, and open it in an editor:
+
+```bash
+xgrep --fzf error warning
+```
+
+The editor is selected from `VISUAL`, then `EDITOR`, and defaults to `vi`.
+`fzf` must be available on `PATH`.
 
 Set `NO_COLOR` to a nonempty value to disable colored output. Colors are also
 disabled when `TERM` is `dumb`:

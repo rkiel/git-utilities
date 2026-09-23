@@ -9,6 +9,7 @@ XFIND="$ROOT/bin/bash/xfind"
 XGREP="$ROOT/bin/bash/xgrep"
 TEST_ROOT="$(mktemp -d /tmp/xfind-tests.XXXXXX)"
 FIXTURE="$TEST_ROOT/files"
+FAKE_BIN="$TEST_ROOT/bin"
 
 cleanup() {
   rm -rf "$TEST_ROOT"
@@ -74,6 +75,13 @@ run_test() {
 }
 
 make_fixture() {
+  mkdir -p "$FAKE_BIN"
+  printf '%s\n' \
+    '#!/usr/bin/env bash' \
+    'printf "%s\n" "$@" >"$FZF_ARGS_FILE"' \
+    'command cat >"$FZF_INPUT_FILE"' >"$FAKE_BIN/fzf"
+  chmod +x "$FAKE_BIN/fzf"
+
   mkdir -p "$FIXTURE/lib" "$FIXTURE/node_modules/pkg"
   mkdir -p "$FIXTURE/spec" "$FIXTURE/src" "$FIXTURE/src/nested"
 
@@ -107,6 +115,7 @@ test_help_and_errors() {
   assert_contains 'A nonempty NO_COLOR disables colored output' "$output" "help documents NO_COLOR"
   assert_contains '-i, --ignore-case' "$output" "help documents case-insensitive searching"
   assert_contains '-l, --files-with-matches' "$output" "help documents filename output"
+  assert_contains '--fzf' "$output" "help documents interactive file selection"
   assert_not_contains '-f, --file' "$output" "help omits removed file option"
   assert_not_contains '--invert' "$output" "help omits an invert option"
   assert_contains '-t, --include-type TYPE' "$output" "help documents included types"
@@ -270,6 +279,42 @@ test_boolean_groups() {
   assert_contains 'README.md:nothing relevant and literal' "$output" "prefixed operator searches for its literal word"
 }
 
+test_fzf_mode() {
+  local args_file="$TEST_ROOT/xfind-fzf-args"
+  local input_file="$TEST_ROOT/xfind-fzf-input"
+  local fzf_arguments fzf_input output
+
+  output="$(
+    cd "$FIXTURE" &&
+      PATH="$FAKE_BIN:$PATH" \
+      FZF_ARGS_FILE="$args_file" \
+      FZF_INPUT_FILE="$input_file" \
+      "$XFIND" --fzf foo bar
+  )"
+  assert_eq '' "$output" "fzf owns interactive output"
+
+  fzf_input="$(<"$input_file")"
+  assert_contains 'src/app.js' "$fzf_input" "fzf receives matching filenames"
+  assert_contains 'lib/tool.rb' "$fzf_input" "fzf receives every matching filename"
+  assert_not_contains 'src/nested/other.js' "$fzf_input" \
+    "fzf receives only complete expression matches"
+  assert_not_contains 'src/app.js:' "$fzf_input" "fzf receives filenames without content"
+  assert_not_contains $'\033[' "$fzf_input" "fzf receives filenames without color codes"
+
+  fzf_arguments="$(<"$args_file")"
+  assert_contains '--exit-0' "$fzf_arguments" "fzf exits when there are no candidates"
+  assert_contains 'head -n 200 {}' "$fzf_arguments" "fzf previews the selected file"
+  assert_contains 'enter:become(${VISUAL:-${EDITOR:-vi}} {})' "$fzf_arguments" \
+    "fzf opens the selected file with the configured editor"
+
+  output="$(cd "$FIXTURE" && "$XFIND" -d --fzf foo)"
+  assert_contains '| xargs grep -E -l -- foo' "$output" \
+    "debug shows implied filename mode"
+  assert_contains '| fzf --exit-0 --preview' "$output" "debug shows the fzf pipeline"
+  assert_contains 'head\ -n\ 200\ \{\}' "$output" "debug shows the preview command"
+  assert_contains 'enter:become' "$output" "debug shows the editor binding"
+}
+
 test_debug_and_project_defaults() {
   local output
 
@@ -333,6 +378,7 @@ run_test "path options" test_path_options
 run_test "content search" test_content_search
 run_test "Boolean groups" test_boolean_groups
 run_test "xgrep parity" test_xgrep_parity
+run_test "fzf mode" test_fzf_mode
 run_test "debug and project defaults" test_debug_and_project_defaults
 
 printf 'all xfind tests passed\n'

@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_NAME="$(basename "$0")"
 DEBUG=false
+FILES_WITH_MATCHES=false
 GIT_COLOR_OPTIONS=()
 GIT_OPTIONS=()
 INCLUDE_PATHS=()
@@ -14,6 +15,7 @@ NOT_TERMS=()
 PATHS=()
 GIT_ARGUMENTS=()
 SEARCH_TERM_COUNT=0
+USE_FZF=false
 
 if [ -n "${NO_COLOR:-}" ] || [ "${TERM:-}" = 'dumb' ]; then
   GIT_COLOR_OPTIONS=(--no-color)
@@ -36,6 +38,7 @@ Patterns:
 Options:
   -d, --debug                 Print the git grep command without running it.
       --no-debug              Disable debug mode, including one set by .xgrep.
+      --fzf                   Select a matching file with fzf and open it.
   -h, --help                  Show this help message.
   -i, --ignore-case           Ignore case distinctions.
   -l, --files-with-matches    Show only names of files containing matches.
@@ -46,6 +49,7 @@ Options:
 
 Examples:
   $SCRIPT_NAME alpha beta
+  $SCRIPT_NAME --fzf alpha beta
   $SCRIPT_NAME -l alpha beta
   $SCRIPT_NAME or alpha beta
   $SCRIPT_NAME alpha or beta gamma not generated vendor
@@ -58,6 +62,7 @@ Project defaults:
 
 Environment:
   A nonempty NO_COLOR disables colored output.
+  VISUAL or EDITOR selects the editor used by --fzf; the default is vi.
 HELP
 }
 
@@ -132,6 +137,11 @@ parse_arguments() {
         DEBUG=false
         shift
         ;;
+      --fzf)
+        USE_FZF=true
+        FILES_WITH_MATCHES=true
+        shift
+        ;;
       -h|--help)
         print_help
         exit 0
@@ -141,7 +151,7 @@ parse_arguments() {
         shift
         ;;
       -l|--files-with-matches)
-        GIT_OPTIONS+=(-l)
+        FILES_WITH_MATCHES=true
         shift
         ;;
       -p|--include-path|--include-path=*|\
@@ -293,8 +303,14 @@ append_or_group() {
 
 build_git_arguments() {
   local pattern
+  local -a color_options=("${GIT_COLOR_OPTIONS[@]}")
 
-  GIT_ARGUMENTS=(-E "${GIT_COLOR_OPTIONS[@]}" "${GIT_OPTIONS[@]}")
+  if $USE_FZF; then
+    color_options=(--no-color)
+  fi
+
+  GIT_ARGUMENTS=(-E "${color_options[@]}" "${GIT_OPTIONS[@]}")
+  $FILES_WITH_MATCHES && GIT_ARGUMENTS+=(-l)
   EXPRESSION_COUNT=0
 
   for pattern in "${AND_TERMS[@]}"; do
@@ -313,12 +329,32 @@ print_git_command() {
   for argument in "${GIT_ARGUMENTS[@]}"; do
     printf ' %q' "$argument"
   done
+}
+
+print_fzf_command() {
+  printf ' | fzf --exit-0 --preview'
+  printf ' %q' 'head -n 200 {}'
+  printf ' --bind'
+  printf ' %q' 'enter:become(${VISUAL:-${EDITOR:-vi}} {})'
   printf '\n'
+}
+
+run_fzf() {
+  command fzf --exit-0 \
+    --preview 'head -n 200 {}' \
+    --bind 'enter:become(${VISUAL:-${EDITOR:-vi}} {})'
 }
 
 run_git_grep() {
   if $DEBUG; then
     print_git_command
+    if $USE_FZF; then
+      print_fzf_command
+    else
+      printf '\n'
+    fi
+  elif $USE_FZF; then
+    command git grep "${GIT_ARGUMENTS[@]}" | run_fzf
   else
     command git grep "${GIT_ARGUMENTS[@]}"
   fi

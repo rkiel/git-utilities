@@ -20,6 +20,7 @@ NOT_TERMS=()
 HIGHLIGHT_TERMS=()
 FIND_ARGUMENTS=()
 SEARCH_TERM_COUNT=0
+USE_FZF=false
 
 if [ -n "${NO_COLOR:-}" ] || [ "${TERM:-}" = 'dumb' ]; then
   XFIND_GREP_COLOR_MODE=never
@@ -46,6 +47,7 @@ Patterns:
 Options:
   -d, --debug                 Print the command without running it.
       --no-debug              Disable debug mode set by .xfind.
+      --fzf                   Select a matching file with fzf and open it.
   -h, --help                  Show this help message.
   -i, --ignore-case           Ignore case distinctions.
   -l, --files-with-matches    Show only names of files containing matches.
@@ -56,6 +58,7 @@ Options:
 
 Examples:
   $SCRIPT_NAME foo
+  $SCRIPT_NAME --fzf foo
   $SCRIPT_NAME -l foo
   $SCRIPT_NAME foo bar
   $SCRIPT_NAME foo or bar baz not generated vendor
@@ -70,6 +73,7 @@ Defaults:
 
 Environment:
   A nonempty NO_COLOR disables colored output.
+  VISUAL or EDITOR selects the editor used by --fzf; the default is vi.
 HELP
 }
 
@@ -142,6 +146,11 @@ parse_arguments() {
         ;;
       --no-debug)
         DEBUG=false
+        shift
+        ;;
+      --fzf)
+        USE_FZF=true
+        FILES_WITH_MATCHES=true
         shift
         ;;
       -h|--help)
@@ -377,7 +386,20 @@ print_debug_command() {
         print_grep_group false true "${HIGHLIGHT_TERMS[@]}"
     fi
   fi
+}
+
+print_fzf_command() {
+  printf ' | fzf --exit-0 --preview'
+  printf ' %q' 'head -n 200 {}'
+  printf ' --bind'
+  printf ' %q' 'enter:become(${VISUAL:-${EDITOR:-vi}} {})'
   printf '\n'
+}
+
+run_fzf() {
+  command fzf --exit-0 \
+    --preview 'head -n 200 {}' \
+    --bind 'enter:become(${VISUAL:-${EDITOR:-vi}} {})'
 }
 
 grep_batch() {
@@ -537,9 +559,24 @@ highlight_results() {
   command "${arguments[@]}"
 }
 
+run_filename_search() {
+  if is_simple_search; then
+    grep_sorted_files
+  else
+    list_matching_files
+  fi
+}
+
 run_find() {
   if $DEBUG; then
     print_debug_command
+    if $USE_FZF; then
+      print_fzf_command
+    else
+      printf '\n'
+    fi
+  elif $USE_FZF; then
+    run_filename_search | run_fzf
   elif is_simple_search; then
     grep_sorted_files
   elif $FILES_WITH_MATCHES; then
