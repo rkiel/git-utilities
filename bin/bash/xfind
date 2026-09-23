@@ -538,8 +538,6 @@ highlight_results() {
 }
 
 run_find() {
-  printf '\n'
-
   if $DEBUG; then
     print_debug_command
   elif is_simple_search; then

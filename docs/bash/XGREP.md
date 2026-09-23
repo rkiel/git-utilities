@@ -148,7 +148,6 @@ Use `-d` to inspect the underlying `git grep` command without running it:
 
 ```console
 $ xgrep -d alpha or beta gamma not generated vendor
-
 git grep -E -e alpha --and \( -e beta --or -e gamma \) --and --not \( -e generated --or -e vendor \) -- .
 ```
 

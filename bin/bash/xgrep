@@ -317,8 +317,6 @@ print_git_command() {
 }
 
 run_git_grep() {
-  printf '\n'
-
   if $DEBUG; then
     print_git_command
   else

@@ -27,8 +27,6 @@ Options:
 ```
 
 The `.git` and `node_modules` directories are excluded by default.
-Like `xgrep`, `xfind` prints a blank line before search results and debug
-output.
 
 When writing search results to a terminal, filenames are magenta and their
 separating colons are cyan. These added colors are disabled when output is

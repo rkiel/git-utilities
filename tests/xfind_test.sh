@@ -274,7 +274,7 @@ test_debug_and_project_defaults() {
   local output
 
   output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XFIND" -d foo -t js -T spec.js)"
-  assert_starts_with $'\n' "$output" "xfind prints a blank line before its output"
+  assert_starts_with 'find ' "$output" "xfind output starts with the debug command"
   assert_contains 'find . -type f' "$output" "debug displays find command"
   assert_contains '-name \*.js' "$output" "debug displays included type"
   assert_contains '\! -name \*.spec.js' "$output" "debug displays excluded type"

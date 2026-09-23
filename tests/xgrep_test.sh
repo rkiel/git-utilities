@@ -215,7 +215,7 @@ test_debug_and_project_defaults() {
   local output
 
   output="$(cd "$REPO" && unset NO_COLOR && TERM=xterm "$XGREP" -d 'alpha beta' not 'blocked value')"
-  assert_starts_with $'\n' "$output" "xgrep prints a blank line before git grep output"
+  assert_starts_with 'git grep ' "$output" "xgrep output starts with the debug command"
   assert_contains 'git grep -E -e alpha\ beta --and --not' "$output" "debug prints shell-safe command"
   assert_contains '-e blocked\ value' "$output" "debug quotes the excluded pattern"
 
