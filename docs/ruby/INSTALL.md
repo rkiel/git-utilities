@@ -1,4 +1,4 @@
-## Installation - classic Ruby version
+## Installation - Ruby version (DEPRECATED)
 
 Clone the repository
 

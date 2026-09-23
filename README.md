@@ -13,7 +13,7 @@ The command-line scripts include:
 For 2026, the command-line scripts have been re-written in Bash 3.2 which should work out-of-the-box on Linux and macOS.
 
 The previous version, was written in Ruby 2.x using just the standard libraries and do not require any gems to be installed.
-It is now deprecated but you can still it by [following these instructions](docs/ruby/INSTALL.md).
+It is now deprecated but you can still install it by [following these instructions](docs/ruby/INSTALL.md).
 
 ## Documentation
 
@@ -25,21 +25,19 @@ It is now deprecated but you can still it by [following these instructions](docs
 
 Please follow either the **Linux user** installation or the **macOS user** installation.
 
-### Linux user
+### Linux user installation
 
 This repository needs to be cloned.  Copy/paste the following to be prompted for the location to clone into.
 
 ```bash
 {
-  read -r -p "Clone into which directory? [$HOME/GitHub/rkiel] " GITHUB_REPOS_DIR
+  read -r -p "Clone this repo into which directory? [$HOME/GitHub/rkiel] " GITHUB_REPOS_DIR
   GITHUB_REPOS_DIR=${GITHUB_REPOS_DIR:-"$HOME/GitHub/rkiel"}
+  GIT_UTILITIES_ROOT="$GITHUB_REPOS_DIR/git-utilities"
 
   mkdir -p "$GITHUB_REPOS_DIR"
 
-  GIT_UTILITIES_ROOT="$GITHUB_REPOS_DIR/git-utilities"
   git clone https://github.com/rkiel/git-utilities.git "$GIT_UTILITIES_ROOT"
-
-  ls -l "$GIT_UTILITIES_ROOT"
 }
 ```
 
@@ -89,22 +87,18 @@ Load the `profile.sh` and `rc.sh` into your current shell and verify correctness
 }
 ```
 
-### macOS user
+### macOS user installation
 
 This repository needs to be cloned.  Copy/paste the following to be prompted for the location to clone into.
 
 ```zsh
-{
-  read -r "GITHUB_REPOS_DIR?Clone into which directory? [$HOME/GitHub/rkiel] "
+  read -r -p "Clone this repo into which directory? [$HOME/GitHub/rkiel] " GITHUB_REPOS_DIR
   GITHUB_REPOS_DIR=${GITHUB_REPOS_DIR:-"$HOME/GitHub/rkiel"}
+  GIT_UTILITIES_ROOT="$GITHUB_REPOS_DIR/git-utilities"
 
   mkdir -p "$GITHUB_REPOS_DIR"
 
-  GIT_UTILITIES_ROOT="$GITHUB_REPOS_DIR/git-utilities"
   git clone https://github.com/rkiel/git-utilities.git "$GIT_UTILITIES_ROOT"
-
-  ls -l "$GIT_UTILITIES_ROOT"
-}
 ```
 
 When you create a feature branch, it will include a name that identifies and distinguishes
