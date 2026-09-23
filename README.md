@@ -5,14 +5,14 @@ This is a collection of simple command-line scripts/wrappers and a few aliases t
 The command-line scripts include:
 
 - `feature` - Feature branches are now easier to use and provide consistency across your team.
-- `xgrep` - Searching in a repository is now easier by harnessing the power of `git-grep`.
+- `xgrep` - Searching in a repository is now easier by harnessing the power of `git grep`.
 - `xfind` - Searching outside a repository is now easier by harnessing the power of `find` and `grep`.
 
 ## Releases
 
 For 2026, the command-line scripts have been re-written in Bash 3.2 which should work out-of-the-box on Linux and macOS.
 
-The previous version, was written in Ruby 2.x using just the standard libraries and do not require any gems to be installed.
+The previous versions were written in Ruby 2.x using only the standard libraries and do not require any gems to be installed.
 It is now deprecated but you can still install it by [following these instructions](docs/ruby/INSTALL.md).
 
 ## Documentation
@@ -92,7 +92,7 @@ Load the `profile.sh` and `rc.sh` into your current shell and verify correctness
 This repository needs to be cloned.  Copy/paste the following to be prompted for the location to clone into.
 
 ```zsh
-  read -r -p "Clone this repo into which directory? [$HOME/GitHub/rkiel] " GITHUB_REPOS_DIR
+  read -r "GITHUB_REPOS_DIR?Clone this repo into which directory? [$HOME/GitHub/rkiel] "
   GITHUB_REPOS_DIR=${GITHUB_REPOS_DIR:-"$HOME/GitHub/rkiel"}
   GIT_UTILITIES_ROOT="$GITHUB_REPOS_DIR/git-utilities"
 
@@ -146,4 +146,3 @@ Load the `profile.sh` and `rc.sh` into your current shell and verify correctness
   command -v xgrep
 }
 ```
-
