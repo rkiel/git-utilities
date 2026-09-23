@@ -112,6 +112,20 @@ test_help_and_errors() {
   assert_not_contains '-N,' "$output" "help omits removed exclude alias"
 
   set +e
+  output="$(cd "$FIXTURE" && "$XFIND" 2>&1)"
+  status="$?"
+  set -e
+  assert_eq 2 "$status" "missing terms exit 2"
+  assert_contains 'at least one search term is required' "$output" "missing terms explain failure"
+
+  set +e
+  output="$(cd "$FIXTURE" && "$XFIND" -t js 2>&1)"
+  status="$?"
+  set -e
+  assert_eq 2 "$status" "filters without terms exit 2"
+  assert_contains 'at least one search term is required' "$output" "filters without terms explain failure"
+
+  set +e
   output="$(cd "$FIXTURE" && "$XFIND" --unknown 2>&1)"
   status="$?"
   set -e
@@ -133,32 +147,16 @@ test_help_and_errors() {
   assert_contains 'at least one search term is required' "$output" "operator without a term explains failure"
 }
 
-test_default_file_listing() {
-  local expected output sorted
-
-  output="$(cd "$FIXTURE" && "$XFIND")"
-  expected="$(
-    printf '\n'
-    printf '%s\n' ./README.md ./lib/tool.rb ./spec/helper.rb ./src/app.js ./src/app.spec.js ./src/bar-name.txt ./src/nested/other.js './src/space name\file.txt' ./src/split-lines.txt ./src/uppercase.js
-  )"
-  assert_eq "$expected" "$output" "xfind lists files in sorted order"
-
-  sorted="$(printf '%s\n' "$output" | LC_ALL=C sort)"
-  assert_eq "$sorted" "$output" "default output remains sorted"
-  assert_not_contains '.git/config' "$output" "default listing excludes .git"
-  assert_not_contains 'node_modules' "$output" "default listing excludes node_modules"
-}
-
 test_type_options() {
   local output
 
-  output="$(cd "$FIXTURE" && "$XFIND" -t js -T spec.js)"
+  output="$(cd "$FIXTURE" && "$XFIND" -t js -T spec.js foo)"
   assert_contains './src/app.js' "$output" "include type keeps JavaScript file"
   assert_contains './src/nested/other.js' "$output" "include type searches nested files"
   assert_not_contains 'app.spec.js' "$output" "exclude type removes JavaScript tests"
   assert_not_contains 'tool.rb' "$output" "include type removes other extensions"
 
-  output="$(cd "$FIXTURE" && "$XFIND" -t js -t rb)"
+  output="$(cd "$FIXTURE" && "$XFIND" -t js -t rb foo)"
   assert_contains './src/app.js' "$output" "repeated type includes JavaScript"
   assert_contains './lib/tool.rb' "$output" "repeated type includes Ruby"
 }
@@ -186,12 +184,12 @@ test_xgrep_parity() {
 test_path_options() {
   local output
 
-  output="$(cd "$FIXTURE" && "$XFIND" -p src -p lib)"
+  output="$(cd "$FIXTURE" && "$XFIND" -p src -p lib foo)"
   assert_contains './src/app.js' "$output" "repeated path includes src"
   assert_contains './lib/tool.rb' "$output" "repeated path includes lib"
   assert_not_contains './spec/helper.rb' "$output" "include path removes other directories"
 
-  output="$(cd "$FIXTURE" && "$XFIND" -P spec)"
+  output="$(cd "$FIXTURE" && "$XFIND" -P spec foo)"
   assert_contains './src/app.js' "$output" "exclude path keeps other directories"
   assert_not_contains './spec/helper.rb' "$output" "exclude path removes spec"
 }
@@ -296,7 +294,6 @@ test_debug_and_project_defaults() {
 
 make_fixture
 run_test "help and errors" test_help_and_errors
-run_test "default file listing" test_default_file_listing
 run_test "type options" test_type_options
 run_test "path options" test_path_options
 run_test "content search" test_content_search

@@ -1,12 +1,12 @@
 ## Xfind utility
 
-`xfind` searches files outside Git repositories, where the more powerful
-`xgrep` is unavailable. With no search terms it lists matching files. With one
-or more terms it searches their contents.
+`xfind` searches file contents outside Git repositories, where the more
+powerful `xgrep` is unavailable. It requires at least one search term and uses
+the same Boolean search model as `xgrep`.
 
 ```text
 Usage:
-  xfind [options] [<term>...]
+  xfind [options] <term>...
 
 Boolean terms:
   Terms are required by default and are combined with AND.
@@ -26,8 +26,8 @@ Options:
 ```
 
 The `.git` and `node_modules` directories are excluded by default.
-Like `xgrep`, `xfind` prints a blank line before listings, search results, and
-debug output.
+Like `xgrep`, `xfind` prints a blank line before search results and debug
+output.
 
 When writing search results to a terminal, filenames are magenta and their
 separating colons are cyan. These added colors are disabled when output is
@@ -139,14 +139,6 @@ Search everywhere except beneath `spec`:
 
 ```bash
 xfind foo -P spec
-```
-
-### Listing files
-
-Omit search terms to list selected files in sorted order:
-
-```bash
-xfind -t js -T spec.js
 ```
 
 ### Project defaults

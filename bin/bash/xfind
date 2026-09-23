@@ -31,7 +31,7 @@ fi
 print_help() {
   cat <<HELP
 Usage:
-  $SCRIPT_NAME [options] [<term>...]
+  $SCRIPT_NAME [options] <term>...
 
 Boolean terms:
   Terms are required by default and are combined with AND.
@@ -53,7 +53,6 @@ Options:
   -P, --exclude-path PATH     Exclude files beneath a directory.
 
 Examples:
-  $SCRIPT_NAME
   $SCRIPT_NAME foo
   $SCRIPT_NAME foo bar
   $SCRIPT_NAME foo or bar baz not generated vendor
@@ -228,7 +227,7 @@ classify_terms() {
   done
 
   SEARCH_TERM_COUNT="$((${#AND_TERMS[@]} + ${#OR_TERMS[@]} + ${#NOT_TERMS[@]}))"
-  if [ "${#TERMS[@]}" -gt 0 ] && [ "$SEARCH_TERM_COUNT" -eq 0 ]; then
+  if [ "$SEARCH_TERM_COUNT" -eq 0 ]; then
     die 'at least one search term is required'
   fi
 
@@ -340,7 +339,7 @@ print_debug_command() {
     print_grep_command
     printf ' --color=%s -H --' "$XFIND_GREP_COLOR_MODE"
     print_argument "${AND_TERMS[0]}"
-  elif [ "$SEARCH_TERM_COUNT" -gt 0 ]; then
+  else
     printf ' | while IFS= read -r file; do '
     if [ "${#AND_TERMS[@]}" -gt 0 ]; then
       print_grep_command
@@ -499,8 +498,6 @@ run_find() {
 
   if $DEBUG; then
     print_debug_command
-  elif [ "$SEARCH_TERM_COUNT" -eq 0 ]; then
-    command find "${FIND_ARGUMENTS[@]}" | command sort
   elif is_simple_search; then
     grep_sorted_files
   elif [ "${#HIGHLIGHT_TERMS[@]}" -gt 0 ]; then
