@@ -1,41 +1,31 @@
 ## Introduction
 
-This is a collection of simple command-line scripts, bash aliases, and bash utilities that make using `git` even easier.
+This is a collection of simple command-line scripts/wrappers and a few aliases to make using `git` even easier.
 
 The command-line scripts include:
 
-- `feature` - make working with feature branches easier
-- `xgrep` - make using `git-grep` easier
-- `xfind` - make using `find` easier
+- `feature` - Feature branches are now easier to use and provide consistency across your team.
+- `xgrep` - Searching in a repository is now easier by harnessing the power of `git-grep`.
+- `xfind` - Searching outside a repository is now easier by harnessing the power of `find` and `grep`.
 
-The "classic" version command-line scripts are written in Ruby 2.x using just the standard libraries and do not require any gems to be installed.
+## Releases
 
-The "new" version command-line scripts are written in Bash 3.2 which should work out-of-the-box on Linux and macOS.
+For 2026, the command-line scripts have been re-written in Bash 3.2 which should work out-of-the-box on Linux and macOS.
 
-The `bash` utilities come directly from the [git source contrib](https://github.com/git/git/tree/master/contrib) and include:
+The previous version, was written in Ruby 2.x using just the standard libraries and do not require any gems to be installed.
+It is now deprecated but you can still it by [following these instructions](docs/ruby/INSTALL.md).
 
-- support for repository status in your [shell prompt](https://github.com/git/git/tree/master/contrib/completion/git-prompt.sh)
+## Documentation
 
-## Installation - classic Ruby version
+- `feature` - [ [new Bash version](docs/bash/FEATURE.md) ] [ [deprecated Ruby version](docs/ruby/FEATURE.md) ]
+- `xgrep` - [ [new Bash version](docs/bash/XGREP.md) ] [ [deprecated Ruby version](docs/ruby/XGREP.md) ]
+- `xfind` - [ [new Bash version](docs/bash/XFIND.md) ] [ [deprecated Ruby version](docs/ruby/XFIND.md) ]
 
-Clone the repository
+## Installation
 
-```
-mkdir -p ~/GitHub/rkiel && cd $_
-git clone https://github.com/rkiel/git-utilities.git
-```
+Please follow either the **Linux user** installation or the **macOS user** installation.
 
-To update your `.bash_profile` and `.bashrc`.
-
-```
-cd ~/GitHub/rkiel/git-utilities
-./install/bin/setup $USER
-```
-
-## Installation - new Bash version
-
-
-#### Linux users (bash)
+### Linux user
 
 This repository needs to be cloned.  Copy/paste the following to be prompted for the location to clone into.
 
@@ -99,7 +89,7 @@ Load the `profile.sh` and `rc.sh` into your current shell and verify correctness
 }
 ```
 
-#### macOS users (zsh)
+### macOS user
 
 This repository needs to be cloned.  Copy/paste the following to be prompted for the location to clone into.
 
@@ -163,8 +153,3 @@ Load the `profile.sh` and `rc.sh` into your current shell and verify correctness
 }
 ```
 
-## Documentation
-
-- `feature` - [ [classic Ruby version](docs/ruby/FEATURE.md) ] [ [new Bash version](docs/bash/FEATURE.md) ]
-- `xgrep` - [ [classic Ruby version](docs/ruby/XGREP.md) ] [ [new Bash version](docs/bash/XGREP.md) ]
-- `xfind` - [ [classic Ruby version](docs/ruby/XFIND.md) ] [ [new Bash version](docs/bash/XFIND.md) ]
