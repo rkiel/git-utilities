@@ -94,7 +94,7 @@ build_engine_arguments() {
     color_options=(--no-color)
   fi
 
-  GIT_ARGUMENTS=(-E "${color_options[@]}")
+  GIT_ARGUMENTS=(-E -I "${color_options[@]}")
   $IGNORE_CASE && GIT_ARGUMENTS+=(-i)
   $FILES_WITH_MATCHES && GIT_ARGUMENTS+=(-l)
   GIT_EXPRESSION_COUNT=0

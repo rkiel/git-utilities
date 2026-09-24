@@ -98,6 +98,7 @@ make_fixture() {
   printf 'foo specification\n' >"$FIXTURE/spec/helper.rb"
   printf 'nothing relevant and literal\n' >"$FIXTURE/README.md"
   printf 'foo dependency\n' >"$FIXTURE/node_modules/pkg/index.js"
+  printf '\0foo bar binary\n' >"$FIXTURE/src/binary.dat"
 
   mkdir -p "$FIXTURE/.git"
   printf 'foo hidden git\n' >"$FIXTURE/.git/xgrep-test"
@@ -109,6 +110,7 @@ test_help_and_errors() {
   output="$($XGREP --help)"
   assert_contains 'Terms are required by default and are combined with AND' "$output" "help explains Boolean defaults"
   assert_contains 'Search terms use extended regular expressions' "$output" "help documents pattern syntax"
+  assert_contains 'Binary files are ignored' "$output" "help documents binary handling"
   assert_contains 'A nonempty NO_COLOR disables colored output' "$output" "help documents NO_COLOR"
   assert_contains '-i, --ignore-case' "$output" "help documents case-insensitive searching"
   assert_contains '-l, --files-with-matches' "$output" "help documents filename output"
@@ -194,7 +196,7 @@ test_path_options() {
 test_content_search() {
   local count output status
 
-  output="$(cd "$FIXTURE" && "$XGREP" foo bar)"
+  output="$(cd "$FIXTURE" && "$XGREP" foo bar 2>&1)"
   assert_not_contains $'\033[' "$output" "redirected output omits ANSI color codes"
   assert_not_contains './src/' "$output" "output omits the leading dot directory"
   assert_contains 'src/app.js:foo bar application' "$output" "multiple terms keep matching JavaScript line"
@@ -206,6 +208,8 @@ test_content_search() {
   assert_not_contains 'uppercase.js' "$output" "searches are case-sensitive by default"
   assert_not_contains '.git/config' "$output" "content search honors default exclusions"
   assert_not_contains 'node_modules' "$output" "content search excludes dependencies"
+  assert_not_contains 'src/binary.dat' "$output" "filesystem engine ignores binary files"
+  assert_not_contains 'Binary file' "$output" "filesystem engine suppresses binary warnings"
 
   output="$(cd "$FIXTURE" && "$XGREP" -i foo bar)"
   assert_contains 'src/uppercase.js:FOO BAR uppercase' "$output" "ignore-case applies to every required term"
@@ -288,7 +292,7 @@ test_fzf_mode() {
     "fzf opens the selected file with the configured editor"
 
   output="$(cd "$FIXTURE" && PATH="$FAKE_BIN:$PATH" NO_COLOR= TERM=xterm "$XGREP" -d --fzf foo)"
-  assert_contains '| xargs grep -E -l -- foo' "$output" \
+  assert_contains '| xargs grep -E -I -l -- foo' "$output" \
     "debug shows implied filename mode"
   assert_contains '| fzf --exit-0 --preview' "$output" "debug shows the fzf pipeline"
   assert_contains 'bat\ --color=always' "$output" "debug shows the syntax-highlighted preview"
@@ -307,33 +311,33 @@ test_debug_and_project_defaults() {
   assert_contains 'find . -type f' "$output" "debug displays find command"
   assert_contains '-name \*.js' "$output" "debug displays included type"
   assert_contains '\! -name \*.spec.js' "$output" "debug displays excluded type"
-  assert_contains '| xargs grep -E --color=auto -H -- foo' "$output" "debug displays grep command"
+  assert_contains '| xargs grep -E -I --color=auto -H -- foo' "$output" "debug displays grep command"
 
   output="$(cd "$FIXTURE" && TERM=xterm NO_COLOR=1 "$XGREP" -d foo)"
-  assert_contains '| xargs grep -E --color=never -H -- foo' "$output" "NO_COLOR disables grep colors"
+  assert_contains '| xargs grep -E -I --color=never -H -- foo' "$output" "NO_COLOR disables grep colors"
 
   output="$(cd "$FIXTURE" && TERM=xterm NO_COLOR='' "$XGREP" -d foo)"
-  assert_contains '| xargs grep -E --color=auto -H -- foo' "$output" "empty NO_COLOR leaves grep colors enabled"
+  assert_contains '| xargs grep -E -I --color=auto -H -- foo' "$output" "empty NO_COLOR leaves grep colors enabled"
 
   output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XGREP" -d foo bar application)"
-  assert_contains 'grep -E -- foo < "$file" | grep -E -- bar | grep -E -- application' \
+  assert_contains 'grep -E -I -- foo < "$file" | grep -E -I -- bar | grep -E -I -- application' \
     "$output" "multiple terms filter file content before adding its name"
   assert_contains 'printf "%s:%s\n" "$file" "$line"' \
     "$output" "debug adds the filename after content filtering"
-  assert_contains '| grep -E --color=auto -e foo -e bar -e application' \
+  assert_contains '| grep -E -I --color=auto -e foo -e bar -e application' \
     "$output" "the final grep colors every search term"
 
   output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XGREP" -d -i foo bar)"
-  assert_contains 'grep -E -i -- foo < "$file" | grep -E -i -- bar' \
+  assert_contains 'grep -E -I -i -- foo < "$file" | grep -E -I -i -- bar' \
     "$output" "debug applies ignore-case to every filtering stage"
-  assert_contains '| grep -E -i --color=auto -e foo -e bar' \
+  assert_contains '| grep -E -I -i --color=auto -e foo -e bar' \
     "$output" "debug applies ignore-case to final highlighting"
 
   output="$(cd "$FIXTURE" && "$XGREP" -d -l foo)"
-  assert_contains '| xargs grep -E -l -- foo' "$output" "debug displays simple filename mode"
+  assert_contains '| xargs grep -E -I -l -- foo' "$output" "debug displays simple filename mode"
 
   output="$(cd "$FIXTURE" && "$XGREP" -d -l foo or application specification not test)"
-  assert_contains 'file="${file#./}"; if grep -E -- foo < "$file"' \
+  assert_contains 'file="${file#./}"; if grep -E -I -- foo < "$file"' \
     "$output" "debug evaluates Boolean filename matches per file"
   assert_contains '> /dev/null; then printf' \
     "$output" "debug suppresses matching content in filename mode"
@@ -341,11 +345,11 @@ test_debug_and_project_defaults() {
     "$output" "debug prints each matching filename once"
 
   output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XGREP" -d foo or bar application not filename nested)"
-  assert_contains 'grep -E -- foo < "$file" | grep -E -e bar -e application | grep -E -v -e filename -e nested' \
+  assert_contains 'grep -E -I -- foo < "$file" | grep -E -I -e bar -e application | grep -E -I -v -e filename -e nested' \
     "$output" "debug displays AND, OR, and NOT filtering stages"
-  assert_contains '| grep -E --color=auto -e foo -e bar -e application' \
+  assert_contains '| grep -E -I --color=auto -e foo -e bar -e application' \
     "$output" "debug highlights positive Boolean terms"
-  assert_not_contains '| grep -E --color=auto -e foo -e bar -e application -e filename' \
+  assert_not_contains '| grep -E -I --color=auto -e foo -e bar -e application -e filename' \
     "$output" "debug does not highlight excluded terms"
 
   printf '%s\n' '-t js' '-T spec.js' >"$FIXTURE/.xgrep"

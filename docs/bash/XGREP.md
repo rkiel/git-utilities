@@ -18,6 +18,10 @@ Boolean terms:
   or   Add following terms to a single OR group.
   not  Add following terms to a single excluded OR group.
 
+Patterns:
+  Search terms use extended regular expressions.
+  Binary files are ignored.
+
 Options:
   -d, --debug                 Print the search command without running it.
       --no-debug              Disable debug mode, including one set by .xgrep.
@@ -43,6 +47,9 @@ directories by default.
 
 The options and Boolean syntax are the same for both engines. Engine detection
 uses `git rev-parse --is-inside-work-tree` and requires no user configuration.
+
+Both engines use `-I` to treat binary files as non-matching files. This avoids
+binary-file warnings and prevents binary content from being printed.
 
 Every search term is an extended regular expression. Quote terms containing
 shell characters:
@@ -184,7 +191,7 @@ Git work tree, the output begins with `git grep`:
 
 ```console
 $ xgrep -d alpha or beta gamma not generated vendor
-git grep -E -e alpha --and \( -e beta --or -e gamma \) --and --not \( -e generated --or -e vendor \) -- .
+git grep -E -I -e alpha --and \( -e beta --or -e gamma \) --and --not \( -e generated --or -e vendor \) -- .
 ```
 
 Outside a Git work tree, the output shows the generated `find` and `grep`

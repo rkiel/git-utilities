@@ -96,6 +96,7 @@ make_repo() {
   printf 'alpha gamma ruby\n' >"$REPO/scripts/tool.rb"
   printf 'salt and pepper\n' >"$REPO/docs/words.md"
   printf 'alpha comma path\n' >"$REPO/src,docs/comma.txt"
+  printf '\0alpha beta binary\n' >"$REPO/src/binary.dat"
 
   git -C "$REPO" add .
   git -C "$REPO" commit -m initial >/dev/null
@@ -109,6 +110,7 @@ test_help_and_errors() {
   assert_contains 'Inside a Git work tree' "$output" "help explains automatic engine selection"
   assert_contains 'Otherwise, search files' "$output" "help explains filesystem searching"
   assert_contains 'Search terms use extended regular expressions' "$output" "help documents pattern syntax"
+  assert_contains 'Binary files are ignored' "$output" "help documents binary handling"
   assert_contains '-i, --ignore-case' "$output" "help documents case-insensitive searching"
   assert_contains '-l, --files-with-matches' "$output" "help documents filename output"
   assert_contains '--fzf' "$output" "help documents interactive file selection"
@@ -204,8 +206,10 @@ test_path_and_type_filters() {
 test_search_modes() {
   local output status
 
-  output="$(cd "$REPO" && "$XGREP" alpha)"
+  output="$(cd "$REPO" && "$XGREP" alpha 2>&1)"
   assert_not_contains 'src/uppercase.txt' "$output" "searches are case-sensitive by default"
+  assert_not_contains 'src/binary.dat' "$output" "Git engine ignores binary files"
+  assert_not_contains 'Binary file' "$output" "Git engine suppresses binary warnings"
 
   output="$(cd "$REPO" && "$XGREP" -i alpha)"
   assert_contains 'src/uppercase.txt:ALPHA uppercase' "$output" "ignore-case matches uppercase text"
@@ -255,7 +259,7 @@ test_fzf_mode() {
     "fzf opens the selected file with the configured editor"
 
   output="$(cd "$REPO" && PATH="$FAKE_BIN:$PATH" NO_COLOR= TERM=xterm "$XGREP" -d --fzf alpha)"
-  assert_contains 'git grep -E --no-color -l -e alpha' "$output" \
+  assert_contains 'git grep -E -I --no-color -l -e alpha' "$output" \
     "debug shows color-free filename mode"
   assert_contains '| fzf --exit-0 --preview' "$output" "debug shows the fzf pipeline"
   assert_contains 'bat\ --color=always' "$output" "debug shows the syntax-highlighted preview"
@@ -271,17 +275,17 @@ test_debug_and_project_defaults() {
 
   output="$(cd "$REPO" && unset NO_COLOR && TERM=xterm "$XGREP" -d 'alpha beta' not 'blocked value')"
   assert_starts_with 'git grep ' "$output" "xgrep output starts with the debug command"
-  assert_contains 'git grep -E -e alpha\ beta --and --not' "$output" "debug prints shell-safe command"
+  assert_contains 'git grep -E -I -e alpha\ beta --and --not' "$output" "debug prints shell-safe command"
   assert_contains '-e blocked\ value' "$output" "debug quotes the excluded pattern"
 
   output="$(cd "$REPO" && TERM=xterm NO_COLOR=1 "$XGREP" -d alpha)"
-  assert_contains 'git grep -E --no-color -e alpha' "$output" "NO_COLOR disables Git colors"
+  assert_contains 'git grep -E -I --no-color -e alpha' "$output" "NO_COLOR disables Git colors"
 
   output="$(cd "$REPO" && TERM=xterm NO_COLOR='' "$XGREP" -d alpha)"
   assert_not_contains '--no-color' "$output" "empty NO_COLOR leaves Git colors enabled"
 
   output="$(cd "$REPO" && unset NO_COLOR && TERM=xterm "$XGREP" -d -i alpha)"
-  assert_contains 'git grep -E -i -e alpha' "$output" "debug displays ignore-case option"
+  assert_contains 'git grep -E -I -i -e alpha' "$output" "debug displays ignore-case option"
 
   printf '%s\n' '-t txt' >"$REPO/.xgrep"
   output="$(cd "$REPO" && "$XGREP" alpha)"

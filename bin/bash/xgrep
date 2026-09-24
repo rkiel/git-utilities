@@ -37,6 +37,7 @@ Boolean terms:
 
 Patterns:
   Search terms use extended regular expressions.
+  Binary files are ignored.
 
 Options:
   -d, --debug                 Print the search command without running it.
