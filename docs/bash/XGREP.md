@@ -241,7 +241,21 @@ Search for `foo` only in the `src` and `lib` directories:
 xgrep foo -p src -p lib
 ```
 
-Search everywhere except the `spec` directory:
+Path filters match directory paths at any depth. Search everywhere except every
+directory named `tmp`, whether it is at the root or deeply nested:
+
+```bash
+xgrep foo -P tmp
+```
+
+Multi-part paths also match at any depth. This searches only beneath directories
+whose path ends in `cache/tmp`:
+
+```bash
+xgrep foo -p cache/tmp
+```
+
+Search everywhere except every `spec` directory:
 
 ```bash
 xgrep foo -P spec

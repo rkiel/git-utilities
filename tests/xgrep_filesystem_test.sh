@@ -113,6 +113,7 @@ make_fixture() {
 
   mkdir -p "$FIXTURE/lib" "$FIXTURE/node_modules/pkg"
   mkdir -p "$FIXTURE/spec" "$FIXTURE/src" "$FIXTURE/src/nested"
+  mkdir -p "$FIXTURE/tmp" "$FIXTURE/src/cache/tmp" "$FIXTURE/src/tmp" "$FIXTURE/src/tmpish"
 
   printf 'foo bar application\n' >"$FIXTURE/src/app.js"
   printf 'foo bar test\n' >"$FIXTURE/src/app.spec.js"
@@ -124,6 +125,10 @@ make_fixture() {
   printf 'FOO BAR uppercase\n' >"$FIXTURE/src/uppercase.js"
   printf 'foo bar ruby\n' >"$FIXTURE/lib/tool.rb"
   printf 'foo specification\n' >"$FIXTURE/spec/helper.rb"
+  printf 'foo root temporary\n' >"$FIXTURE/tmp/root.txt"
+  printf 'foo nested temporary\n' >"$FIXTURE/src/tmp/nested.txt"
+  printf 'foo nested cache temporary\n' >"$FIXTURE/src/cache/tmp/cache.txt"
+  printf 'foo similarly named directory\n' >"$FIXTURE/src/tmpish/keep.txt"
   printf 'nothing relevant and literal\n' >"$FIXTURE/README.md"
   printf 'foo dependency\n' >"$FIXTURE/node_modules/pkg/index.js"
   printf '\0foo bar binary\n' >"$FIXTURE/src/binary.dat"
@@ -221,6 +226,23 @@ test_path_options() {
   output="$(cd "$FIXTURE" && "$XGREP" -P spec foo)"
   assert_contains 'src/app.js' "$output" "exclude path keeps other directories"
   assert_not_contains 'spec/helper.rb' "$output" "exclude path removes spec"
+
+  output="$(cd "$FIXTURE" && "$XGREP" -p tmp foo)"
+  assert_contains 'tmp/root.txt' "$output" "include path finds a root directory"
+  assert_contains 'src/tmp/nested.txt' "$output" "include path finds a nested directory"
+  assert_contains 'src/cache/tmp/cache.txt' "$output" "include path finds a deeply nested directory"
+  assert_not_contains 'src/tmpish/keep.txt' "$output" "include path does not match partial directory names"
+
+  output="$(cd "$FIXTURE" && "$XGREP" -P tmp foo)"
+  assert_contains 'src/app.js' "$output" "nested exclusion keeps unrelated paths"
+  assert_contains 'src/tmpish/keep.txt' "$output" "nested exclusion keeps similarly named directories"
+  assert_not_contains 'tmp/root.txt' "$output" "exclude path removes a root directory"
+  assert_not_contains 'src/tmp/nested.txt' "$output" "exclude path removes a nested directory"
+  assert_not_contains 'src/cache/tmp/cache.txt' "$output" "exclude path removes a deeply nested directory"
+
+  output="$(cd "$FIXTURE" && "$XGREP" -p cache/tmp foo)"
+  assert_contains 'src/cache/tmp/cache.txt' "$output" "multi-part include path matches at any depth"
+  assert_not_contains 'src/tmp/nested.txt' "$output" "multi-part include path requires the complete path"
 }
 
 test_content_search() {

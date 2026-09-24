@@ -12,13 +12,13 @@ build_git_paths() {
   local -a excluded_paths=()
 
   for path in "${INCLUDE_PATHS[@]}"; do
-    included_paths+=("$path")
+    included_paths+=(":(glob)**/$path/**")
   done
   for type in "${INCLUDE_TYPES[@]}"; do
     included_paths+=(":*.$type")
   done
   for path in "${EXCLUDE_PATHS[@]}"; do
-    excluded_paths+=(":!$path")
+    excluded_paths+=(":(exclude,glob)**/$path/**")
   done
   for type in "${EXCLUDE_TYPES[@]}"; do
     excluded_paths+=(":!*.$type")

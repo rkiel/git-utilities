@@ -50,8 +50,8 @@ Options:
   -h, --help                  Show this help message.
   -i, --ignore-case           Ignore case distinctions.
   -l, --files-with-matches    Show only names of files containing matches.
-  -p, --include-path PATH     Include a path.
-  -P, --exclude-path PATH     Exclude a path.
+  -p, --include-path PATH     Include a directory path at any depth.
+  -P, --exclude-path PATH     Exclude a directory path at any depth.
   -t, --include-type TYPE     Include a file extension.
   -T, --exclude-type TYPE     Exclude a file extension.
 

@@ -75,6 +75,7 @@ run_test() {
 
 make_repo() {
   mkdir -p "$FAKE_BIN" "$REPO/docs" "$REPO/scripts" "$REPO/src" "$REPO/src,docs"
+  mkdir -p "$REPO/tmp" "$REPO/src/cache/tmp" "$REPO/src/tmp" "$REPO/src/tmpish"
   printf '%s\n' \
     '#!/usr/bin/env bash' \
     'printf "%s\n" "$@" >"$FZF_ARGS_FILE"' \
@@ -96,6 +97,10 @@ make_repo() {
   printf 'alpha gamma ruby\n' >"$REPO/scripts/tool.rb"
   printf 'salt and pepper\n' >"$REPO/docs/words.md"
   printf 'alpha comma path\n' >"$REPO/src,docs/comma.txt"
+  printf 'alpha root temporary\n' >"$REPO/tmp/root.txt"
+  printf 'alpha nested temporary\n' >"$REPO/src/tmp/nested.txt"
+  printf 'alpha nested cache temporary\n' >"$REPO/src/cache/tmp/cache.txt"
+  printf 'alpha similarly named directory\n' >"$REPO/src/tmpish/keep.txt"
   printf '\0alpha beta binary\n' >"$REPO/src/binary.dat"
 
   git -C "$REPO" add .
@@ -201,6 +206,23 @@ test_path_and_type_filters() {
   output="$(cd "$REPO" && "$XGREP" -P src alpha)"
   assert_contains 'docs/guide.md' "$output" "exclude path keeps other paths"
   assert_not_contains 'src/alpha.txt' "$output" "exclude path removes selected path"
+
+  output="$(cd "$REPO" && "$XGREP" -p tmp alpha)"
+  assert_contains 'tmp/root.txt' "$output" "include path finds a root directory"
+  assert_contains 'src/tmp/nested.txt' "$output" "include path finds a nested directory"
+  assert_contains 'src/cache/tmp/cache.txt' "$output" "include path finds a deeply nested directory"
+  assert_not_contains 'src/tmpish/keep.txt' "$output" "include path does not match partial directory names"
+
+  output="$(cd "$REPO" && "$XGREP" -P tmp alpha)"
+  assert_contains 'docs/guide.md' "$output" "nested exclusion keeps unrelated paths"
+  assert_contains 'src/tmpish/keep.txt' "$output" "nested exclusion keeps similarly named directories"
+  assert_not_contains 'tmp/root.txt' "$output" "exclude path removes a root directory"
+  assert_not_contains 'src/tmp/nested.txt' "$output" "exclude path removes a nested directory"
+  assert_not_contains 'src/cache/tmp/cache.txt' "$output" "exclude path removes a deeply nested directory"
+
+  output="$(cd "$REPO" && "$XGREP" -p cache/tmp alpha)"
+  assert_contains 'src/cache/tmp/cache.txt' "$output" "multi-part include path matches at any depth"
+  assert_not_contains 'src/tmp/nested.txt' "$output" "multi-part include path requires the complete path"
 }
 
 test_search_modes() {
