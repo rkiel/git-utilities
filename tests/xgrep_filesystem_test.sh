@@ -64,6 +64,16 @@ assert_starts_with() {
   fi
 }
 
+assert_file_missing() {
+  local path="$1"
+  local message="$2"
+
+  if [ -e "$path" ]; then
+    printf 'not ok: %s\nunexpected file: %s\n' "$message" "$path" >&2
+    exit 1
+  fi
+}
+
 run_test() {
   local name="$1"
   shift
@@ -80,8 +90,26 @@ make_fixture() {
     'printf "%s\n" "$@" >"$FZF_ARGS_FILE"' \
     'command cat >"$FZF_INPUT_FILE"' >"$FAKE_BIN/fzf"
   printf '%s\n' '#!/usr/bin/env bash' 'exit 0' >"$FAKE_BIN/bat"
+  printf '%s\n' \
+    '#!/usr/bin/env bash' \
+    'printf "%s\n" "$@" >"$LESS_ARGS_FILE"' \
+    'printf "%s\n" "${LESS-}" >"$LESS_ENV_FILE"' \
+    'command cat >"$LESS_INPUT_FILE"' >"$FAKE_BIN/less"
+  printf '%s\n' \
+    '#!/usr/bin/env bash' \
+    'cd "$PAGER_FIXTURE"' \
+    'if [ "${PAGER_NO_PAGER:-}" = true ]; then' \
+    '  set -- --no-pager' \
+    'else' \
+    '  set --' \
+    'fi' \
+    'PATH="$PAGER_FAKE_BIN:$PATH" NO_COLOR= TERM=xterm \' \
+    '  PAGER="${PAGER_SETTING:-}" LESS= "$PAGER_XGREP" "$@" foo bar' \
+    >"$FAKE_BIN/run-pager-test"
   chmod +x "$FAKE_BIN/fzf"
   chmod +x "$FAKE_BIN/bat"
+  chmod +x "$FAKE_BIN/less"
+  chmod +x "$FAKE_BIN/run-pager-test"
 
   mkdir -p "$FIXTURE/lib" "$FIXTURE/node_modules/pkg"
   mkdir -p "$FIXTURE/spec" "$FIXTURE/src" "$FIXTURE/src/nested"
@@ -114,8 +142,10 @@ test_help_and_errors() {
   assert_contains 'A nonempty NO_COLOR disables colored output' "$output" "help documents NO_COLOR"
   assert_contains '-i, --ignore-case' "$output" "help documents case-insensitive searching"
   assert_contains '-l, --files-with-matches' "$output" "help documents filename output"
+  assert_contains '--no-pager' "$output" "help documents paging override"
   assert_contains '--fzf' "$output" "help documents interactive file selection"
   assert_contains 'bat or batcat' "$output" "help documents optional syntax highlighting"
+  assert_contains 'PAGER=cat disables filesystem paging' "$output" "help documents pager environment"
   assert_not_contains '-f, --file' "$output" "help omits removed file option"
   assert_not_contains '--invert' "$output" "help omits an invert option"
   assert_contains '-t, --include-type TYPE' "$output" "help documents included types"
@@ -260,6 +290,57 @@ test_boolean_groups() {
   assert_contains 'README.md:nothing relevant and literal' "$output" "prefixed operator searches for its literal word"
 }
 
+run_pager_in_terminal() {
+  if command script -q -c true /dev/null >/dev/null 2>&1; then
+    command script -q -c "$FAKE_BIN/run-pager-test" /dev/null >/dev/null
+  else
+    command script -q /dev/null "$FAKE_BIN/run-pager-test" >/dev/null
+  fi
+}
+
+test_paging() {
+  local args_file="$TEST_ROOT/less-args"
+  local env_file="$TEST_ROOT/less-env"
+  local input_file="$TEST_ROOT/less-input"
+  local output pager_input
+
+  if ! command -v script >/dev/null 2>&1; then
+    printf 'skip: script is unavailable; '
+    return 0
+  fi
+
+  export LESS_ARGS_FILE="$args_file"
+  export LESS_ENV_FILE="$env_file"
+  export LESS_INPUT_FILE="$input_file"
+  export PAGER_FAKE_BIN="$FAKE_BIN"
+  export PAGER_FIXTURE="$FIXTURE"
+  export PAGER_NO_PAGER=false
+  export PAGER_SETTING=
+  export PAGER_XGREP="$XGREP"
+
+  run_pager_in_terminal
+
+  assert_eq '-R' "$(<"$args_file")" "filesystem paging enables ANSI colors in less"
+  assert_eq 'FRX' "$(<"$env_file")" "filesystem paging uses Git-like less defaults"
+  pager_input="$(<"$input_file")"
+  assert_contains 'src/app.js' "$pager_input" "pager receives matching output"
+  assert_contains $'\033[' "$pager_input" "pager receives colored output"
+
+  rm -f "$args_file" "$env_file" "$input_file"
+  export PAGER_SETTING=cat
+  run_pager_in_terminal
+  assert_file_missing "$args_file" "PAGER=cat bypasses filesystem paging"
+
+  export PAGER_NO_PAGER=true
+  export PAGER_SETTING=
+  run_pager_in_terminal
+  assert_file_missing "$args_file" "--no-pager bypasses filesystem paging"
+
+  output="$(cd "$FIXTURE" && "$XGREP" --no-pager foo bar)"
+  assert_contains 'src/app.js' "$output" "--no-pager prints matching output directly"
+  assert_not_contains $'\033[' "$output" "redirected --no-pager output remains color-free"
+}
+
 test_fzf_mode() {
   local args_file="$TEST_ROOT/xgrep-fzf-args"
   local input_file="$TEST_ROOT/xgrep-fzf-input"
@@ -365,6 +446,7 @@ run_test "type options" test_type_options
 run_test "path options" test_path_options
 run_test "content search" test_content_search
 run_test "Boolean groups" test_boolean_groups
+run_test "paging" test_paging
 run_test "fzf mode" test_fzf_mode
 run_test "debug and project defaults" test_debug_and_project_defaults
 

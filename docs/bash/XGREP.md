@@ -25,6 +25,7 @@ Patterns:
 Options:
   -d, --debug                 Print the search command without running it.
       --no-debug              Disable debug mode, including one set by .xgrep.
+      --no-pager              Disable filesystem-result paging.
       --fzf                   Select a matching file with fzf and open it.
   -h, --help                  Show the help message.
   -i, --ignore-case           Ignore case distinctions.
@@ -50,6 +51,22 @@ uses `git rev-parse --is-inside-work-tree` and requires no user configuration.
 
 Both engines use `-I` to treat binary files as non-matching files. This avoids
 binary-file warnings and prevents binary content from being printed.
+
+### Paging
+
+Git controls paging for its own engine through settings such as `pager.grep`
+and `core.pager`. For an interactive filesystem search, `xgrep` pipes results
+through `less`. Redirected output, pipelines, debug mode, and `--fzf` bypass the
+pager.
+
+The filesystem pager uses `LESS=FRX` when `LESS` is unset and passes `-R` so
+ANSI colors remain visible. Set `PAGER=cat` or use `--no-pager` to disable it:
+
+```bash
+xgrep --no-pager error warning
+```
+
+If `less` is unavailable, filesystem results are printed directly.
 
 Every search term is an extended regular expression. Quote terms containing
 shell characters:

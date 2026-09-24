@@ -11,6 +11,11 @@ $IGNORE_CASE && FIND_GREP_OPTIONS+=(-i)
 
 if [ -n "${NO_COLOR:-}" ] || [ "${TERM:-}" = 'dumb' ]; then
   FIND_GREP_COLOR_MODE=never
+elif $USE_PAGER; then
+  FIND_GREP_COLOR_MODE=always
+  FIND_FILENAME_COLOR=$'\033[35m'
+  FIND_SEPARATOR_COLOR=$'\033[36m'
+  FIND_COLOR_RESET=$'\033[0m'
 elif [ -t 1 ]; then
   FIND_FILENAME_COLOR=$'\033[35m'
   FIND_SEPARATOR_COLOR=$'\033[36m'
