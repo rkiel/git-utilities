@@ -9,6 +9,7 @@ XFIND="$ROOT/bin/bash/xfind"
 XGREP="$ROOT/bin/bash/xgrep"
 TEST_ROOT="$(mktemp -d /tmp/xfind-tests.XXXXXX)"
 FIXTURE="$TEST_ROOT/files"
+NON_REPO="$TEST_ROOT/non-repo"
 FAKE_BIN="$TEST_ROOT/bin"
 
 cleanup() {
@@ -100,6 +101,9 @@ make_fixture() {
   printf 'nothing relevant and literal\n' >"$FIXTURE/README.md"
   printf 'foo dependency\n' >"$FIXTURE/node_modules/pkg/index.js"
 
+  mkdir -p "$NON_REPO"
+  cp -R "$FIXTURE"/. "$NON_REPO"
+
   git init -b main "$FIXTURE" >/dev/null
   git -C "$FIXTURE" config user.email test@example.com
   git -C "$FIXTURE" config user.name Test
@@ -185,23 +189,78 @@ test_type_options() {
 
 assert_search_parity() {
   local message="$1"
+  local directory="$2"
   local xfind_output xgrep_output
-  shift
+  shift 2
 
-  xfind_output="$(cd "$FIXTURE" && "$XFIND" "$@")"
-  xgrep_output="$(cd "$FIXTURE" && "$XGREP" "$@")"
+  xfind_output="$(cd "$directory" && "$XFIND" "$@")"
+  xgrep_output="$(cd "$directory" && "$XGREP" "$@")"
   assert_eq "$xgrep_output" "$xfind_output" "$message"
 }
 
 test_xgrep_parity() {
-  assert_search_parity "required terms match xgrep" --include-type=js foo bar
-  assert_search_parity "extended regular expressions match xgrep" \
+  assert_search_parity "required terms match xgrep" "$FIXTURE" --include-type=js foo bar
+  assert_search_parity "extended regular expressions match xgrep" "$FIXTURE" \
     -t js foo 'application|nested'
-  assert_search_parity "pure OR matches xgrep" -t js or application nested
-  assert_search_parity "combined Boolean groups match xgrep" \
+  assert_search_parity "pure OR matches xgrep" "$FIXTURE" -t js or application nested
+  assert_search_parity "combined Boolean groups match xgrep" "$FIXTURE" \
     -t js foo or application nested not test
-  assert_search_parity "case-insensitive searches match xgrep" -i -t js foo bar
-  assert_search_parity "filename searches match xgrep" -l -t js foo bar
+  assert_search_parity "case-insensitive searches match xgrep" "$FIXTURE" -i -t js foo bar
+  assert_search_parity "filename searches match xgrep" "$FIXTURE" -l -t js foo bar
+}
+
+test_xgrep_filesystem_engine() {
+  local args_file="$TEST_ROOT/xgrep-find-fzf-args"
+  local input_file="$TEST_ROOT/xgrep-find-fzf-input"
+  local fzf_input output status
+
+  assert_search_parity "filesystem required terms match xfind" \
+    "$NON_REPO" --include-type=js foo bar
+  assert_search_parity "filesystem regular expressions match xfind" \
+    "$NON_REPO" -t js foo 'application|nested'
+  assert_search_parity "filesystem pure OR matches xfind" \
+    "$NON_REPO" -t js or application nested
+  assert_search_parity "filesystem Boolean groups match xfind" \
+    "$NON_REPO" -t js foo or application nested not test
+  assert_search_parity "filesystem case-insensitive searches match xfind" \
+    "$NON_REPO" -i -t js foo bar
+  assert_search_parity "filesystem filename searches match xfind" \
+    "$NON_REPO" -l -t js foo bar
+  assert_search_parity "filesystem path filters match xfind" \
+    "$NON_REPO" -p src -P nested foo
+
+  output="$(cd "$FIXTURE" && "$XGREP" -d foo)"
+  assert_starts_with 'git grep ' "$output" "xgrep selects Git inside a work tree"
+
+  output="$(cd "$NON_REPO" && "$XGREP" -d foo)"
+  assert_starts_with 'find ' "$output" "xgrep selects find outside a work tree"
+
+  output="$(
+    cd "$NON_REPO" &&
+      PATH="$FAKE_BIN:$PATH" \
+      NO_COLOR= \
+      TERM=xterm \
+      FZF_ARGS_FILE="$args_file" \
+      FZF_INPUT_FILE="$input_file" \
+      "$XGREP" --fzf foo bar
+  )"
+  assert_eq '' "$output" "filesystem xgrep sends interactive output to fzf"
+  fzf_input="$(<"$input_file")"
+  assert_contains 'src/app.js' "$fzf_input" "filesystem xgrep sends filenames to fzf"
+  assert_not_contains 'src/app.js:' "$fzf_input" "filesystem fzf input omits content"
+
+  set +e
+  output="$(cd "$NON_REPO" && "$XGREP" missing-term 2>&1)"
+  status="$?"
+  set -e
+  assert_eq 1 "$status" "filesystem xgrep preserves the no-match status"
+  assert_eq '' "$output" "filesystem xgrep emits nothing when nothing matches"
+
+  printf '%s\n' '-t js' '-T spec.js' >"$NON_REPO/.xgrep"
+  output="$(cd "$NON_REPO" && "$XGREP" foo)"
+  assert_contains 'src/app.js' "$output" "filesystem engine applies .xgrep defaults"
+  assert_not_contains 'app.spec.js' "$output" "filesystem defaults exclude selected types"
+  assert_not_contains 'tool.rb' "$output" "filesystem defaults remove other types"
 }
 
 test_path_options() {
@@ -388,6 +447,7 @@ run_test "path options" test_path_options
 run_test "content search" test_content_search
 run_test "Boolean groups" test_boolean_groups
 run_test "xgrep parity" test_xgrep_parity
+run_test "xgrep filesystem engine" test_xgrep_filesystem_engine
 run_test "fzf mode" test_fzf_mode
 run_test "debug and project defaults" test_debug_and_project_defaults
 

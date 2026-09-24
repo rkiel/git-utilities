@@ -106,6 +106,8 @@ test_help_and_errors() {
 
   output="$($XGREP --help)"
   assert_contains 'Terms are required by default' "$output" "help explains default AND behavior"
+  assert_contains 'Inside a Git work tree' "$output" "help explains automatic engine selection"
+  assert_contains 'Otherwise, search files' "$output" "help explains filesystem searching"
   assert_contains 'Search terms use extended regular expressions' "$output" "help documents pattern syntax"
   assert_contains '-i, --ignore-case' "$output" "help documents case-insensitive searching"
   assert_contains '-l, --files-with-matches' "$output" "help documents filename output"

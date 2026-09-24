@@ -2,30 +2,32 @@
 set -euo pipefail
 
 SCRIPT_NAME="$(basename "$0")"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+XGREP_ENGINE_DIR="$(cd "$SCRIPT_DIR/../../lib/bash/xgrep" && pwd)"
+
 DEBUG=false
 FILES_WITH_MATCHES=false
 FZF_PREVIEW_COMMAND='head -n 200 {}'
-GIT_COLOR_OPTIONS=()
-GIT_OPTIONS=()
+IGNORE_CASE=false
+INCLUDE_TYPES=()
+EXCLUDE_TYPES=()
 INCLUDE_PATHS=()
 EXCLUDE_PATHS=()
 TERMS=()
 AND_TERMS=()
 OR_TERMS=()
 NOT_TERMS=()
-PATHS=()
-GIT_ARGUMENTS=()
 SEARCH_TERM_COUNT=0
 USE_FZF=false
-
-if [ -n "${NO_COLOR:-}" ] || [ "${TERM:-}" = 'dumb' ]; then
-  GIT_COLOR_OPTIONS=(--no-color)
-fi
 
 print_help() {
   cat <<HELP
 Usage:
   $SCRIPT_NAME [options] <term>...
+
+Search engine:
+  Inside a Git work tree, search tracked files with git grep.
+  Otherwise, search files beneath the current directory with find and grep.
 
 Boolean terms:
   Terms are required by default and are combined with AND.
@@ -37,14 +39,14 @@ Patterns:
   Search terms use extended regular expressions.
 
 Options:
-  -d, --debug                 Print the git grep command without running it.
+  -d, --debug                 Print the search command without running it.
       --no-debug              Disable debug mode, including one set by .xgrep.
       --fzf                   Select a matching file with fzf and open it.
   -h, --help                  Show this help message.
   -i, --ignore-case           Ignore case distinctions.
   -l, --files-with-matches    Show only names of files containing matches.
-  -p, --include-path PATH     Include a pathspec.
-  -P, --exclude-path PATH     Exclude a pathspec.
+  -p, --include-path PATH     Include a path.
+  -P, --exclude-path PATH     Exclude a path.
   -t, --include-type TYPE     Include a file extension.
   -T, --exclude-type TYPE     Exclude a file extension.
 
@@ -112,13 +114,13 @@ append_filter_value() {
       INCLUDE_PATHS+=("$value")
       ;;
     exclude-path)
-      EXCLUDE_PATHS+=(":!$value")
+      EXCLUDE_PATHS+=("$value")
       ;;
     include-type)
-      INCLUDE_PATHS+=(":*.$value")
+      INCLUDE_TYPES+=("$value")
       ;;
     exclude-type)
-      EXCLUDE_PATHS+=(":!*.$value")
+      EXCLUDE_TYPES+=("$value")
       ;;
   esac
 }
@@ -149,7 +151,7 @@ parse_arguments() {
         exit 0
         ;;
       -i|--ignore-case)
-        GIT_OPTIONS+=(-i)
+        IGNORE_CASE=true
         shift
         ;;
       -l|--files-with-matches)
@@ -251,98 +253,23 @@ classify_terms() {
   fi
 }
 
-build_paths() {
-  local i j value
+load_search_engine() {
+  local engine engine_file
 
-  if [ "${#EXCLUDE_PATHS[@]}" -gt 0 ] && [ "${#INCLUDE_PATHS[@]}" -eq 0 ]; then
-    PATHS=(. "${EXCLUDE_PATHS[@]}")
+  if command git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    engine=git
   else
-    PATHS=("${INCLUDE_PATHS[@]}" "${EXCLUDE_PATHS[@]}")
+    engine=find
   fi
 
-  if [ "${#PATHS[@]}" -eq 0 ]; then
-    PATHS=(.)
+  engine_file="$XGREP_ENGINE_DIR/$engine.sh"
+  if [ ! -r "$engine_file" ]; then
+    die "search engine is unavailable: $engine_file"
   fi
 
-  for ((i = 1; i < ${#PATHS[@]}; i++)); do
-    value="${PATHS[i]}"
-    j="$i"
-    while [ "$j" -gt 0 ] && [[ "${PATHS[j - 1]}" > "$value" ]]; do
-      PATHS[j]="${PATHS[j - 1]}"
-      j=$((j - 1))
-    done
-    PATHS[j]="$value"
-  done
-}
-
-append_and() {
-  if [ "$EXPRESSION_COUNT" -gt 0 ]; then
-    GIT_ARGUMENTS+=(--and)
-  fi
-}
-
-append_pattern() {
-  local pattern="$1"
-
-  append_and
-  GIT_ARGUMENTS+=(-e "$pattern")
-  EXPRESSION_COUNT=$((EXPRESSION_COUNT + 1))
-}
-
-append_or_group() {
-  local negate="$1"
-  local first=true pattern
-  shift
-
-  [ "$#" -gt 0 ] || return 0
-
-  append_and
-  if $negate; then
-    GIT_ARGUMENTS+=(--not)
-  fi
-  GIT_ARGUMENTS+=("(")
-
-  for pattern in "$@"; do
-    if $first; then
-      first=false
-    else
-      GIT_ARGUMENTS+=(--or)
-    fi
-    GIT_ARGUMENTS+=(-e "$pattern")
-  done
-
-  GIT_ARGUMENTS+=(")")
-  EXPRESSION_COUNT=$((EXPRESSION_COUNT + 1))
-}
-
-build_git_arguments() {
-  local pattern
-  local -a color_options=("${GIT_COLOR_OPTIONS[@]}")
-
-  if $USE_FZF; then
-    color_options=(--no-color)
-  fi
-
-  GIT_ARGUMENTS=(-E "${color_options[@]}" "${GIT_OPTIONS[@]}")
-  $FILES_WITH_MATCHES && GIT_ARGUMENTS+=(-l)
-  EXPRESSION_COUNT=0
-
-  for pattern in "${AND_TERMS[@]}"; do
-    append_pattern "$pattern"
-  done
-  append_or_group false "${OR_TERMS[@]}"
-  append_or_group true "${NOT_TERMS[@]}"
-
-  GIT_ARGUMENTS+=(-- "${PATHS[@]}")
-}
-
-print_git_command() {
-  local argument
-
-  printf 'git grep'
-  for argument in "${GIT_ARGUMENTS[@]}"; do
-    printf ' %q' "$argument"
-  done
+  # The selected engine defines build_engine_arguments, print_engine_command,
+  # and run_engine.
+  . "$engine_file"
 }
 
 print_fzf_command() {
@@ -359,18 +286,18 @@ run_fzf() {
     --bind 'enter:become(${VISUAL:-${EDITOR:-vi}} {})'
 }
 
-run_git_grep() {
+run_search() {
   if $DEBUG; then
-    print_git_command
+    print_engine_command
     if $USE_FZF; then
       print_fzf_command
     else
       printf '\n'
     fi
   elif $USE_FZF; then
-    command git grep "${GIT_ARGUMENTS[@]}" | run_fzf
+    run_engine | run_fzf
   else
-    command git grep "${GIT_ARGUMENTS[@]}"
+    run_engine
   fi
 }
 
@@ -379,9 +306,9 @@ main() {
   parse_arguments "${PROJECT_ARGUMENTS[@]}"
   build_fzf_preview_command
   classify_terms
-  build_paths
-  build_git_arguments
-  run_git_grep
+  load_search_engine
+  build_engine_arguments
+  run_search
 }
 
 main "$@"
