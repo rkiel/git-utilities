@@ -29,19 +29,14 @@ assert_eq() {
 }
 
 make_fixture() {
-  local implementation
-
   mkdir -p "$FIXTURE/dotfiles/bash" "$FIXTURE/dotfiles/shared" \
-    "$FIXTURE/dotfiles/zsh"
+    "$FIXTURE/dotfiles/zsh" "$FIXTURE/bin/bash"
   cp "$SOURCE_BASH_PROFILE" "$BASH_PROFILE"
   cp "$SOURCE_SHARED_PROFILE" "$SHARED_PROFILE"
   cp "$SOURCE_ZSH_PROFILE" "$ZSH_PROFILE"
 
-  for implementation in bash ruby; do
-    mkdir -p "$FIXTURE/bin/$implementation"
-    printf '#!/bin/sh\nexit 0\n' >"$FIXTURE/bin/$implementation/feature"
-    chmod +x "$FIXTURE/bin/$implementation/feature"
-  done
+  printf '#!/bin/sh\nexit 0\n' >"$FIXTURE/bin/bash/feature"
+  chmod +x "$FIXTURE/bin/bash/feature"
 }
 
 test_shell() {

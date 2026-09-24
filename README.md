@@ -9,16 +9,13 @@ The command-line scripts include:
 
 ## Releases
 
-For 2026, the command-line scripts have been re-written in Bash 3.2 which should work out-of-the-box on Linux and macOS.
-
-The previous versions were written in Ruby 2.x using only the standard libraries and do not require any gems to be installed.
-It is now deprecated but you can still install it by [following these instructions](docs/ruby/INSTALL.md).
+The command-line scripts are written in Bash 3.2 and should work out of the box
+on Linux and macOS.
 
 ## Documentation
 
-- `feature` - [ [new Bash version](docs/bash/FEATURE.md) ] [ [deprecated Ruby version](docs/ruby/FEATURE.md) ]
-- `xgrep` - [ [new Bash version](docs/bash/XGREP.md) ] [ [deprecated Ruby version](docs/ruby/XGREP.md) ]
-- `xfind` - [ [deprecated Ruby version](docs/ruby/XFIND.md) ]
+- `feature` - [Documentation](docs/bash/FEATURE.md)
+- `xgrep` - [Documentation](docs/bash/XGREP.md)
 
 ## Installation
 
