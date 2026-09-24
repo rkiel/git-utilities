@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Keep these tests in sync with bin/bash/xfind. Behavior changes should update
-# this file in the same change.
+# Keep these tests in sync with the xgrep filesystem engine. Behavior changes
+# should update this file in the same change.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-XFIND="$ROOT/bin/bash/xfind"
 XGREP="$ROOT/bin/bash/xgrep"
-TEST_ROOT="$(mktemp -d /tmp/xfind-tests.XXXXXX)"
+TEST_ROOT="$(mktemp -d /tmp/xgrep-filesystem-tests.XXXXXX)"
 FIXTURE="$TEST_ROOT/files"
-NON_REPO="$TEST_ROOT/non-repo"
 FAKE_BIN="$TEST_ROOT/bin"
 
 cleanup() {
@@ -101,21 +99,14 @@ make_fixture() {
   printf 'nothing relevant and literal\n' >"$FIXTURE/README.md"
   printf 'foo dependency\n' >"$FIXTURE/node_modules/pkg/index.js"
 
-  mkdir -p "$NON_REPO"
-  cp -R "$FIXTURE"/. "$NON_REPO"
-
-  git init -b main "$FIXTURE" >/dev/null
-  git -C "$FIXTURE" config user.email test@example.com
-  git -C "$FIXTURE" config user.name Test
-  git -C "$FIXTURE" add .
-  git -C "$FIXTURE" commit -m initial >/dev/null
-  printf 'foo hidden git\n' >"$FIXTURE/.git/xfind-test"
+  mkdir -p "$FIXTURE/.git"
+  printf 'foo hidden git\n' >"$FIXTURE/.git/xgrep-test"
 }
 
 test_help_and_errors() {
   local output status
 
-  output="$($XFIND --help)"
+  output="$($XGREP --help)"
   assert_contains 'Terms are required by default and are combined with AND' "$output" "help explains Boolean defaults"
   assert_contains 'Search terms use extended regular expressions' "$output" "help documents pattern syntax"
   assert_contains 'A nonempty NO_COLOR disables colored output' "$output" "help documents NO_COLOR"
@@ -131,42 +122,42 @@ test_help_and_errors() {
   assert_not_contains '-N,' "$output" "help omits removed exclude alias"
 
   set +e
-  output="$(cd "$FIXTURE" && "$XFIND" 2>&1)"
+  output="$(cd "$FIXTURE" && "$XGREP" 2>&1)"
   status="$?"
   set -e
   assert_eq 2 "$status" "missing terms exit 2"
   assert_contains 'at least one search term is required' "$output" "missing terms explain failure"
 
   set +e
-  output="$(cd "$FIXTURE" && "$XFIND" -t js 2>&1)"
+  output="$(cd "$FIXTURE" && "$XGREP" -t js 2>&1)"
   status="$?"
   set -e
   assert_eq 2 "$status" "filters without terms exit 2"
   assert_contains 'at least one search term is required' "$output" "filters without terms explain failure"
 
   set +e
-  output="$(cd "$FIXTURE" && "$XFIND" --unknown 2>&1)"
+  output="$(cd "$FIXTURE" && "$XGREP" --unknown 2>&1)"
   status="$?"
   set -e
   assert_eq 2 "$status" "unknown option exits 2"
   assert_contains 'unknown option: --unknown' "$output" "unknown option explains failure"
 
   set +e
-  output="$(cd "$FIXTURE" && "$XFIND" -n js 2>&1)"
+  output="$(cd "$FIXTURE" && "$XGREP" -n js 2>&1)"
   status="$?"
   set -e
   assert_eq 2 "$status" "removed -n alias exits 2"
   assert_contains 'unknown option: -n' "$output" "removed -n alias explains failure"
 
   set +e
-  output="$(cd "$FIXTURE" && "$XFIND" -f foo 2>&1)"
+  output="$(cd "$FIXTURE" && "$XGREP" -f foo 2>&1)"
   status="$?"
   set -e
   assert_eq 2 "$status" "removed file option exits 2"
   assert_contains 'unknown option: -f' "$output" "removed file option explains failure"
 
   set +e
-  output="$(cd "$FIXTURE" && "$XFIND" or 2>&1)"
+  output="$(cd "$FIXTURE" && "$XGREP" or 2>&1)"
   status="$?"
   set -e
   assert_eq 2 "$status" "operator without a term exits 2"
@@ -176,102 +167,26 @@ test_help_and_errors() {
 test_type_options() {
   local output
 
-  output="$(cd "$FIXTURE" && "$XFIND" -t js -T spec.js foo)"
+  output="$(cd "$FIXTURE" && "$XGREP" -t js -T spec.js foo)"
   assert_contains 'src/app.js' "$output" "include type keeps JavaScript file"
   assert_contains 'src/nested/other.js' "$output" "include type searches nested files"
   assert_not_contains 'app.spec.js' "$output" "exclude type removes JavaScript tests"
   assert_not_contains 'tool.rb' "$output" "include type removes other extensions"
 
-  output="$(cd "$FIXTURE" && "$XFIND" -t js -t rb foo)"
+  output="$(cd "$FIXTURE" && "$XGREP" -t js -t rb foo)"
   assert_contains 'src/app.js' "$output" "repeated type includes JavaScript"
   assert_contains 'lib/tool.rb' "$output" "repeated type includes Ruby"
-}
-
-assert_search_parity() {
-  local message="$1"
-  local directory="$2"
-  local xfind_output xgrep_output
-  shift 2
-
-  xfind_output="$(cd "$directory" && "$XFIND" "$@")"
-  xgrep_output="$(cd "$directory" && "$XGREP" "$@")"
-  assert_eq "$xgrep_output" "$xfind_output" "$message"
-}
-
-test_xgrep_parity() {
-  assert_search_parity "required terms match xgrep" "$FIXTURE" --include-type=js foo bar
-  assert_search_parity "extended regular expressions match xgrep" "$FIXTURE" \
-    -t js foo 'application|nested'
-  assert_search_parity "pure OR matches xgrep" "$FIXTURE" -t js or application nested
-  assert_search_parity "combined Boolean groups match xgrep" "$FIXTURE" \
-    -t js foo or application nested not test
-  assert_search_parity "case-insensitive searches match xgrep" "$FIXTURE" -i -t js foo bar
-  assert_search_parity "filename searches match xgrep" "$FIXTURE" -l -t js foo bar
-}
-
-test_xgrep_filesystem_engine() {
-  local args_file="$TEST_ROOT/xgrep-find-fzf-args"
-  local input_file="$TEST_ROOT/xgrep-find-fzf-input"
-  local fzf_input output status
-
-  assert_search_parity "filesystem required terms match xfind" \
-    "$NON_REPO" --include-type=js foo bar
-  assert_search_parity "filesystem regular expressions match xfind" \
-    "$NON_REPO" -t js foo 'application|nested'
-  assert_search_parity "filesystem pure OR matches xfind" \
-    "$NON_REPO" -t js or application nested
-  assert_search_parity "filesystem Boolean groups match xfind" \
-    "$NON_REPO" -t js foo or application nested not test
-  assert_search_parity "filesystem case-insensitive searches match xfind" \
-    "$NON_REPO" -i -t js foo bar
-  assert_search_parity "filesystem filename searches match xfind" \
-    "$NON_REPO" -l -t js foo bar
-  assert_search_parity "filesystem path filters match xfind" \
-    "$NON_REPO" -p src -P nested foo
-
-  output="$(cd "$FIXTURE" && "$XGREP" -d foo)"
-  assert_starts_with 'git grep ' "$output" "xgrep selects Git inside a work tree"
-
-  output="$(cd "$NON_REPO" && "$XGREP" -d foo)"
-  assert_starts_with 'find ' "$output" "xgrep selects find outside a work tree"
-
-  output="$(
-    cd "$NON_REPO" &&
-      PATH="$FAKE_BIN:$PATH" \
-      NO_COLOR= \
-      TERM=xterm \
-      FZF_ARGS_FILE="$args_file" \
-      FZF_INPUT_FILE="$input_file" \
-      "$XGREP" --fzf foo bar
-  )"
-  assert_eq '' "$output" "filesystem xgrep sends interactive output to fzf"
-  fzf_input="$(<"$input_file")"
-  assert_contains 'src/app.js' "$fzf_input" "filesystem xgrep sends filenames to fzf"
-  assert_not_contains 'src/app.js:' "$fzf_input" "filesystem fzf input omits content"
-
-  set +e
-  output="$(cd "$NON_REPO" && "$XGREP" missing-term 2>&1)"
-  status="$?"
-  set -e
-  assert_eq 1 "$status" "filesystem xgrep preserves the no-match status"
-  assert_eq '' "$output" "filesystem xgrep emits nothing when nothing matches"
-
-  printf '%s\n' '-t js' '-T spec.js' >"$NON_REPO/.xgrep"
-  output="$(cd "$NON_REPO" && "$XGREP" foo)"
-  assert_contains 'src/app.js' "$output" "filesystem engine applies .xgrep defaults"
-  assert_not_contains 'app.spec.js' "$output" "filesystem defaults exclude selected types"
-  assert_not_contains 'tool.rb' "$output" "filesystem defaults remove other types"
 }
 
 test_path_options() {
   local output
 
-  output="$(cd "$FIXTURE" && "$XFIND" -p src -p lib foo)"
+  output="$(cd "$FIXTURE" && "$XGREP" -p src -p lib foo)"
   assert_contains 'src/app.js' "$output" "repeated path includes src"
   assert_contains 'lib/tool.rb' "$output" "repeated path includes lib"
   assert_not_contains 'spec/helper.rb' "$output" "include path removes other directories"
 
-  output="$(cd "$FIXTURE" && "$XFIND" -P spec foo)"
+  output="$(cd "$FIXTURE" && "$XGREP" -P spec foo)"
   assert_contains 'src/app.js' "$output" "exclude path keeps other directories"
   assert_not_contains 'spec/helper.rb' "$output" "exclude path removes spec"
 }
@@ -279,7 +194,7 @@ test_path_options() {
 test_content_search() {
   local count output status
 
-  output="$(cd "$FIXTURE" && "$XFIND" foo bar)"
+  output="$(cd "$FIXTURE" && "$XGREP" foo bar)"
   assert_not_contains $'\033[' "$output" "redirected output omits ANSI color codes"
   assert_not_contains './src/' "$output" "output omits the leading dot directory"
   assert_contains 'src/app.js:foo bar application' "$output" "multiple terms keep matching JavaScript line"
@@ -292,22 +207,22 @@ test_content_search() {
   assert_not_contains '.git/config' "$output" "content search honors default exclusions"
   assert_not_contains 'node_modules' "$output" "content search excludes dependencies"
 
-  output="$(cd "$FIXTURE" && "$XFIND" -i foo bar)"
+  output="$(cd "$FIXTURE" && "$XGREP" -i foo bar)"
   assert_contains 'src/uppercase.js:FOO BAR uppercase' "$output" "ignore-case applies to every required term"
 
-  output="$(cd "$FIXTURE" && "$XFIND" -l foo bar)"
+  output="$(cd "$FIXTURE" && "$XGREP" -l foo bar)"
   assert_contains 'src/app.js' "$output" "filename mode lists files with matching lines"
   assert_not_contains 'src/app.js:' "$output" "filename mode omits matching content"
   count="$(printf '%s\n' "$output" | command grep -Fxc 'src/repeated.js')"
   assert_eq 1 "$count" "filename mode prints each matching file once"
 
-  output="$(cd "$FIXTURE" && "$XFIND" -l foo or application specification not test)"
+  output="$(cd "$FIXTURE" && "$XGREP" -l foo or application specification not test)"
   assert_contains 'src/app.js' "$output" "filename mode supports combined Boolean groups"
   assert_contains 'spec/helper.rb' "$output" "filename mode includes OR alternatives"
   assert_not_contains 'src/app.spec.js' "$output" "filename mode applies NOT exclusions"
 
   set +e
-  output="$(cd "$FIXTURE" && "$XFIND" missing-term 2>&1)"
+  output="$(cd "$FIXTURE" && "$XGREP" missing-term 2>&1)"
   status="$?"
   set -e
   assert_eq 1 "$status" "no matches exit 1"
@@ -317,33 +232,33 @@ test_content_search() {
 test_boolean_groups() {
   local output
 
-  output="$(cd "$FIXTURE" && "$XFIND" foo and bar)"
+  output="$(cd "$FIXTURE" && "$XGREP" foo and bar)"
   assert_contains 'src/app.js' "$output" "and switches back to the required group"
   assert_not_contains 'bar-name.txt' "$output" "required terms still apply to content only"
   assert_not_contains 'split-lines.txt' "$output" "required terms remain line based"
 
-  output="$(cd "$FIXTURE" && "$XFIND" or application ruby)"
+  output="$(cd "$FIXTURE" && "$XGREP" or application ruby)"
   assert_contains 'src/app.js' "$output" "pure OR includes its first alternative"
   assert_contains 'lib/tool.rb' "$output" "pure OR includes its second alternative"
   assert_not_contains 'spec/helper.rb' "$output" "pure OR excludes unrelated lines"
 
-  output="$(cd "$FIXTURE" && "$XFIND" foo or application specification not test)"
+  output="$(cd "$FIXTURE" && "$XGREP" foo or application specification not test)"
   assert_contains 'src/app.js' "$output" "combined expression includes an OR alternative"
   assert_contains 'spec/helper.rb' "$output" "combined expression includes another OR alternative"
   assert_not_contains 'app.spec.js' "$output" "NOT excludes matching lines"
   assert_not_contains 'lib/tool.rb' "$output" "OR remains required when AND terms exist"
 
-  output="$(cd "$FIXTURE" && "$XFIND" not relevant)"
+  output="$(cd "$FIXTURE" && "$XGREP" not relevant)"
   assert_contains 'src/app.js' "$output" "NOT-only search keeps nonmatching lines"
   assert_not_contains 'README.md' "$output" "NOT-only search removes matching lines"
 
-  output="$(cd "$FIXTURE" && "$XFIND" -- --and)"
+  output="$(cd "$FIXTURE" && "$XGREP" -- --and)"
   assert_contains 'README.md:nothing relevant and literal' "$output" "prefixed operator searches for its literal word"
 }
 
 test_fzf_mode() {
-  local args_file="$TEST_ROOT/xfind-fzf-args"
-  local input_file="$TEST_ROOT/xfind-fzf-input"
+  local args_file="$TEST_ROOT/xgrep-fzf-args"
+  local input_file="$TEST_ROOT/xgrep-fzf-input"
   local fzf_arguments fzf_input output
 
   output="$(
@@ -353,7 +268,7 @@ test_fzf_mode() {
       TERM=xterm \
       FZF_ARGS_FILE="$args_file" \
       FZF_INPUT_FILE="$input_file" \
-      "$XFIND" --fzf foo bar
+      "$XGREP" --fzf foo bar
   )"
   assert_eq '' "$output" "fzf owns interactive output"
 
@@ -372,14 +287,14 @@ test_fzf_mode() {
   assert_contains 'enter:become(${VISUAL:-${EDITOR:-vi}} {})' "$fzf_arguments" \
     "fzf opens the selected file with the configured editor"
 
-  output="$(cd "$FIXTURE" && PATH="$FAKE_BIN:$PATH" NO_COLOR= TERM=xterm "$XFIND" -d --fzf foo)"
+  output="$(cd "$FIXTURE" && PATH="$FAKE_BIN:$PATH" NO_COLOR= TERM=xterm "$XGREP" -d --fzf foo)"
   assert_contains '| xargs grep -E -l -- foo' "$output" \
     "debug shows implied filename mode"
   assert_contains '| fzf --exit-0 --preview' "$output" "debug shows the fzf pipeline"
   assert_contains 'bat\ --color=always' "$output" "debug shows the syntax-highlighted preview"
   assert_contains 'enter:become' "$output" "debug shows the editor binding"
 
-  output="$(cd "$FIXTURE" && PATH="$FAKE_BIN:$PATH" NO_COLOR=1 "$XFIND" -d --fzf foo)"
+  output="$(cd "$FIXTURE" && PATH="$FAKE_BIN:$PATH" NO_COLOR=1 "$XGREP" -d --fzf foo)"
   assert_contains 'head\ -n\ 200\ \{\}' "$output" "NO_COLOR selects the plain preview"
   assert_not_contains 'bat\ --color=always' "$output" "NO_COLOR disables preview highlighting"
 }
@@ -387,20 +302,20 @@ test_fzf_mode() {
 test_debug_and_project_defaults() {
   local output
 
-  output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XFIND" -d foo -t js -T spec.js)"
-  assert_starts_with 'find ' "$output" "xfind output starts with the debug command"
+  output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XGREP" -d foo -t js -T spec.js)"
+  assert_starts_with 'find ' "$output" "filesystem debug output starts with find"
   assert_contains 'find . -type f' "$output" "debug displays find command"
   assert_contains '-name \*.js' "$output" "debug displays included type"
   assert_contains '\! -name \*.spec.js' "$output" "debug displays excluded type"
   assert_contains '| xargs grep -E --color=auto -H -- foo' "$output" "debug displays grep command"
 
-  output="$(cd "$FIXTURE" && TERM=xterm NO_COLOR=1 "$XFIND" -d foo)"
+  output="$(cd "$FIXTURE" && TERM=xterm NO_COLOR=1 "$XGREP" -d foo)"
   assert_contains '| xargs grep -E --color=never -H -- foo' "$output" "NO_COLOR disables grep colors"
 
-  output="$(cd "$FIXTURE" && TERM=xterm NO_COLOR='' "$XFIND" -d foo)"
+  output="$(cd "$FIXTURE" && TERM=xterm NO_COLOR='' "$XGREP" -d foo)"
   assert_contains '| xargs grep -E --color=auto -H -- foo' "$output" "empty NO_COLOR leaves grep colors enabled"
 
-  output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XFIND" -d foo bar application)"
+  output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XGREP" -d foo bar application)"
   assert_contains 'grep -E -- foo < "$file" | grep -E -- bar | grep -E -- application' \
     "$output" "multiple terms filter file content before adding its name"
   assert_contains 'printf "%s:%s\n" "$file" "$line"' \
@@ -408,16 +323,16 @@ test_debug_and_project_defaults() {
   assert_contains '| grep -E --color=auto -e foo -e bar -e application' \
     "$output" "the final grep colors every search term"
 
-  output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XFIND" -d -i foo bar)"
+  output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XGREP" -d -i foo bar)"
   assert_contains 'grep -E -i -- foo < "$file" | grep -E -i -- bar' \
     "$output" "debug applies ignore-case to every filtering stage"
   assert_contains '| grep -E -i --color=auto -e foo -e bar' \
     "$output" "debug applies ignore-case to final highlighting"
 
-  output="$(cd "$FIXTURE" && "$XFIND" -d -l foo)"
+  output="$(cd "$FIXTURE" && "$XGREP" -d -l foo)"
   assert_contains '| xargs grep -E -l -- foo' "$output" "debug displays simple filename mode"
 
-  output="$(cd "$FIXTURE" && "$XFIND" -d -l foo or application specification not test)"
+  output="$(cd "$FIXTURE" && "$XGREP" -d -l foo or application specification not test)"
   assert_contains 'file="${file#./}"; if grep -E -- foo < "$file"' \
     "$output" "debug evaluates Boolean filename matches per file"
   assert_contains '> /dev/null; then printf' \
@@ -425,7 +340,7 @@ test_debug_and_project_defaults() {
   assert_contains '"$file"; fi; done' \
     "$output" "debug prints each matching filename once"
 
-  output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XFIND" -d foo or bar application not filename nested)"
+  output="$(cd "$FIXTURE" && unset NO_COLOR && TERM=xterm "$XGREP" -d foo or bar application not filename nested)"
   assert_contains 'grep -E -- foo < "$file" | grep -E -e bar -e application | grep -E -v -e filename -e nested' \
     "$output" "debug displays AND, OR, and NOT filtering stages"
   assert_contains '| grep -E --color=auto -e foo -e bar -e application' \
@@ -433,11 +348,11 @@ test_debug_and_project_defaults() {
   assert_not_contains '| grep -E --color=auto -e foo -e bar -e application -e filename' \
     "$output" "debug does not highlight excluded terms"
 
-  printf '%s\n' '-t js' '-T spec.js' >"$FIXTURE/.xfind"
-  output="$(cd "$FIXTURE" && "$XFIND" foo)"
-  assert_contains 'src/app.js' "$output" ".xfind applies included type"
-  assert_not_contains 'app.spec.js' "$output" ".xfind applies excluded type"
-  assert_not_contains 'tool.rb' "$output" ".xfind defaults remove other types"
+  printf '%s\n' '-t js' '-T spec.js' >"$FIXTURE/.xgrep"
+  output="$(cd "$FIXTURE" && "$XGREP" foo)"
+  assert_contains 'src/app.js' "$output" ".xgrep applies included type"
+  assert_not_contains 'app.spec.js' "$output" ".xgrep applies excluded type"
+  assert_not_contains 'tool.rb' "$output" ".xgrep defaults remove other types"
 }
 
 make_fixture
@@ -446,9 +361,7 @@ run_test "type options" test_type_options
 run_test "path options" test_path_options
 run_test "content search" test_content_search
 run_test "Boolean groups" test_boolean_groups
-run_test "xgrep parity" test_xgrep_parity
-run_test "xgrep filesystem engine" test_xgrep_filesystem_engine
 run_test "fzf mode" test_fzf_mode
 run_test "debug and project defaults" test_debug_and_project_defaults
 
-printf 'all xfind tests passed\n'
+printf 'all xgrep filesystem tests passed\n'

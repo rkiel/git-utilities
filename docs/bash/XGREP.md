@@ -1,11 +1,16 @@
 ## Xgrep utility
 
-`xgrep` is a Bash 3.2-compatible wrapper around `git grep` for composing common
-Boolean searches without writing Git's expression syntax directly.
+`xgrep` is a Bash 3.2-compatible search tool for composing common Boolean
+searches from the command line. It automatically chooses the appropriate
+search engine for the current directory.
 
 ```text
 Usage:
   xgrep [options] <term>...
+
+Search engine:
+  Inside a Git work tree, search tracked files with git grep.
+  Otherwise, search files beneath the current directory with find and grep.
 
 Boolean terms:
   Terms are required by default and are combined with AND.
@@ -14,17 +19,30 @@ Boolean terms:
   not  Add following terms to a single excluded OR group.
 
 Options:
-  -d, --debug                 Print the git grep command without running it.
+  -d, --debug                 Print the search command without running it.
       --no-debug              Disable debug mode, including one set by .xgrep.
       --fzf                   Select a matching file with fzf and open it.
   -h, --help                  Show the help message.
   -i, --ignore-case           Ignore case distinctions.
   -l, --files-with-matches    Show only names of files containing matches.
-  -p, --include-path PATH     Include a pathspec.
-  -P, --exclude-path PATH     Exclude a pathspec.
+  -p, --include-path PATH     Include a path.
+  -P, --exclude-path PATH     Exclude a path.
   -t, --include-type TYPE     Include a file extension.
   -T, --exclude-type TYPE     Exclude a file extension.
 ```
+
+### Search engines
+
+Inside a Git work tree, `xgrep` uses `git grep`. It searches tracked files from
+the current working tree and benefits from Git's native path filtering and
+Boolean-expression support.
+
+Outside a Git work tree, `xgrep` combines `find` and `grep`. It searches regular
+files beneath the current directory and excludes `.git` and `node_modules`
+directories by default.
+
+The options and Boolean syntax are the same for both engines. Engine detection
+uses `git rev-parse --is-inside-work-tree` and requires no user configuration.
 
 Every search term is an extended regular expression. Quote terms containing
 shell characters:
@@ -161,12 +179,16 @@ until the remaining output is useful.
 
 ### Debug output
 
-Use `-d` to inspect the underlying `git grep` command without running it:
+Use `-d` to inspect the underlying search command without running it. Inside a
+Git work tree, the output begins with `git grep`:
 
 ```console
 $ xgrep -d alpha or beta gamma not generated vendor
 git grep -E -e alpha --and \( -e beta --or -e gamma \) --and --not \( -e generated --or -e vendor \) -- .
 ```
+
+Outside a Git work tree, the output shows the generated `find` and `grep`
+pipeline instead.
 
 ### Paths and types
 
@@ -202,8 +224,8 @@ xgrep foo -P spec
 ```
 
 When exclusions are used without an inclusion, `xgrep` searches from `.` and
-applies the exclusions. All patterns and pathspecs are passed to Git as distinct
-arguments and are not evaluated by the shell.
+applies the exclusions. Values are passed as distinct arguments and are not
+evaluated by the shell.
 
 ### Project defaults
 
@@ -221,6 +243,10 @@ everyone working on the project shares the same defaults:
 
 ### Maintenance
 
-Behavior changes must update `tests/xgrep_test.sh` in the same change. Keep the
-script compatible with Bash 3.2 and with Git versions available by default on
-supported Linux and macOS systems.
+Behavior changes must update `tests/xgrep_test.sh` and
+`tests/xgrep_filesystem_test.sh` as applicable. The shared frontend is
+`bin/bash/xgrep`; its Git and filesystem engines are in `lib/bash/xgrep`.
+
+Keep the implementation compatible with Bash 3.2 and with the standard Git,
+`find`, `grep`, and `sort` versions available on supported Linux and macOS
+systems.

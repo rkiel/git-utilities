@@ -5,8 +5,7 @@ This is a collection of simple command-line scripts/wrappers and a few aliases t
 The command-line scripts include:
 
 - `feature` - Feature branches are now easier to use and provide consistency across your team.
-- `xgrep` - Searching in a repository is now easier by harnessing the power of `git grep`.
-- `xfind` - Searching outside a repository is now easier by harnessing the power of `find` and `grep`.
+- `xgrep` - Search with `git grep` inside repositories and `find`/`grep` everywhere else.
 
 ## Releases
 
@@ -19,7 +18,7 @@ It is now deprecated but you can still install it by [following these instructio
 
 - `feature` - [ [new Bash version](docs/bash/FEATURE.md) ] [ [deprecated Ruby version](docs/ruby/FEATURE.md) ]
 - `xgrep` - [ [new Bash version](docs/bash/XGREP.md) ] [ [deprecated Ruby version](docs/ruby/XGREP.md) ]
-- `xfind` - [ [new Bash version](docs/bash/XFIND.md) ] [ [deprecated Ruby version](docs/ruby/XFIND.md) ]
+- `xfind` - [ [deprecated Ruby version](docs/ruby/XFIND.md) ]
 
 ## Installation
 
@@ -82,7 +81,6 @@ Load the `profile.sh` and `rc.sh` into your current shell and verify correctness
   source "$GIT_UTILITIES_ROOT/dotfiles/bash/profile.sh" "$FEATURE_USER"
   source "$GIT_UTILITIES_ROOT/dotfiles/bash/rc.sh"
   command -v feature
-  command -v xfind
   command -v xgrep
 }
 ```
@@ -142,7 +140,6 @@ Load the `profile.sh` and `rc.sh` into your current shell and verify correctness
   source "$GIT_UTILITIES_ROOT/dotfiles/zsh/profile.sh" "$FEATURE_USER"
   source "$GIT_UTILITIES_ROOT/dotfiles/zsh/rc.sh"
   command -v feature
-  command -v xfind
   command -v xgrep
 }
 ```
