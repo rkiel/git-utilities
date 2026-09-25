@@ -77,7 +77,7 @@ Copy/paste the following to update your `.bashrc` to execute the git-utilities
 }
 ```
 
-### Linux Step 4 Add tab completion (OPTIONAL)
+### Linux Step 4: Add tab completion (OPTIONAL)
 
 Tab completion suggests `feature` subcommands and filesystem paths as you type.
 This convenience is not required to use `feature` or `xgrep`.
@@ -94,7 +94,7 @@ your current shell:
 }
 ```
 
-### Linux Step 5 Install aliases (OPTIONAL)
+### Linux Step 5: Install aliases (OPTIONAL)
 
 The optional aliases define short command names that may replace aliases you
 already use. [Review the available aliases](dotfiles/shared/aliases.sh) before
@@ -184,7 +184,7 @@ Copy/paste the following to update your `.zprofile` to execute the git-utilities
 }
 ```
 
-### macOS Step 4 Add tab completion (OPTIONAL)
+### macOS Step 4: Add tab completion (OPTIONAL)
 
 Tab completion suggests `feature` subcommands and filesystem paths as you type.
 This convenience is not required to use `feature` or `xgrep`.
@@ -201,7 +201,7 @@ your current shell:
 }
 ```
 
-### macOS Step 5 Install aliases (OPTIONAL)
+### macOS Step 5: Install aliases (OPTIONAL)
 
 The optional aliases define short command names that may replace aliases you
 already use. [Review the available aliases](dotfiles/shared/aliases.sh) before
