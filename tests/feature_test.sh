@@ -195,12 +195,11 @@ test_bash_completion_uses_tab_command() {
   aliases="$(
     HOME="$completion_home" bash --noprofile --norc -c '
       source "$1"
-      alias a
-      alias x
+      alias -p
     ' _ "$ROOT/dotfiles/bash/rc.sh"
   )"
-  assert_contains "alias a='feature add'" "$aliases" "bashrc loads shared feature alias"
-  assert_contains "alias x='xgrep'" "$aliases" "bashrc loads shared utility alias"
+  assert_not_contains "alias a=" "$aliases" "bashrc does not load optional feature aliases"
+  assert_not_contains "alias x=" "$aliases" "bashrc does not load optional utility aliases"
 }
 
 test_zsh_completion_uses_tab_command() {
@@ -210,13 +209,27 @@ test_zsh_completion_uses_tab_command() {
   assert_contains 'feature tab "$PREFIX"' "$config" "zshrc completes subcommands through feature tab"
   assert_contains '_files' "$config" "zshrc enables filesystem fallback completion"
   assert_contains 'compdef get_feature_commands feature' "$config" "zshrc registers feature completion"
-  assert_contains '../shared/aliases.sh' "$config" "zshrc loads shared aliases"
+  assert_not_contains 'aliases.sh' "$config" "zshrc does not load optional aliases"
 
   if command -v zsh >/dev/null 2>&1; then
     completion_home="$TEST_ROOT/zsh-completion-home"
     mkdir -p "$completion_home"
     HOME="$completion_home" zsh -n "$ROOT/dotfiles/zsh/rc.sh"
   fi
+}
+
+test_shared_aliases_are_optional() {
+  local aliases
+
+  aliases="$(
+    bash --noprofile --norc -c '
+      source "$1"
+      alias -p
+    ' _ "$ROOT/dotfiles/shared/aliases.sh"
+  )"
+
+  assert_contains "alias a='feature add'" "$aliases" "shared aliases define feature shortcuts"
+  assert_contains "alias x='xgrep'" "$aliases" "shared aliases define the xgrep shortcut"
 }
 
 test_start_and_info() {
@@ -594,6 +607,7 @@ run_test "help and usage" test_help_and_usage
 run_test "tab lists and filters commands" test_tab_lists_and_filters_commands
 run_test "Bash completion uses tab command" test_bash_completion_uses_tab_command
 run_test "zsh completion uses tab command" test_zsh_completion_uses_tab_command
+run_test "shared aliases are optional" test_shared_aliases_are_optional
 run_test "start and info" test_start_and_info
 run_test "selected Git commands are displayed" test_selected_git_commands_are_displayed
 run_test "status includes stash list" test_status_includes_stash_list

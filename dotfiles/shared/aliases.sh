@@ -1,4 +1,4 @@
-# Shared aliases for Bash and Zsh.
+# Optional shared aliases for Bash and Zsh.
 
 alias a='feature add'
 alias c='feature commit'

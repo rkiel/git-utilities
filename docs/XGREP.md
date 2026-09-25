@@ -1,4 +1,4 @@
-## Xgrep utility
+## Xgrep
 
 `xgrep` is a Bash 3.2-compatible search tool for composing common Boolean
 searches from the command line. It automatically chooses the appropriate

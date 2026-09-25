@@ -1,6 +1,6 @@
-# Feature Workflow
+# Feature
 
-`bin/feature` is a Bash helper for short-lived, personal feature branches. The
+`feature` is a Bash helper for short-lived, personal feature branches. The
 remote feature branch is treated as a backup and code-review copy of local work;
 the branch owner is expected to be the only person changing it.
 

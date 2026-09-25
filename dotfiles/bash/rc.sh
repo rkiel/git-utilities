@@ -1,6 +1,4 @@
 # Usage: source /path/to/dotfiles/bash/rc.sh
-#
-source "$(dirname "${BASH_SOURCE[0]}")/../shared/aliases.sh" || return
 
 function get_feature_commands()
 {

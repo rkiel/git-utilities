@@ -1,7 +1,5 @@
 # Usage: source /path/to/dotfiles/zsh/rc.sh
 
-source "$(dirname "${(%):-%N}")/../shared/aliases.sh" || return
-
 autoload -Uz compinit
 compinit
 

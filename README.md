@@ -60,7 +60,7 @@ Copy/paste the following to accept the default or enter a different
 }
 ```
 
-### Linux Step 3: Update your `.bashrc`
+### Linux Step 3: Environment Variables
 
 Copy/paste the following to update your `.bashrc` to execute the git-utilities
 `profile.sh` script for every interactive shell. The script will:
@@ -77,12 +77,11 @@ Copy/paste the following to update your `.bashrc` to execute the git-utilities
 }
 ```
 
-### Linux Step 4: Update your `.bashrc`
+### Linux Step 4: Add tab completion
 
 Copy/paste the following to update your `.bashrc` to execute the git-utilities
 `rc.sh` script that will:
 
-* define some aliases
 * add support for shell tab completion
 
 ```bash
@@ -94,7 +93,26 @@ Copy/paste the following to update your `.bashrc` to execute the git-utilities
 }
 ```
 
-### Linux Step 5: Verify the installation
+### Linux Step 5 Install aliases (OPTIONAL)
+
+The optional aliases define short command names that may replace aliases you
+already use. [Review the available aliases](dotfiles/shared/aliases.sh) before
+enabling them.
+
+Copy/paste the following to add the aliases to your `.bashrc` and load them into
+your current shell:
+
+```bash
+{
+  printf '\nsource "%s/dotfiles/shared/aliases.sh"\n' \
+    "$GIT_UTILITIES_ROOT" >> "$HOME/.bashrc"
+
+  source "$GIT_UTILITIES_ROOT/dotfiles/shared/aliases.sh"
+  alias
+}
+```
+
+### Linux Step 6: Verify the installation
 
 Copy/paste the following to load the `profile.sh` and `rc.sh` into your current
 shell and verify correctness.
@@ -151,7 +169,7 @@ Copy/paste the following to accept the default or enter a different
 }
 ```
 
-### macOS Step 3: Update your `.zprofile`
+### macOS Step 3: Environment Variables
 
 Copy/paste the following to update your `.zprofile` to execute the git-utilities
 `profile.sh` script that will:
@@ -168,12 +186,11 @@ Copy/paste the following to update your `.zprofile` to execute the git-utilities
 }
 ```
 
-### macOS Step 4: Update your `.zshrc`
+### macOS Step 4: Add tab completion
 
 Copy/paste the following to update your `.zshrc` to execute the git-utilities
 `rc.sh` script that will:
 
-* define some aliases
 * add support for shell tab completion
 
 ```zsh
@@ -185,7 +202,26 @@ Copy/paste the following to update your `.zshrc` to execute the git-utilities
 }
 ```
 
-### macOS Step 5: Verify the installation
+### macOS Step 5 Install aliases (OPTIONAL)
+
+The optional aliases define short command names that may replace aliases you
+already use. [Review the available aliases](dotfiles/shared/aliases.sh) before
+enabling them.
+
+Copy/paste the following to add the aliases to your `.zshrc` and load them into
+your current shell:
+
+```zsh
+{
+  printf '\nsource "%s/dotfiles/shared/aliases.sh"\n' \
+    "$GIT_UTILITIES_ROOT" >> "$HOME/.zshrc"
+
+  source "$GIT_UTILITIES_ROOT/dotfiles/shared/aliases.sh"
+  alias
+}
+```
+
+### macOS Step 6: Verify the installation
 
 Copy/paste the following to load the `profile.sh` and `rc.sh` into your current
 shell and verify correctness.
