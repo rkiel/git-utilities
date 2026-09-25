@@ -283,7 +283,7 @@ everyone working on the project shares the same defaults:
 
 Behavior changes must update `tests/xgrep_test.sh` and
 `tests/xgrep_filesystem_test.sh` as applicable. The shared frontend is
-`bin/bash/xgrep`; its Git and filesystem engines are in `lib/bash/xgrep`.
+`bin/xgrep`; its Git and filesystem engines are in `lib/xgrep`.
 
 Keep the implementation compatible with Bash 3.2 and with the standard Git,
 `find`, `grep`, and `sort` versions available on supported Linux and macOS

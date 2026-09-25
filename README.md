@@ -14,8 +14,8 @@ on Linux and macOS.
 
 ## Documentation
 
-- `feature` - [Documentation](docs/bash/FEATURE.md)
-- `xgrep` - [Documentation](docs/bash/XGREP.md)
+- `feature` - [Documentation](docs/FEATURE.md)
+- `xgrep` - [Documentation](docs/XGREP.md)
 
 ## Installation
 
@@ -44,7 +44,7 @@ short name containing only letters, numbers, and underscores.
 Update your `.bash_profile` to load the git-utilities `profile.sh` script that will:
 
 * export environment variable `FEATURE_USER` with that short name
-* add `$GIT_UTILITIES_ROOT/bin/bash` to your `$PATH`
+* add `$GIT_UTILITIES_ROOT/bin` to your `$PATH`
 
 ```bash
 {
@@ -103,7 +103,7 @@ short name containing only letters, numbers, and underscores.
 Update your `.zprofile` to load the git-utilities `profile.sh` script that will:
 
 * export environment variable `FEATURE_USER` with that short name
-* add `$GIT_UTILITIES_ROOT/bin/bash` to your `$PATH`
+* add `$GIT_UTILITIES_ROOT/bin` to your `$PATH`
 
 ```zsh
 {

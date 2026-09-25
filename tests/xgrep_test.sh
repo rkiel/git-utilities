@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Keep these tests in sync with bin/bash/xgrep. Behavior changes should update
+# Keep these tests in sync with bin/xgrep. Behavior changes should update
 # this file in the same change.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-XGREP="$ROOT/bin/bash/xgrep"
+XGREP="$ROOT/bin/xgrep"
 TEST_ROOT="$(mktemp -d /tmp/xgrep-tests.XXXXXX)"
 REPO="$TEST_ROOT/repo"
 FAKE_BIN="$TEST_ROOT/bin"

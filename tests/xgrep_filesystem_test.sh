@@ -5,7 +5,7 @@ set -euo pipefail
 # should update this file in the same change.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-XGREP="$ROOT/bin/bash/xgrep"
+XGREP="$ROOT/bin/xgrep"
 TEST_ROOT="$(mktemp -d /tmp/xgrep-filesystem-tests.XXXXXX)"
 FIXTURE="$TEST_ROOT/files"
 FAKE_BIN="$TEST_ROOT/bin"

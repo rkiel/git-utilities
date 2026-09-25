@@ -9,7 +9,7 @@ fi
 
 _git_utilities_shared_user=$1
 _git_utilities_shared_repo=$2
-_git_utilities_shared_bin="$_git_utilities_shared_repo/bin/bash"
+_git_utilities_shared_bin="$_git_utilities_shared_repo/bin"
 
 if [ ! -x "$_git_utilities_shared_bin/feature" ]; then
   printf 'git-utilities profile: feature is not executable in %s\n' \

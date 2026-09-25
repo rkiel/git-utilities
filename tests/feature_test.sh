@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Keep these tests in sync with bin/bash/feature. Any behavior change should update
+# Keep these tests in sync with bin/feature. Any behavior change should update
 # this file in the same change; new subcommands need happy-path and guard tests.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FEATURE="$ROOT/bin/bash/feature"
+FEATURE="$ROOT/bin/feature"
 TEST_ROOT="$(mktemp -d /tmp/feature-tests.XXXXXX)"
 
 cleanup() {

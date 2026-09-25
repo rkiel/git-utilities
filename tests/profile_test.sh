@@ -30,13 +30,13 @@ assert_eq() {
 
 make_fixture() {
   mkdir -p "$FIXTURE/dotfiles/bash" "$FIXTURE/dotfiles/shared" \
-    "$FIXTURE/dotfiles/zsh" "$FIXTURE/bin/bash"
+    "$FIXTURE/dotfiles/zsh" "$FIXTURE/bin"
   cp "$SOURCE_BASH_PROFILE" "$BASH_PROFILE"
   cp "$SOURCE_SHARED_PROFILE" "$SHARED_PROFILE"
   cp "$SOURCE_ZSH_PROFILE" "$ZSH_PROFILE"
 
-  printf '#!/bin/sh\nexit 0\n' >"$FIXTURE/bin/bash/feature"
-  chmod +x "$FIXTURE/bin/bash/feature"
+  printf '#!/bin/sh\nexit 0\n' >"$FIXTURE/bin/feature"
+  chmod +x "$FIXTURE/bin/feature"
 }
 
 test_shell() {
@@ -53,7 +53,7 @@ test_shell() {
       sh -c '\''printf "%s\n%s\n%s\n" "$FEATURE_USER" "$GIT_UTILITIES" "$PATH"'\''
     '
   )"
-  expected="$(printf '%s\n' sam "$FIXTURE" "$FIXTURE/bin/bash:/usr/bin:/bin")"
+  expected="$(printf '%s\n' sam "$FIXTURE" "$FIXTURE/bin:/usr/bin:/bin")"
   assert_eq "$expected" "$actual" "$shell_name exports values without duplicating PATH"
 
   actual="$(

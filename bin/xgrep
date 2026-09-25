@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_NAME="$(basename "$0")"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-XGREP_ENGINE_DIR="$(cd "$SCRIPT_DIR/../../lib/bash/xgrep" && pwd)"
+XGREP_ENGINE_DIR="$(cd "$SCRIPT_DIR/../lib/xgrep" && pwd)"
 
 DEBUG=false
 FILES_WITH_MATCHES=false
