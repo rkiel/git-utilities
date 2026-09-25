@@ -1,29 +1,25 @@
 ## Introduction
 
-This is a collection of simple command-line scripts/wrappers and a few aliases to make using `git` even easier.
+This is a collection of simple command-line scripts and wrappers, along with a
+few aliases, that make Git easier to use.
 
 The command-line scripts include:
 
-- `feature` - Feature branches are now easier to use and provide consistency across your team.
-- `xgrep` - Search with `git grep` inside repositories and `find`/`grep` everywhere else.
+- `feature` - Create, rebase, merge, and discard personal feature branches
+  consistently across your team, whether you are new to Git or an experienced
+  user. [See documentation](docs/FEATURE.md)
+- `xgrep` - Search using simple keywords or complex Boolean logic. It uses
+  `git grep` inside Git repositories and `find`/`grep` everywhere else.
+  [See documentation](docs/XGREP.md)
 
-## Releases
+**New for 2026:** The command-line scripts were rewritten in Bash 3.2, providing
+a simpler installation experience on Linux and macOS.
 
-The command-line scripts are written in Bash 3.2 and should work out of the box
-on Linux and macOS.
+## Installation for Linux users
 
-## Documentation
+### Linux Step 1: Clone the repository
 
-- `feature` - [Documentation](docs/FEATURE.md)
-- `xgrep` - [Documentation](docs/XGREP.md)
-
-## Installation
-
-Please follow either the **Linux user** installation or the **macOS user** installation.
-
-### Linux user installation
-
-This repository needs to be cloned.  Copy/paste the following to be prompted for the location to clone into.
+Copy/paste the following to be prompted for the location to clone into.
 
 ```bash
 {
@@ -37,27 +33,54 @@ This repository needs to be cloned.  Copy/paste the following to be prompted for
 }
 ```
 
-When you create a feature branch, it will include a name that identifies and distinguishes
-your branches from branches created by other members of your team. Choose a
-short name containing only letters, numbers, and underscores.
+### Linux Step 2: Define your `FEATURE_USER`
 
-Update your `.bash_profile` to load the git-utilities `profile.sh` script that will:
+When you create a feature branch, it includes an identifier that distinguishes
+your branches from branches created by other members of your team. The default
+is your current username. The identifier may contain only letters, numbers, and
+underscores.
 
-* export environment variable `FEATURE_USER` with that short name
+Copy/paste the following to accept the default or enter a different
+`FEATURE_USER`:
+
+```bash
+{
+  FEATURE_USER_DEFAULT=${USER:-$(id -un)}
+  read -r -p "Enter a unique name [$FEATURE_USER_DEFAULT]: " FEATURE_USER
+  FEATURE_USER=${FEATURE_USER:-"$FEATURE_USER_DEFAULT"}
+  unset FEATURE_USER_DEFAULT
+
+  case "$FEATURE_USER" in
+    ''|*[!A-Za-z0-9_]*)
+      printf 'FEATURE_USER must contain only letters, numbers, and underscores\n' >&2
+      unset FEATURE_USER
+      false
+      ;;
+  esac
+}
+```
+
+### Linux Step 3: Update your `.bashrc`
+
+Copy/paste the following to update your `.bashrc` to execute the git-utilities
+`profile.sh` script for every interactive shell. The script will:
+
+* export environment variable `FEATURE_USER` with that unique identifier
 * add `$GIT_UTILITIES_ROOT/bin` to your `$PATH`
 
 ```bash
 {
-  read -r -p 'Enter a user name: ' FEATURE_USER
-
   printf '\nsource "%s/dotfiles/bash/profile.sh" "%s"\n' \
-    "$GIT_UTILITIES_ROOT" "$FEATURE_USER" >> "$HOME/.bash_profile"
+    "$GIT_UTILITIES_ROOT" "$FEATURE_USER" >> "$HOME/.bashrc"
 
-  cat "$HOME/.bash_profile"
+  cat "$HOME/.bashrc"
 }
 ```
 
-Update your `.bashrc` to load the git-utilities `rc.sh` script that will:
+### Linux Step 4: Update your `.bashrc`
+
+Copy/paste the following to update your `.bashrc` to execute the git-utilities
+`rc.sh` script that will:
 
 * define some aliases
 * add support for shell tab completion
@@ -71,7 +94,10 @@ Update your `.bashrc` to load the git-utilities `rc.sh` script that will:
 }
 ```
 
-Load the `profile.sh` and `rc.sh` into your current shell and verify correctness.
+### Linux Step 5: Verify the installation
+
+Copy/paste the following to load the `profile.sh` and `rc.sh` into your current
+shell and verify correctness.
 
 ```bash
 {
@@ -82,9 +108,11 @@ Load the `profile.sh` and `rc.sh` into your current shell and verify correctness
 }
 ```
 
-### macOS user installation
+## Installation for macOS users
 
-This repository needs to be cloned.  Copy/paste the following to be prompted for the location to clone into.
+### macOS Step 1: Clone the repository
+
+Copy/paste the following to be prompted for the location to clone into.
 
 ```zsh
   read -r "GITHUB_REPOS_DIR?Clone this repo into which directory? [$HOME/GitHub/rkiel] "
@@ -96,19 +124,43 @@ This repository needs to be cloned.  Copy/paste the following to be prompted for
   git clone https://github.com/rkiel/git-utilities.git "$GIT_UTILITIES_ROOT"
 ```
 
-When you create a feature branch, it will include a name that identifies and distinguishes
-your branches from branches created by other members of your team. Choose a
-short name containing only letters, numbers, and underscores.
+### macOS Step 2: Define your `FEATURE_USER`
 
-Update your `.zprofile` to load the git-utilities `profile.sh` script that will:
+When you create a feature branch, it includes an identifier that distinguishes
+your branches from branches created by other members of your team. The default
+is your current username. The identifier may contain only letters, numbers, and
+underscores.
 
-* export environment variable `FEATURE_USER` with that short name
+Copy/paste the following to accept the default or enter a different
+`FEATURE_USER`:
+
+```zsh
+{
+  FEATURE_USER_DEFAULT=${USER:-$(id -un)}
+  read -r "FEATURE_USER?Enter a unique name [$FEATURE_USER_DEFAULT]: "
+  FEATURE_USER=${FEATURE_USER:-"$FEATURE_USER_DEFAULT"}
+  unset FEATURE_USER_DEFAULT
+
+  case "$FEATURE_USER" in
+    ''|*[!A-Za-z0-9_]*)
+      printf 'FEATURE_USER must contain only letters, numbers, and underscores\n' >&2
+      unset FEATURE_USER
+      false
+      ;;
+  esac
+}
+```
+
+### macOS Step 3: Update your `.zprofile`
+
+Copy/paste the following to update your `.zprofile` to execute the git-utilities
+`profile.sh` script that will:
+
+* export environment variable `FEATURE_USER` with that unique identifier
 * add `$GIT_UTILITIES_ROOT/bin` to your `$PATH`
 
 ```zsh
 {
-  read -r 'FEATURE_USER?Enter a user name: '
-
   printf '\nsource "%s/dotfiles/zsh/profile.sh" "%s"\n' \
     "$GIT_UTILITIES_ROOT" "$FEATURE_USER" >> "$HOME/.zprofile"
 
@@ -116,7 +168,10 @@ Update your `.zprofile` to load the git-utilities `profile.sh` script that will:
 }
 ```
 
-Update your `.zshrc` to load the git-utilities `rc.sh` script that will:
+### macOS Step 4: Update your `.zshrc`
+
+Copy/paste the following to update your `.zshrc` to execute the git-utilities
+`rc.sh` script that will:
 
 * define some aliases
 * add support for shell tab completion
@@ -130,7 +185,10 @@ Update your `.zshrc` to load the git-utilities `rc.sh` script that will:
 }
 ```
 
-Load the `profile.sh` and `rc.sh` into your current shell and verify correctness.
+### macOS Step 5: Verify the installation
+
+Copy/paste the following to load the `profile.sh` and `rc.sh` into your current
+shell and verify correctness.
 
 ```zsh
 {
