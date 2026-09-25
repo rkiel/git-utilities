@@ -1,4 +1,4 @@
-# Usage: source /path/to/dotfiles/bash/rc.sh
+# Usage: source /path/to/dotfiles/bash/tab_completion.sh
 
 function get_feature_commands()
 {

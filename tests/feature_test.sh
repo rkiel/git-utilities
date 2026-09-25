@@ -178,7 +178,7 @@ test_bash_completion_uses_tab_command() {
         COMP_CWORD=1
         get_feature_commands
         printf "%s\n" "${COMPREPLY[@]}"
-      ' _ "$ROOT/dotfiles/bash/rc.sh"
+      ' _ "$ROOT/dotfiles/bash/tab_completion.sh"
   )"
 
   assert_eq "$(printf '%s\n' start status)" "$actual" "bashrc completes feature subcommands through feature tab"
@@ -187,34 +187,34 @@ test_bash_completion_uses_tab_command() {
     HOME="$completion_home" bash --noprofile --norc -c '
       source "$1"
       complete -p feature
-    ' _ "$ROOT/dotfiles/bash/rc.sh"
+    ' _ "$ROOT/dotfiles/bash/tab_completion.sh"
   )"
-  assert_contains "-o bashdefault" "$registration" "bashrc enables Bash fallback completion"
-  assert_contains "-o default" "$registration" "bashrc enables filesystem fallback completion"
+  assert_contains "-o bashdefault" "$registration" "Bash completion enables Bash fallback"
+  assert_contains "-o default" "$registration" "Bash completion enables filesystem fallback"
 
   aliases="$(
     HOME="$completion_home" bash --noprofile --norc -c '
       source "$1"
       alias -p
-    ' _ "$ROOT/dotfiles/bash/rc.sh"
+    ' _ "$ROOT/dotfiles/bash/tab_completion.sh"
   )"
-  assert_not_contains "alias a=" "$aliases" "bashrc does not load optional feature aliases"
-  assert_not_contains "alias x=" "$aliases" "bashrc does not load optional utility aliases"
+  assert_not_contains "alias a=" "$aliases" "Bash completion does not load feature aliases"
+  assert_not_contains "alias x=" "$aliases" "Bash completion does not load utility aliases"
 }
 
 test_zsh_completion_uses_tab_command() {
   local config completion_home
 
-  config="$(cat "$ROOT/dotfiles/zsh/rc.sh")"
-  assert_contains 'feature tab "$PREFIX"' "$config" "zshrc completes subcommands through feature tab"
-  assert_contains '_files' "$config" "zshrc enables filesystem fallback completion"
-  assert_contains 'compdef get_feature_commands feature' "$config" "zshrc registers feature completion"
-  assert_not_contains 'aliases.sh' "$config" "zshrc does not load optional aliases"
+  config="$(cat "$ROOT/dotfiles/zsh/tab_completion.sh")"
+  assert_contains 'feature tab "$PREFIX"' "$config" "zsh completes subcommands through feature tab"
+  assert_contains '_files' "$config" "zsh completion enables filesystem fallback"
+  assert_contains 'compdef get_feature_commands feature' "$config" "zsh registers feature completion"
+  assert_not_contains 'aliases.sh' "$config" "zsh completion does not load optional aliases"
 
   if command -v zsh >/dev/null 2>&1; then
     completion_home="$TEST_ROOT/zsh-completion-home"
     mkdir -p "$completion_home"
-    HOME="$completion_home" zsh -n "$ROOT/dotfiles/zsh/rc.sh"
+    HOME="$completion_home" zsh -n "$ROOT/dotfiles/zsh/tab_completion.sh"
   fi
 }
 

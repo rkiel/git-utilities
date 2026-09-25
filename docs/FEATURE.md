@@ -110,11 +110,12 @@ push anything.
 
 ## Shell Completion
 
-The completion setups in `dotfiles/bash/rc.sh` and `dotfiles/zsh/rc.sh` call
-`feature tab` while completing the first argument to `feature`. Source the file
-for your shell or copy its `get_feature_commands` function and completion
-registration into your shell configuration. For later arguments, both shells
-fall back to filesystem path completion.
+The optional completion setups in `dotfiles/bash/tab_completion.sh` and
+`dotfiles/zsh/tab_completion.sh` call `feature tab` while completing the first
+argument to `feature`. Source the file for your shell or copy its
+`get_feature_commands` function and completion registration into your shell
+configuration. For later arguments, both shells fall back to filesystem path
+completion.
 
 ## Git Command Output
 

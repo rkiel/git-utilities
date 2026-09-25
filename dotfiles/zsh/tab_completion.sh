@@ -1,4 +1,4 @@
-# Usage: source /path/to/dotfiles/zsh/rc.sh
+# Usage: source /path/to/dotfiles/zsh/tab_completion.sh
 
 autoload -Uz compinit
 compinit

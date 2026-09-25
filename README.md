@@ -73,23 +73,24 @@ Copy/paste the following to update your `.bashrc` to execute the git-utilities
   printf '\nsource "%s/dotfiles/bash/profile.sh" "%s"\n' \
     "$GIT_UTILITIES_ROOT" "$FEATURE_USER" >> "$HOME/.bashrc"
 
-  cat "$HOME/.bashrc"
+  source "$GIT_UTILITIES_ROOT/dotfiles/bash/profile.sh" "$FEATURE_USER"
 }
 ```
 
-### Linux Step 4: Add tab completion
+### Linux Step 4 Add tab completion (OPTIONAL)
 
-Copy/paste the following to update your `.bashrc` to execute the git-utilities
-`rc.sh` script that will:
+Tab completion suggests `feature` subcommands and filesystem paths as you type.
+This convenience is not required to use `feature` or `xgrep`.
 
-* add support for shell tab completion
+Copy/paste the following to add tab completion to your `.bashrc` and load it into
+your current shell:
 
 ```bash
 {
-  printf '\nsource "%s/dotfiles/bash/rc.sh"\n' \
+  printf '\nsource "%s/dotfiles/bash/tab_completion.sh"\n' \
     "$GIT_UTILITIES_ROOT" >> "$HOME/.bashrc"
 
-  cat "$HOME/.bashrc"
+  source "$GIT_UTILITIES_ROOT/dotfiles/bash/tab_completion.sh"
 }
 ```
 
@@ -108,19 +109,16 @@ your current shell:
     "$GIT_UTILITIES_ROOT" >> "$HOME/.bashrc"
 
   source "$GIT_UTILITIES_ROOT/dotfiles/shared/aliases.sh"
-  alias
 }
 ```
 
 ### Linux Step 6: Verify the installation
 
-Copy/paste the following to load the `profile.sh` and `rc.sh` into your current
-shell and verify correctness.
+Copy/paste the following to verify the required installation.
 
 ```bash
 {
-  source "$GIT_UTILITIES_ROOT/dotfiles/bash/profile.sh" "$FEATURE_USER"
-  source "$GIT_UTILITIES_ROOT/dotfiles/bash/rc.sh"
+  alias
   command -v feature
   command -v xgrep
 }
@@ -182,23 +180,24 @@ Copy/paste the following to update your `.zprofile` to execute the git-utilities
   printf '\nsource "%s/dotfiles/zsh/profile.sh" "%s"\n' \
     "$GIT_UTILITIES_ROOT" "$FEATURE_USER" >> "$HOME/.zprofile"
 
-  cat "$HOME/.zprofile"
+  source "$GIT_UTILITIES_ROOT/dotfiles/zsh/profile.sh" "$FEATURE_USER"
 }
 ```
 
-### macOS Step 4: Add tab completion
+### macOS Step 4 Add tab completion (OPTIONAL)
 
-Copy/paste the following to update your `.zshrc` to execute the git-utilities
-`rc.sh` script that will:
+Tab completion suggests `feature` subcommands and filesystem paths as you type.
+This convenience is not required to use `feature` or `xgrep`.
 
-* add support for shell tab completion
+Copy/paste the following to add tab completion to your `.zshrc` and load it into
+your current shell:
 
 ```zsh
 {
-  printf '\nsource "%s/dotfiles/zsh/rc.sh"\n' \
+  printf '\nsource "%s/dotfiles/zsh/tab_completion.sh"\n' \
     "$GIT_UTILITIES_ROOT" >> "$HOME/.zshrc"
 
-  cat "$HOME/.zshrc"
+  source "$GIT_UTILITIES_ROOT/dotfiles/zsh/tab_completion.sh"
 }
 ```
 
@@ -217,19 +216,16 @@ your current shell:
     "$GIT_UTILITIES_ROOT" >> "$HOME/.zshrc"
 
   source "$GIT_UTILITIES_ROOT/dotfiles/shared/aliases.sh"
-  alias
 }
 ```
 
 ### macOS Step 6: Verify the installation
 
-Copy/paste the following to load the `profile.sh` and `rc.sh` into your current
-shell and verify correctness.
+Copy/paste the following to verify the required installation.
 
 ```zsh
 {
-  source "$GIT_UTILITIES_ROOT/dotfiles/zsh/profile.sh" "$FEATURE_USER"
-  source "$GIT_UTILITIES_ROOT/dotfiles/zsh/rc.sh"
+  alias
   command -v feature
   command -v xgrep
 }
