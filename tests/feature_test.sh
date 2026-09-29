@@ -220,7 +220,7 @@ test_zsh_completion_uses_tab_command() {
 }
 
 test_shared_aliases_are_optional() {
-  local aliases
+  local aliases already_loaded started
 
   aliases="$(
     bash --noprofile --norc -c '
@@ -231,6 +231,32 @@ test_shared_aliases_are_optional() {
 
   assert_contains "alias a='feature add'" "$aliases" "shared aliases define feature shortcuts"
   assert_contains "alias x='xgrep'" "$aliases" "shared aliases define the xgrep shortcut"
+
+  already_loaded="$(
+    bash --noprofile --norc -c '
+      ssh-add() { return 0; }
+      source "$1"
+      ssh-start
+    ' _ "$ROOT/dotfiles/shared/aliases.sh"
+  )"
+  assert_eq "SSH key is already loaded." "$already_loaded" "ssh-start reuses a working agent"
+
+  started="$(
+    HOME="$TEST_ROOT/ssh-home" bash --noprofile --norc -c '
+      ssh-add() {
+        if [ "${1:-}" = "-l" ]; then
+          return 2
+        fi
+        printf "loaded:%s\n" "$1"
+      }
+      ssh-agent() {
+        printf "%s\n" "SSH_AUTH_SOCK=/tmp/test-agent; export SSH_AUTH_SOCK;"
+      }
+      source "$1"
+      ssh-start
+    ' _ "$ROOT/dotfiles/shared/aliases.sh"
+  )"
+  assert_eq "loaded:$TEST_ROOT/ssh-home/.ssh/id_ed25519" "$started" "ssh-start starts an agent and loads the default key"
 }
 
 test_start_and_info() {

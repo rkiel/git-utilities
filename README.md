@@ -126,9 +126,11 @@ your current shell:
 
 ### Linux Step 5: Install aliases (OPTIONAL)
 
-The optional aliases define short command names that may replace aliases you
-already use. [Review the available aliases](dotfiles/shared/aliases.sh) before
-enabling them.
+The optional shell helpers define short command names that may replace aliases
+you already use. They also provide `ssh-start`, which starts an SSH agent when
+needed and loads `$HOME/.ssh/id_ed25519`. This remembers the key's passphrase
+for the agent session. [Review the available helpers](dotfiles/shared/aliases.sh)
+before enabling them.
 
 Copy/paste the following to add the aliases to your `.bashrc` and load them into
 your current shell:
@@ -272,9 +274,11 @@ your current shell:
 
 ### macOS Step 5: Install aliases (OPTIONAL)
 
-The optional aliases define short command names that may replace aliases you
-already use. [Review the available aliases](dotfiles/shared/aliases.sh) before
-enabling them.
+The optional shell helpers define short command names that may replace aliases
+you already use. They also provide `ssh-start`, which starts an SSH agent when
+needed and loads `$HOME/.ssh/id_ed25519`. This remembers the key's passphrase
+for the agent session. [Review the available helpers](dotfiles/shared/aliases.sh)
+before enabling them.
 
 Copy/paste the following to add the aliases to your `.zshrc` and load them into
 your current shell:
