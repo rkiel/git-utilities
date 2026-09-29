@@ -68,12 +68,32 @@ assert_branch_missing() {
   fi
 }
 
+assert_branch_exists() {
+  local repo="$1"
+  local branch="$2"
+
+  if ! git -C "$repo" show-ref --verify --quiet "refs/heads/$branch"; then
+    printf 'not ok: local branch does not exist: %s\n' "$branch" >&2
+    exit 1
+  fi
+}
+
 assert_remote_branch_missing() {
   local repo="$1"
   local branch="$2"
 
   if [ -n "$(git -C "$repo" ls-remote --heads origin "$branch")" ]; then
     printf 'not ok: remote branch still exists: %s\n' "$branch" >&2
+    exit 1
+  fi
+}
+
+assert_remote_branch_exists() {
+  local repo="$1"
+  local branch="$2"
+
+  if [ -z "$(git -C "$repo" ls-remote --heads origin "$branch")" ]; then
+    printf 'not ok: remote branch does not exist: %s\n' "$branch" >&2
     exit 1
   fi
 }
@@ -673,6 +693,56 @@ test_end_and_trash_cleanup() {
   assert_remote_branch_missing "$repo" main--sam--444--trash-cleanup
 }
 
+test_cleanup_attempts_every_operation() {
+  local repo remote branch output status
+
+  repo="$(make_repo cleanup-missing-remote)"
+  (cd "$repo" && FEATURE_USER=sam "$FEATURE" start 445 missing remote >/dev/null 2>&1)
+  branch="$(git -C "$repo" branch --show-current)"
+  remote="$(git -C "$repo" remote get-url origin)"
+  git --git-dir="$remote" update-ref -d "refs/heads/$branch"
+
+  (cd "$repo" && "$FEATURE" end >/dev/null 2>&1)
+
+  assert_eq "main" "$(git -C "$repo" branch --show-current)" "end tolerates an already-absent remote branch"
+  assert_branch_missing "$repo" "$branch"
+  assert_remote_branch_missing "$repo" "$branch"
+
+  repo="$(make_repo cleanup-remote-failure)"
+  (cd "$repo" && FEATURE_USER=sam "$FEATURE" start 446 remote failure >/dev/null 2>&1)
+  branch="$(git -C "$repo" branch --show-current)"
+  remote="$(git -C "$repo" remote get-url origin)"
+  git --git-dir="$remote" config receive.denyDeletes true
+
+  set +e
+  output="$(cd "$repo" && "$FEATURE" trash "$branch" 2>&1)"
+  status="$?"
+  set -e
+
+  assert_eq 1 "$status" "trash reports a remote deletion failure"
+  assert_contains "cleanup incomplete" "$output" "trash summarizes incomplete cleanup"
+  assert_contains "+ git fetch origin --prune" "$output" "trash prunes after a remote deletion failure"
+  assert_branch_missing "$repo" "$branch"
+  assert_remote_branch_exists "$repo" "$branch"
+
+  repo="$(make_repo cleanup-local-failure)"
+  (cd "$repo" && FEATURE_USER=sam "$FEATURE" start 447 local failure >/dev/null 2>&1)
+  branch="$(git -C "$repo" branch --show-current)"
+  chmod u-w "$repo/.git/refs/heads"
+
+  set +e
+  output="$(cd "$repo" && "$FEATURE" trash "$branch" 2>&1)"
+  status="$?"
+  set -e
+  chmod u+w "$repo/.git/refs/heads"
+
+  assert_eq 1 "$status" "trash reports a local deletion failure"
+  assert_contains "cleanup incomplete" "$output" "trash summarizes a local cleanup failure"
+  assert_contains "+ git fetch origin --prune" "$output" "trash prunes after a local deletion failure"
+  assert_branch_exists "$repo" "$branch"
+  assert_remote_branch_missing "$repo" "$branch"
+}
+
 test_release_branch_full_workflow() {
   local repo branch output local_head remote_head base_head origin_base
 
@@ -793,6 +863,7 @@ run_test "squash guards and restores" test_squash_guards_and_restores
 run_test "rebase dirty policy" test_rebase_blocks_tracked_changes_but_allows_untracked
 run_test "merge pushes initial branch" test_merge_pushes_initial_branch
 run_test "end and trash cleanup" test_end_and_trash_cleanup
+run_test "cleanup attempts every operation" test_cleanup_attempts_every_operation
 run_test "release branch workflow" test_release_branch_full_workflow
 run_test "other Git-valid initial names" test_accepts_other_git_valid_initial_names
 run_test "start rejects reserved and feature branches" test_start_rejects_reserved_and_feature_branches

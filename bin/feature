@@ -587,11 +587,35 @@ merge() {
 delete_feature_branch() {
   local base_branch="$1"
   local feature_branch="$2"
+  local cleanup_failed=0
+  local remote_status=0
 
-  run_git switch "$base_branch"
-  run_git push origin --delete "$feature_branch"
-  git branch -D "$feature_branch"
-  run_git fetch origin --prune
+  if ! run_git switch "$base_branch"; then
+    cleanup_failed=1
+  fi
+
+  git ls-remote --exit-code --heads origin "refs/heads/$feature_branch" \
+    >/dev/null 2>&1 || remote_status=$?
+  if [ "$remote_status" -ne 2 ]; then
+    if ! run_git push origin --delete "$feature_branch"; then
+      cleanup_failed=1
+    fi
+  fi
+
+  if git show-ref --verify --quiet "refs/heads/$feature_branch"; then
+    if ! git branch -D "$feature_branch"; then
+      cleanup_failed=1
+    fi
+  fi
+
+  if ! run_git fetch origin --prune; then
+    cleanup_failed=1
+  fi
+
+  if [ "$cleanup_failed" -ne 0 ]; then
+    printf 'feature: cleanup incomplete for "%s"\n' "$feature_branch" >&2
+    return 1
+  fi
 }
 
 end() {

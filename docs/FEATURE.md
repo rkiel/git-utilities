@@ -62,8 +62,10 @@ only `<message>`.
 
 `feature end` must be run from a feature branch. It fails unless the feature
 branch and initial branch agree. If they do, it switches to the initial branch,
-deletes the remote feature branch, deletes the local feature branch, and prunes
-`origin`.
+independently deletes the remote and local feature branches, and prunes
+`origin`. A branch that is already absent counts as removed. If one cleanup
+operation fails, it still attempts the remaining operations before reporting
+that cleanup is incomplete.
 
 `feature help` prints the command usage, examples, branch format, and
 `FEATURE_USER` environment-variable guidance.
@@ -115,8 +117,10 @@ text. It does not require a Git repository.
 
 `feature trash <feature-branch>` must be run from that exact feature branch. It
 does not check whether work was merged. It switches to the initial branch,
-deletes the remote feature branch, deletes the local feature branch, and prunes
-`origin`.
+independently deletes the remote and local feature branches, and prunes
+`origin`. A branch that is already absent counts as removed. If one cleanup
+operation fails, it still attempts the remaining operations before reporting
+that cleanup is incomplete.
 
 `feature unstage <paths...>` must be run from a feature branch. It runs
 `git restore --staged -- <paths...>` to remove the specified paths from the
@@ -162,6 +166,8 @@ is green. Color is disabled when output is redirected, `NO_COLOR` is set, or
 - Untracked files are allowed so local scratch files do not block the workflow.
 - `trash` requires the exact feature branch name as confirmation.
 - `end` only deletes a feature branch after it agrees with the initial branch.
+- `end` and `trash` attempt local deletion, remote deletion, and pruning
+  independently so one cleanup failure does not prevent the remaining work.
 - `tab` only reports subcommand names and does not run Git commands.
 
 ## Cross-Platform Compatibility
