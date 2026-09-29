@@ -195,19 +195,23 @@ They do not touch real repositories or remotes.
 
 ## Maintenance Rule
 
-Any behavior change to `bin/feature` must update `tests/feature_test.sh` in
-the same change. Any subcommand addition, removal, or rename must update the
-command implementation and dispatcher, `FEATURE_COMMANDS`, help usage and
-relevant examples, the command inventory and descriptions above, and the
-regression tests. Keep all command inventories and descriptions alphabetized.
-`FEATURE_COMMANDS` must exactly match the supported subcommands because
-`feature tab` reports that list to shell completion. New subcommands need at
-least one happy-path test and one guard/error test. Branch-format or safety-rule
-changes must update both this document and the tests. Every change must also be
-reviewed against the cross-platform compatibility rules above. Calls to Git
-commands named in the Git Command Output section must use `run_git`; other Git
-commands must remain quiet unless that documented list is deliberately changed.
-Before considering a change complete, run:
+- Any behavior change to `bin/feature` must update `tests/feature_test.sh` in
+  the same change.
+- Any subcommand addition, removal, or rename must update the
+  command implementation and dispatcher, `FEATURE_COMMANDS`, help usage and
+  relevant examples, the command inventory and descriptions above, and the
+  regression tests.
+- Keep all command inventories and descriptions alphabetized.
+- `FEATURE_COMMANDS` must exactly match the supported subcommands because
+  `feature tab` reports that list to shell completion.
+- New subcommands need at least one happy-path test and one guard/error test.
+- Branch-format or safety-rule changes must update both this document and
+  the tests.
+- Every change must also be reviewed against the cross-platform compatibility
+  rules above.
+- Calls to Git commands named in the Git Command Output section must use `run_git`;
+  other Git commands must remain quiet unless that documented list is deliberately changed.
+- Before considering a change complete, run:
 
 ```bash
 tests/feature_test.sh
