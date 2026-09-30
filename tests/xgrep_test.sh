@@ -108,7 +108,10 @@ make_repo() {
 }
 
 test_help_and_errors() {
-  local output status
+  local output startup status
+
+  startup="$(sed -n '1,10p' "$XGREP")"
+  assert_contains 'set +u' "$startup" "frontend disables nounset for Bash 3.2 empty arrays"
 
   output="$($XGREP --help)"
   assert_contains 'Terms are required by default' "$output" "help explains default AND behavior"
@@ -132,6 +135,7 @@ test_help_and_errors() {
   status="$?"
   set -e
   assert_eq 2 "$status" "missing terms exit 2"
+  assert_not_contains 'unbound variable' "$output" "missing terms do not trigger Bash 3.2 empty-array errors"
   assert_contains 'at least one search term is required' "$output" "missing terms explain failure"
   assert_contains 'Usage:' "$output" "missing terms display help"
   assert_contains 'Options:' "$output" "missing terms display complete help"

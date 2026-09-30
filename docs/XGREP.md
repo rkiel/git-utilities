@@ -292,7 +292,8 @@ Behavior changes must update `tests/xgrep_test.sh` and
 
 Keep the implementation compatible with Bash 3.2 and with the standard Git,
 `find`, `grep`, and `sort` versions available on supported Linux and macOS
-systems.
+systems. Do not enable Bash's `nounset` option in `xgrep`; Bash 3.2 treats
+legitimately empty arrays as unbound variables.
 
 ## Credit
 

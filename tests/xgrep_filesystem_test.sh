@@ -163,6 +163,7 @@ test_help_and_errors() {
   status="$?"
   set -e
   assert_eq 2 "$status" "missing terms exit 2"
+  assert_not_contains 'unbound variable' "$output" "missing terms do not trigger Bash 3.2 empty-array errors"
   assert_contains 'at least one search term is required' "$output" "missing terms explain failure"
   assert_contains 'Usage:' "$output" "missing terms display help"
   assert_contains 'Options:' "$output" "missing terms display complete help"
