@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOURCE_BASH_PROFILE="$ROOT/dotfiles/bash/profile.sh"
 SOURCE_SHARED_PROFILE="$ROOT/dotfiles/shared/profile.sh"
 SOURCE_ZSH_PROFILE="$ROOT/dotfiles/zsh/profile.sh"
+README="$ROOT/README.md"
 TEST_ROOT="$(mktemp -d /tmp/git-utilities-profile-tests.XXXXXX)"
 FIXTURE="$TEST_ROOT/repository with spaces"
 BASH_PROFILE="$FIXTURE/dotfiles/bash/profile.sh"
@@ -74,8 +75,21 @@ test_shell() {
   assert_eq "$expected" "$actual" "$shell_name leaves the environment unchanged after a usage error"
 }
 
+test_readme_feature_user_validation() {
+  local validation_count
+
+  if grep -Fq '*[!A-Za-z0-9_]*' "$README"; then
+    printf 'not ok: README FEATURE_USER validation triggers shell history expansion\n' >&2
+    exit 1
+  fi
+
+  validation_count="$(grep -Fc "LC_ALL=C grep -Eq '[^A-Za-z0-9_]'" "$README" || true)"
+  assert_eq 2 "$validation_count" "README uses shell-safe FEATURE_USER validation for Bash and zsh"
+}
+
 make_fixture
 bash -n "$SOURCE_BASH_PROFILE" "$SOURCE_SHARED_PROFILE"
+test_readme_feature_user_validation
 test_shell bash "$BASH_PROFILE"
 
 if command -v zsh >/dev/null 2>&1; then

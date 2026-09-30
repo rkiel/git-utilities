@@ -56,13 +56,12 @@ Copy/paste the following to accept the default or enter a different
   FEATURE_USER=${FEATURE_USER:-"$FEATURE_USER_DEFAULT"}
   unset FEATURE_USER_DEFAULT
 
-  case "$FEATURE_USER" in
-    ''|*[!A-Za-z0-9_]*)
-      printf 'FEATURE_USER must contain only letters, numbers, and underscores\n' >&2
-      unset FEATURE_USER
-      false
-      ;;
-  esac
+  if [ -z "$FEATURE_USER" ] ||
+      printf '%s\n' "$FEATURE_USER" | LC_ALL=C grep -Eq '[^A-Za-z0-9_]'; then
+    printf 'FEATURE_USER must contain only letters, numbers, and underscores\n' >&2
+    unset FEATURE_USER
+    false
+  fi
 }
 ```
 
@@ -204,13 +203,12 @@ Copy/paste the following to accept the default or enter a different
   FEATURE_USER=${FEATURE_USER:-"$FEATURE_USER_DEFAULT"}
   unset FEATURE_USER_DEFAULT
 
-  case "$FEATURE_USER" in
-    ''|*[!A-Za-z0-9_]*)
-      printf 'FEATURE_USER must contain only letters, numbers, and underscores\n' >&2
-      unset FEATURE_USER
-      false
-      ;;
-  esac
+  if [ -z "$FEATURE_USER" ] ||
+      printf '%s\n' "$FEATURE_USER" | LC_ALL=C grep -Eq '[^A-Za-z0-9_]'; then
+    printf 'FEATURE_USER must contain only letters, numbers, and underscores\n' >&2
+    unset FEATURE_USER
+    false
+  fi
 }
 ```
 
