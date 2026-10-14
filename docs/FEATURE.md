@@ -35,7 +35,7 @@ is omitted from commit messages and `feature info` reports `Ticket: none`.
 
 ```bash
 feature add <git-add-arguments...>
-feature commit <message...>
+feature commit [-f] <message...>
 feature end
 feature help
 feature info
@@ -58,7 +58,9 @@ push them.
 `feature commit` must be run from a feature branch. It runs `git add --patch`,
 commits with a message in the form `#<ticket> <message>`, then pushes the
 feature branch to `origin` with `--force-with-lease`. For ticket `0`, it commits
-only `<message>`.
+only `<message>`. The optional `-f` flag passes `--no-verify` to `git commit`,
+bypassing the pre-commit and commit-msg hooks for that commit, and appends
+` (no verify)` to the commit message.
 
 `feature end` must be run from a feature branch. It fails unless the feature
 branch and initial branch agree. If they do, it switches to the initial branch,

@@ -469,8 +469,32 @@ test_commit_pushes_feature_branch() {
   assert_eq "$local_head" "$remote_head" "commit rewrites the remote feature branch"
   assert_contains "+ git add --patch" "$output" "commit displays patch add command"
   assert_contains "+ git commit -m" "$output" "commit displays commit command"
+  assert_not_contains "--no-verify" "$output" "commit verifies hooks by default"
   assert_contains "+ git push --force-with-lease origin" "$output" \
     "commit displays force-with-lease push command"
+}
+
+test_commit_force_flag_bypasses_hooks() {
+  local repo branch subject local_head remote_head output
+
+  repo="$(make_repo commit-no-verify)"
+  (cd "$repo" && FEATURE_USER=sam "$FEATURE" start 905 bypass hooks >/dev/null 2>&1)
+  printf '#!/bin/sh\nexit 1\n' >"$repo/.git/hooks/commit-msg"
+  chmod +x "$repo/.git/hooks/commit-msg"
+  printf 'initial\nforced commit change\n' >"$repo/README.md"
+
+  output="$(cd "$repo" && printf 'y\n' | "$FEATURE" commit -f bypass failing hook 2>&1)"
+
+  branch="$(git -C "$repo" branch --show-current)"
+  subject="$(git -C "$repo" log -1 --format=%s)"
+  local_head="$(git -C "$repo" rev-parse HEAD)"
+  remote_head="$(git -C "$repo" rev-parse origin/main--sam--905--bypass-hooks)"
+
+  assert_eq "#905 bypass failing hook (no verify)" "$subject" \
+    "-f marks the commit message as unverified"
+  assert_eq "$local_head" "$remote_head" "-f commit pushes the feature branch"
+  assert_contains "+ git commit --no-verify -m" "$output" "-f passes --no-verify to git commit"
+  assert_eq "main--sam--905--bypass-hooks" "$branch" "-f commit remains on feature branch"
 }
 
 test_commit_refuses_unseen_remote_change() {
@@ -856,6 +880,7 @@ run_test "FEATURE_USER validation" test_start_rejects_bad_feature_user
 run_test "add and unstage" test_add_and_unstage
 run_test "add and unstage require feature branch" test_add_and_unstage_require_feature_branch
 run_test "commit pushes feature branch" test_commit_pushes_feature_branch
+run_test "commit -f bypasses hooks" test_commit_force_flag_bypasses_hooks
 run_test "commit protects unseen remote changes" test_commit_refuses_unseen_remote_change
 run_test "ticket zero omits commit prefix" test_zero_ticket_omits_commit_prefix
 run_test "squash replaces commits and pushes" test_squash_replaces_commits_and_pushes

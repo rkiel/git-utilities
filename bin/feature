@@ -30,7 +30,7 @@ print_help() {
   cat <<HELP
 Usage:
   $SCRIPT_NAME add <git-add-arguments...>
-  $SCRIPT_NAME commit <message...>
+  $SCRIPT_NAME commit [-f] <message...>
   $SCRIPT_NAME end
   $SCRIPT_NAME help
   $SCRIPT_NAME info
@@ -49,6 +49,7 @@ Examples:
   $SCRIPT_NAME add new-file.rb
   $SCRIPT_NAME unstage accidentally-added.txt
   $SCRIPT_NAME commit implement form validation
+  $SCRIPT_NAME commit -f bypass hooks for this commit
   $SCRIPT_NAME squash combine completed work
   $SCRIPT_NAME info
   $SCRIPT_NAME status --short --branch
@@ -463,6 +464,16 @@ commit() {
   fi
 
   local feature_branch ticket message
+  local no_verify=false
+
+  if [ "$1" = -f ]; then
+    no_verify=true
+    shift
+  fi
+
+  if [ "$#" -lt 1 ]; then
+    die_usage
+  fi
 
   require_git_work_tree
 
@@ -470,9 +481,16 @@ commit() {
   require_feature_branch "$feature_branch"
   ticket="$(ticket_for "$feature_branch")"
   message="$(feature_commit_message "$ticket" "$@")"
+  if [ "$no_verify" = true ]; then
+    message="$message (no verify)"
+  fi
 
   run_git add --patch
-  run_git commit -m "$message"
+  if [ "$no_verify" = true ]; then
+    run_git commit --no-verify -m "$message"
+  else
+    run_git commit -m "$message"
+  fi
   run_git push --force-with-lease origin "$feature_branch"
 }
 
