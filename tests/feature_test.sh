@@ -475,26 +475,52 @@ test_commit_pushes_feature_branch() {
 }
 
 test_commit_force_flag_bypasses_hooks() {
-  local repo branch subject local_head remote_head output
+  local placement repo branch subject local_head remote_head output status
 
-  repo="$(make_repo commit-no-verify)"
-  (cd "$repo" && FEATURE_USER=sam "$FEATURE" start 905 bypass hooks >/dev/null 2>&1)
-  printf '#!/bin/sh\nexit 1\n' >"$repo/.git/hooks/commit-msg"
-  chmod +x "$repo/.git/hooks/commit-msg"
-  printf 'initial\nforced commit change\n' >"$repo/README.md"
+  for placement in beginning middle end; do
+    repo="$(make_repo "commit-no-verify-$placement")"
+    (cd "$repo" && FEATURE_USER=sam "$FEATURE" start 905 bypass hooks >/dev/null 2>&1)
+    printf '#!/bin/sh\nexit 1\n' >"$repo/.git/hooks/commit-msg"
+    chmod +x "$repo/.git/hooks/commit-msg"
+    printf 'initial\nforced commit change\n' >"$repo/README.md"
 
-  output="$(cd "$repo" && printf 'y\n' | "$FEATURE" commit -f bypass failing hook 2>&1)"
+    case "$placement" in
+      beginning)
+        output="$(cd "$repo" && printf 'y\n' | "$FEATURE" commit -f bypass failing hook 2>&1)"
+        ;;
+      middle)
+        output="$(cd "$repo" && printf 'y\n' | "$FEATURE" commit bypass -f failing hook 2>&1)"
+        ;;
+      end)
+        output="$(cd "$repo" && printf 'y\n' | "$FEATURE" commit bypass failing hook -f 2>&1)"
+        ;;
+    esac
 
-  branch="$(git -C "$repo" branch --show-current)"
-  subject="$(git -C "$repo" log -1 --format=%s)"
-  local_head="$(git -C "$repo" rev-parse HEAD)"
-  remote_head="$(git -C "$repo" rev-parse origin/main--sam--905--bypass-hooks)"
+    branch="$(git -C "$repo" branch --show-current)"
+    subject="$(git -C "$repo" log -1 --format=%s)"
+    local_head="$(git -C "$repo" rev-parse HEAD)"
+    remote_head="$(git -C "$repo" rev-parse origin/main--sam--905--bypass-hooks)"
 
-  assert_eq "#905 bypass failing hook (no verify)" "$subject" \
-    "-f marks the commit message as unverified"
-  assert_eq "$local_head" "$remote_head" "-f commit pushes the feature branch"
-  assert_contains "+ git commit --no-verify -m" "$output" "-f passes --no-verify to git commit"
-  assert_eq "main--sam--905--bypass-hooks" "$branch" "-f commit remains on feature branch"
+    assert_eq "#905 bypass failing hook (no verify)" "$subject" \
+      "-f in the $placement marks the commit message as unverified"
+    assert_eq "$local_head" "$remote_head" "-f in the $placement pushes the feature branch"
+    assert_contains "+ git commit --no-verify -m" "$output" \
+      "-f in the $placement passes --no-verify to git commit"
+    assert_eq "main--sam--905--bypass-hooks" "$branch" \
+      "-f in the $placement leaves the feature branch checked out"
+  done
+
+  repo="$(make_repo commit-no-verify-without-message)"
+  (cd "$repo" && FEATURE_USER=sam "$FEATURE" start 906 missing message >/dev/null 2>&1)
+
+  set +e
+  output="$(cd "$repo" && "$FEATURE" commit -f 2>&1)"
+  status="$?"
+  set -e
+
+  assert_eq 2 "$status" "-f without a commit message exits 2"
+  assert_contains "feature commit [-f] <message...>" "$output" \
+    "-f without a commit message prints help"
 }
 
 test_commit_refuses_unseen_remote_change() {

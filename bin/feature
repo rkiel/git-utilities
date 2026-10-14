@@ -463,15 +463,21 @@ commit() {
     die_usage
   fi
 
-  local feature_branch ticket message
+  local argument feature_branch ticket message
   local no_verify=false
+  local message_argument_count=0
+  local message_arguments=()
 
-  if [ "$1" = -f ]; then
-    no_verify=true
-    shift
-  fi
+  for argument in "$@"; do
+    if [ "$argument" = -f ]; then
+      no_verify=true
+    else
+      message_arguments[$message_argument_count]="$argument"
+      message_argument_count=$((message_argument_count + 1))
+    fi
+  done
 
-  if [ "$#" -lt 1 ]; then
+  if [ "$message_argument_count" -eq 0 ]; then
     die_usage
   fi
 
@@ -480,7 +486,7 @@ commit() {
   feature_branch="$(current_named_branch)"
   require_feature_branch "$feature_branch"
   ticket="$(ticket_for "$feature_branch")"
-  message="$(feature_commit_message "$ticket" "$@")"
+  message="$(feature_commit_message "$ticket" "${message_arguments[@]}")"
   if [ "$no_verify" = true ]; then
     message="$message (no verify)"
   fi
